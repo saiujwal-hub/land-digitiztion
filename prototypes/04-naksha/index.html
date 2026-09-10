@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Naksha — District Atlas of Land Record Digitization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to map</a>
+
+<header class="sheet-head">
+  <div class="wrap">
+    <div class="cartouche">
+      <span class="mark" aria-hidden="true">न</span>
+      <span><b>Naksha</b><small>Cadastral Digitization Atlas</small></span>
+    </div>
+    <nav aria-label="Primary">
+      <a href="#" aria-current="page">Atlas</a>
+      <a href="#parcels">From Sheet to Database</a>
+      <a href="dashboard.html">Progress Console</a>
+      <a href="#standards">GIS Standards</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero gridded" aria-labelledby="hero-h">
+    <div class="wrap hero-grid">
+
+      <figure class="map-sheet" style="margin:0;">
+        <div class="map-fold" aria-hidden="true"></div>
+        <figcaption class="sheet-title">
+          <b>Digitization Progress — Pilot States</b>
+          <small>SHEET 1 : 2 · SCHEMATIC · SEP 2026</small>
+        </figcaption>
+        <svg viewBox="0 0 640 510" role="img" aria-label="Schematic choropleth of twelve districts. Bhopal 78 and Gwalior 86 percent complete in dark green; Guna 71, Sagar 64, Jabalpur 68 and Hoshangabad 61 in mid green; Satna 55, Rewa 47, Dhar 42, Betul 51 pale; Ratlam 38 and Chhindwara 33 lowest, shown hatched as early-stage.">
+          <defs>
+            <pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+              <rect width="7" height="7" fill="#d3e0d4"/>
+              <line x1="0" y1="0" x2="0" y2="7" stroke="#94b49a" stroke-width="2.4"/>
+            </pattern>
+          </defs>
+          <!-- high ≥75 -->
+          <g class="district" role="img" aria-label="Gwalior — 86% · 2,814 villages digitized" data-tip="Gwalior — 86% · 2,814 villages digitized">
+            <polygon points="70,45 200,25 175,150 55,165" fill="#1e5b3e"></polygon>
+            <text x="125" y="94" text-anchor="middle" class="d-label-dark">Gwalior<tspan x="125" dy="13" class="d-pct">86%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Bhopal — 78% · 1,103 villages digitized" data-tip="Bhopal — 78% · 1,103 villages digitized">
+            <polygon points="175,150 355,160 345,315 180,330" fill="#1e5b3e"></polygon>
+            <text x="264" y="237" text-anchor="middle" class="d-label-dark">Bhopal<tspan x="264" dy="13" class="d-pct">78%</tspan></text>
+          </g>
+          <!-- good 60–74 -->
+          <g class="district" role="img" aria-label="Guna — 71% · 1,240 villages" data-tip="Guna — 71% · 1,240 villages">
+            <polygon points="200,25 350,35 355,160 175,150" fill="#4a8563"></polygon>
+            <text x="270" y="90" text-anchor="middle" class="d-label-dark">Guna<tspan x="270" dy="13" class="d-pct">71%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Sagar — 64% · 1,860 villages" data-tip="Sagar — 64% · 1,860 villages">
+            <polygon points="350,35 495,30 505,145 355,160" fill="#4a8563"></polygon>
+            <text x="426" y="90" text-anchor="middle" class="d-label-dark">Sagar<tspan x="426" dy="13" class="d-pct">64%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Jabalpur — 68% · 1,542 villages" data-tip="Jabalpur — 68% · 1,542 villages">
+            <polygon points="355,160 505,145 510,325 345,315" fill="#4a8563"></polygon>
+            <text x="429" y="234" text-anchor="middle" class="d-label-dark">Jabalpur<tspan x="429" dy="13" class="d-pct">68%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Hoshangabad — 61% · 980 villages" data-tip="Hoshangabad — 61% · 980 villages">
+            <polygon points="180,330 345,315 345,445 185,455" fill="#4a8563"></polygon>
+            <text x="264" y="384" text-anchor="middle" class="d-label-dark">Hoshangabad<tspan x="264" dy="13" class="d-pct">61%</tspan></text>
+          </g>
+          <!-- mid 40–59 -->
+          <g class="district" role="img" aria-label="Satna — 55% · 1,102 villages" data-tip="Satna — 55% · 1,102 villages">
+            <polygon points="495,30 625,50 635,180 505,145" fill="#94b49a"></polygon>
+            <text x="565" y="99" text-anchor="middle" class="d-label-light">Satna<tspan x="565" dy="13" class="d-pct">55%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Rewa — 47% · 1,355 villages" data-tip="Rewa — 47% · 1,355 villages">
+            <polygon points="505,145 635,180 625,315 510,325" fill="#94b49a"></polygon>
+            <text x="569" y="239" text-anchor="middle" class="d-label-light">Rewa<tspan x="569" dy="13" class="d-pct">47%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Ratlam — 38% · 1,412 villages" data-tip="Ratlam — 38% · 1,412 villages">
+            <polygon points="55,165 175,150 180,330 50,320" fill="url(#hatch)"></polygon>
+            <text x="115" y="239" text-anchor="middle" class="d-label-light">Ratlam<tspan x="115" dy="13" class="d-pct">38%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Dhar — 42% · 3,127 villages" data-tip="Dhar — 42% · 3,127 villages">
+            <polygon points="50,320 180,330 185,455 60,440" fill="url(#hatch)"></polygon>
+            <text x="119" y="384" text-anchor="middle" class="d-label-light">Dhar<tspan x="119" dy="13" class="d-pct">42%</tspan></text>
+          </g>
+          <g class="district" role="img" aria-label="Betul — 51% · 1,268 villages" data-tip="Betul — 51% · 1,268 villages">
+            <polygon points="510,325 625,315 630,430 500,455" fill="#94b49a"></polygon>
+            <text x="566" y="379" text-anchor="middle" class="d-label-light">Betul<tspan x="566" dy="13" class="d-pct">51%</tspan></text>
+          </g>
+          <!-- low <40 -->
+          <g class="district" role="img" aria-label="Chhindwara — 33% · 1,694 villages" data-tip="Chhindwara — 33% · 1,694 villages">
+            <polygon points="345,315 510,325 500,455 345,445" fill="url(#hatch)"></polygon>
+            <text x="425" y="383" text-anchor="middle" class="d-label-light">Chhindwara<tspan x="425" dy="13" class="d-pct">33%</tspan></text>
+          </g>
+
+          <!-- cartographic furniture -->
+          <g aria-hidden="true">
+            <g stroke="#1c2a22" stroke-width="1.5">
+              <rect x="55" y="474" width="40" height="6" fill="#1c2a22"/>
+              <rect x="95" y="474" width="40" height="6" fill="#f7f8f5"/>
+              <rect x="135" y="474" width="40" height="6" fill="#1c2a22"/>
+              <rect x="175" y="474" width="40" height="6" fill="#f7f8f5"/>
+              <rect x="55" y="474" width="160" height="6" fill="none"/>
+            </g>
+            <g fill="#5b6a5f" font-family="ui-monospace, monospace" font-size="9">
+              <text x="55" y="470">0</text><text x="131" y="470">25</text><text x="211" y="470">50 km</text>
+            </g>
+            <g stroke="#1c2a22" stroke-width="1.5">
+              <line x1="598" y1="484" x2="598" y2="462"/>
+              <polygon points="598,456 594,466 602,466" fill="#1c2a22"/>
+            </g>
+            <text x="606" y="466" font-family="ui-monospace, monospace" font-size="10" fill="#1c2a22">N</text>
+          </g>
+        </svg>
+        <p class="map-note">HOVER A DISTRICT FOR DETAIL · BOUNDARIES SCHEMATIC, NOT SURVEY-ACCURATE</p>
+      </figure>
+
+      <div class="hero-copy">
+        <h1 id="hero-h">The land records map, <em>filling in</em> district by district.</h1>
+        <p class="lede">Naksha tracks the digitization programme the way it will be used — geographically. Every scanned village sheet is georeferenced, linked to its survey numbers, and pushed to the GIS layer as a certified parcel.</p>
+
+        <div class="legend">
+          <h2>Villages digitized (%)</h2>
+          <ul>
+            <li><span class="swatch" style="background:#1e5b3e"></span>High <span class="rng">75 – 100</span></li>
+            <li><span class="swatch" style="background:#4a8563"></span>Good <span class="rng">60 – 74</span></li>
+            <li><span class="swatch" style="background:#94b49a"></span>Building <span class="rng">40 – 59</span></li>
+            <li><span class="swatch" style="background:#d3e0d4"></span>Early <span class="rng">&lt; 40</span></li>
+          </ul>
+        </div>
+
+        <section class="selected" aria-label="Selected district detail">
+          <header>
+            <h2>Bhopal District</h2>
+            <span class="tag">SELECTED · SHEET 1:2</span>
+          </header>
+          <dl>
+            <div class="kv"><dt>Villages digitized</dt><dd>861 <span style="color:var(--muted); font-weight:400;">of 1,103</span></dd></div>
+            <div class="kv"><dt>Records certified</dt><dd>1,42,318</dd></div>
+            <div class="kv"><dt>Survey maps georeferenced</dt><dd>642 <span style="color:var(--muted); font-weight:400;">of 1,103</span></dd></div>
+            <div class="kv"><dt>Mean field confidence</dt><dd>97.1%</dd></div>
+            <div class="kv wide"><dt>Current bundles</dt><dd><span class="mono">BPL/HUZUR 1998–99 (clerk review) · BPL/BERASIA 1971–72 (scanning)</span></dd></div>
+          </dl>
+          <div class="parcel-grid" aria-hidden="true">
+            <i class="done" style="left:1px; top:1px; width:54px; height:55px"></i>
+            <i class="done" style="left:57px; top:1px; width:55px; height:27px"></i>
+            <i class="prog" style="left:57px; top:30px; width:55px; height:26px"></i>
+            <i class="done" style="left:1px; top:58px; width:82px; height:27px"></i>
+            <i class="prog" style="left:86px; top:58px; width:54px; height:27px"></i>
+            <i class="done" style="left:169px; top:1px; width:27px; height:84px"></i>
+            <i class="flag" style="left:200px; top:1px; width:54px; height:55px"></i>
+            <i class="prog" style="left:200px; top:58px; width:54px; height:27px"></i>
+            <span class="pg-label">Bilakhedi · khasra grid</span>
+          </div>
+          <footer><a class="btn btn-outline" href="dashboard.html">Open progress console →</a></footer>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-label="Atlas statistics">
+    <div class="wrap">
+      <div><div class="v" data-countup>4,82,140</div><div class="l">Records georeferenced</div></div>
+      <div><div class="v" data-countup>18,422</div><div class="l">Villages on the GIS layer</div></div>
+      <div><div class="v" data-countup>6,410</div><div class="l">Cadastral sheets mosaicked</div></div>
+      <div><div class="v" data-countup>96.8%</div><div class="l">Parcel-match accuracy</div></div>
+    </div>
+  </section>
+
+  <section class="section" id="parcels" aria-labelledby="parcels-h">
+    <div class="wrap">
+      <h2 class="section-title" id="parcels-h">From village sheet to GIS parcel.</h2>
+      <p class="section-sub">A scanned cadastral sheet is only useful when its parcels can be found, matched and trusted. Naksha carries each sheet through five geospatial stages before it joins the LRMS/GIS layer.</p>
+      <div class="step-grid" data-stagger>
+        <div class="step-card"><span class="tag-line">STAGE 01</span><h3>Scan &amp; Georeference</h3><p>Village sheets are scanned at 400 dpi and pinned to control points from the survey-of-India grid.</p></div>
+        <div class="step-card"><span class="tag-line">STAGE 02</span><h3>Register Reading</h3><p>OCR reads the corresponding khasra register — owner, area, tenure — with per-field confidence.</p></div>
+        <div class="step-card"><span class="tag-line">STAGE 03</span><h3>Parcel Matching</h3><p>Survey and khasra numbers are matched between map sheet and register; mismatches are flagged.</p></div>
+        <div class="step-card"><span class="tag-line">STAGE 04</span><h3>Human Validation</h3><p>Clerks resolve mismatches against the scan; officers approve the corrected parcel record.</p></div>
+        <div class="step-card"><span class="tag-line">STAGE 05</span><h3>GIS Publication</h3><p>Certified parcels are sealed and published to the LRMS/GIS layer with a verifiable QR.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="standards" aria-labelledby="std-h" style="padding-top:0;">
+    <div class="wrap">
+      <h2 class="section-title" id="std-h">Aligned to the DILRMP GIS stack.</h2>
+      <p class="section-sub">Naksha speaks the formats and identifiers the modernization programme already uses, so digitized records land in existing systems without translation loss.</p>
+      <div class="step-grid" style="grid-template-columns:repeat(4,1fr);" data-stagger>
+        <div class="step-card"><span class="tag-line">FORMAT</span><h3>Parcel Identifiers</h3><p>Unique parcel IDs carry village · survey · sub-survey codes exactly as the RoR uses them.</p></div>
+        <div class="step-card"><span class="tag-line">FORMAT</span><h3>Vector Publication</h3><p>Certified boundaries export as OGC-standard vectors with attribution and seal metadata.</p></div>
+        <div class="step-card"><span class="tag-line">CONTROL</span><h3>Coordinate Reference</h3><p>Sheets are reprojected to the state's notified CRS; transformations are logged per sheet.</p></div>
+        <div class="step-card"><span class="tag-line">CONTROL</span><h3>Change Audit</h3><p>Every re-mosaic, correction and republication is versioned and attributable to an officer.</p></div>
+      </div>
+      <div style="margin-top:28px;"><a class="btn" href="dashboard.html">Open the progress console →</a></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="sheet-foot">
+  <div class="wrap">
+    <span>Naksha · Cadastral Digitization Atlas (demo) · Boundaries schematic, figures illustrative.</span>
+    <span class="demo-tag">PROTOTYPE 04 · NAKSHA · MOCK DATA</span>
+  </div>
+</footer>
+
+<script>
+/* District tooltip: positioned from the hovered polygon's bounding box so it
+   never sits on top of the shape (or its label) it describes. */
+(function () {
+  "use strict";
+  var sheet = document.querySelector(".map-sheet");
+  var svg = sheet && sheet.querySelector("svg");
+  if (!svg) return;
+  var tip = document.createElement("div");
+  tip.className = "map-tip";
+  tip.setAttribute("aria-hidden", "true");
+  sheet.appendChild(tip);
+
+  var vb = svg.viewBox && svg.viewBox.baseVal;
+  var VW = (vb && vb.width) || 640;
+
+  function place(g) {
+    var poly = g.querySelector("polygon");
+    var text = g.getAttribute("data-tip");
+    if (!poly || !text) return;
+    var box = poly.getBBox();
+    var svgR = svg.getBoundingClientRect();
+    var sheetR = sheet.getBoundingClientRect();
+    var s = svgR.width / VW;
+    tip.textContent = text;
+    tip.className = "map-tip on";
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var pad = 12;
+    var bx = svgR.left - sheetR.left + box.x * s;
+    var by = svgR.top - sheetR.top + box.y * s;
+    var bw = box.width * s, bh = box.height * s;
+    var x = bx + bw + pad;                                  // prefer right of the shape
+    if (x + tw > sheetR.width - 2) x = bx - tw - pad;       // otherwise left
+    var y = by + bh / 2 - th / 2;                           // centred on the shape
+    y = Math.max(2, Math.min(y, sheetR.height - th - 2));
+    if (x < 2) { x = Math.max(2, bx + bw / 2 - tw / 2); y = by - th - pad; } // crowded sheet: above
+    tip.style.left = Math.round(x) + "px";
+    tip.style.top = Math.round(y) + "px";
+  }
+  function hide() { tip.className = "map-tip"; }
+
+  document.querySelectorAll("g.district[data-tip]").forEach(function (g) {
+    g.addEventListener("mouseenter", function () { place(g); });
+    g.addEventListener("mouseleave", hide);
+  });
+  window.addEventListener("scroll", hide, { passive: true });
+})();
+</script>
+
+</body>
+</html>

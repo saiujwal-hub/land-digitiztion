@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Bhasha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@400;500;600;700;800&family=Anek+Devanagari:wght@400;500;600;700;800&family=Anek+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to dashboard</a>
+
+<input class="lang-state" type="radio" name="lang" id="lang-en" checked>
+<input class="lang-state" type="radio" name="lang" id="lang-hi">
+<input class="lang-state" type="radio" name="lang" id="lang-te">
+
+<div class="page">
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="seed" aria-hidden="true">भ</span>
+      <span><b>Bhasha</b><small><span class="tr tr-en">State Dashboard</span><span class="tr tr-hi">राज्य डैशबोर्ड</span><span class="tr tr-te">రాష్ట్ర డాష్‌బోర్డ్</span></small></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html"><span class="tr tr-en">Home</span><span class="tr tr-hi">होम</span><span class="tr tr-te">హోమ్</span></a>
+      <a href="#" aria-current="page"><span class="tr tr-en">Dashboard</span><span class="tr tr-hi">डैशबोर्ड</span><span class="tr tr-te">డాష్‌బోర్డ్</span></a>
+      <a href="#queue"><span class="tr tr-en">Review queue</span><span class="tr tr-hi">समीक्षा कतार</span><span class="tr tr-te">రివ్యూ క్యూ</span></a>
+      <a href="#scripts"><span class="tr tr-en">Script accuracy</span><span class="tr tr-hi">लिपि सटीकता</span><span class="tr tr-te">లిపి ఖచ్చితత్వం</span></a>
+    </nav>
+    <div class="lang-switch" role="group" aria-label="Interface language">
+      <span class="lbl" aria-hidden="true">EN⇄</span>
+      <label for="lang-en">English</label>
+      <label for="lang-hi" class="hi" lang="hi">हिन्दी</label>
+      <label for="lang-te" class="te" lang="te">తెలుగు</label>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="dash-head">
+    <div class="wrap">
+      <h1><span class="tr tr-en">Madhya Pradesh &amp; Telangana — programme dashboard</span><span class="tr tr-hi">मध्य प्रदेश और तेलंगाना — कार्यक्रम डैशबोर्ड</span><span class="tr tr-te">మధ్యప్రదేశ్ &amp; తెలంగాణ — ప్రోగ్రామ్ డాష్‌బోర్డ్</span></h1>
+      <p><span class="tr tr-en">01 Aug – 02 Sep 2026 · figures refresh every 15 minutes · review console available in Hindi and Telugu.</span><span class="tr tr-hi">01 अगस्त – 02 सितंबर 2026 · आँकड़े हर 15 मिनट ताज़ा होते हैं · समीक्षा कंसोल हिन्दी और तेलुगु में उपलब्ध।</span><span class="tr tr-te">01 ఆగస్టు – 02 సెప్టెంబర్ 2026 · గణాంకాలు ప్రతి 15 నిమిషాలు రిఫ్రెష్ · రివ్యూ కన్సోల్ హిందీ, తెలుగులో అందుబాటులో.</span></p>
+    </div>
+  </section>
+
+  <section class="wrap" aria-label="Key metrics">
+    <div class="kpi-row">
+      <div class="kpi"><div class="v" data-countup>4,82,140</div><div class="l"><span class="tr tr-en">Documents processed</span><span class="tr tr-hi">प्रक्रियाएँ पूर्ण दस्तावेज़</span><span class="tr tr-te">ప్రాసెస్ చేసిన డాక్యుమెంట్లు</span></div><span class="trend trend-up">▲ 6,214 / <span class="tr tr-en">week</span><span class="tr tr-hi">सप्ताह</span><span class="tr tr-te">వారం</span></span></div>
+      <div class="kpi"><div class="v" data-countup>96.8%</div><div class="l"><span class="tr tr-en">Extraction accuracy</span><span class="tr tr-hi">निष्कर्षण सटीकता</span><span class="tr tr-te">సంగ్రహణ ఖచ్చితత్వం</span></div><span class="trend trend-up">▲ 0.4 pts</span></div>
+      <div class="kpi"><div class="v" data-countup>1,273</div><div class="l"><span class="tr tr-en">Pending verification</span><span class="tr tr-hi">सत्यापन लंबित</span><span class="tr tr-te">సత్యాపన పెండింగ్</span></div><span class="trend trend-dn">▼ <span class="tr tr-en">oldest 2d 6h</span><span class="tr tr-hi">सबसे पुराना 2दा 6घं</span><span class="tr tr-te">పాతది 2రో 6గం</span></span></div>
+      <div class="kpi"><div class="v" data-countup>12</div><div class="l"><span class="tr tr-en">Scripts in production</span><span class="tr tr-hi">उत्पादन में लिपियाँ</span><span class="tr tr-te">ప్రొడక్షన్‌లో లిపులు</span></div><span class="trend trend-up">▲ <span class="tr tr-en">Odia added Aug</span><span class="tr tr-hi">उड़िया अगस्त में जोड़ी</span><span class="tr tr-te">ఒడియా ఆగస్టులో చేర్చబడింది</span></span></div>
+    </div>
+  </section>
+
+  <section class="wrap dash-grid" id="scripts" aria-label="Script accuracy and queue">
+    <div class="panel">
+      <div class="panel-head"><h2><span class="tr tr-en">Accuracy by script</span><span class="tr tr-hi">लिपि अनुसार सटीकता</span><span class="tr tr-te">లిపి ప్రకారం ఖచ్చితత్వం</span></h2><span class="meta">field-level · 7-day</span></div>
+      <div class="panel-body" data-stagger>
+        <div class="prow"><div class="nm">Devanagari <span lang="hi" style="font-family:var(--f-dev)">देवनागरी</span></div><div class="track"><div class="fill" style="width:97%"></div></div><div class="pct">97.4%</div></div>
+        <div class="prow"><div class="nm">Telugu <span lang="te" style="font-family:var(--f-tel)">తెలుగు</span></div><div class="track"><div class="fill" style="width:96%"></div></div><div class="pct">96.6%</div></div>
+        <div class="prow"><div class="nm">Tamil <span lang="ta">தமிழ்</span></div><div class="track"><div class="fill" style="width:95%"></div></div><div class="pct">95.8%</div></div>
+        <div class="prow"><div class="nm">Kannada <span lang="kn">ಕನ್ನಡ</span></div><div class="track"><div class="fill" style="width:95%"></div></div><div class="pct">95.2%</div></div>
+        <div class="prow"><div class="nm">Gurmukhi <span lang="pa">ਗੁਰਮੁਖੀ</span></div><div class="track"><div class="fill" style="width:94%"></div></div><div class="pct">94.7%</div></div>
+        <div class="prow"><div class="nm">Bengali <span lang="bn">বাংলা</span></div><div class="track"><div class="fill" style="width:94%"></div></div><div class="pct">94.1%</div></div>
+        <div class="prow"><div class="nm">Odia <span lang="or">ଓଡ଼ିଆ</span></div><div class="track"><div class="fill" style="width:92%"></div></div><div class="pct">92.3%</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="queue">
+      <div class="panel-head"><h2><span class="tr tr-en">Review queue</span><span class="tr tr-hi">समीक्षा कतार</span><span class="tr tr-te">రివ్యూ క్యూ</span></h2><span class="meta">1,273 <span class="tr tr-en">pending</span><span class="tr tr-hi">लंबित</span><span class="tr tr-te">పెండింగ్</span></span></div>
+      <div class="panel-body" style="padding:0;">
+        <table class="data">
+          <thead>
+            <tr>
+              <th scope="col"><span class="tr tr-en">Reference</span><span class="tr tr-hi">संदर्भ</span><span class="tr tr-te">రిఫరెన్స్</span></th>
+              <th scope="col"><span class="tr tr-en">Script</span><span class="tr tr-hi">लिपि</span><span class="tr tr-te">లిపి</span></th>
+              <th scope="col"><span class="tr tr-en">Confidence</span><span class="tr tr-hi">विश्वास स्तर</span><span class="tr tr-te">కాన్ఫిడెన్స్</span></th>
+              <th scope="col"><span class="tr tr-en">Status</span><span class="tr tr-hi">स्थिति</span><span class="tr tr-te">స్థితి</span></th>
+            </tr>
+          </thead>
+          <tbody data-stagger>
+            <tr>
+              <td class="mono">TS/WGL/2026/11407</td><td lang="te" style="font-family:var(--f-tel)">తెలుగు</td>
+              <td><span class="chip chip-lo">78%</span></td><td><span class="tr tr-en">Clerk review</span><span class="tr tr-hi">क्लर्क समीक्षा</span><span class="tr tr-te">క్లర్క్ రివ్యూ</span></td>
+            </tr>
+            <tr>
+              <td class="mono">MP/BPL/2026/08412</td><td lang="hi" style="font-family:var(--f-dev)">देवनागरी</td>
+              <td><span class="chip chip-lo">82%</span></td><td><span class="tr tr-en">Clerk review</span><span class="tr tr-hi">क्लर्क समीक्षा</span><span class="tr tr-te">క్లర్క్ రివ్యూ</span></td>
+            </tr>
+            <tr>
+              <td class="mono">TS/WGL/2026/11402</td><td lang="te" style="font-family:var(--f-tel)">తెలుగు</td>
+              <td><span class="chip chip-md">91%</span></td><td><span class="tr tr-en">Clerk review</span><span class="tr tr-hi">क्लर्क समीक्षा</span><span class="tr tr-te">క్లర్క్ రివ్యూ</span></td>
+            </tr>
+            <tr>
+              <td class="mono">MP/IND/2026/08396</td><td lang="hi" style="font-family:var(--f-dev)">देवनागरी</td>
+              <td><span class="chip chip-md">93%</span></td><td><span class="tr tr-en">Officer sign-off</span><span class="tr tr-hi">अधिकारी स्वीकृति</span><span class="tr tr-te">అధికారి ఆమోదం</span></td>
+            </tr>
+            <tr>
+              <td class="mono">TS/HYD/2026/11398</td><td><span class="tr tr-en">Mixed</span><span class="tr tr-hi">मिश्रित</span><span class="tr tr-te">మిక్స్‌డ్</span></td>
+              <td><span class="chip chip-hi">97%</span></td><td><span class="tr tr-en">Officer sign-off</span><span class="tr tr-hi">अधिकारी स्वीकृति</span><span class="tr tr-te">అధికారి ఆమోదం</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap dash-grid" aria-label="Validation breakdown">
+    <div class="panel">
+      <div class="panel-head"><h2><span class="tr tr-en">Validation status</span><span class="tr tr-hi">सत्यापन स्थिति</span><span class="tr tr-te">ధృవీకరణ స్థితి</span></h2><span class="meta">4,82,140 <span class="tr tr-en">documents</span><span class="tr tr-hi">दस्तावेज़</span><span class="tr tr-te">డాక్యుమెంట్లు</span></span></div>
+      <div class="panel-body">
+        <svg viewBox="0 0 640 150" width="100%" role="img" aria-label="Stacked bar of validation status: auto-approved 74, corrected 13, flagged 9, escalated 3, rejected 1 percent">
+          <g font-size="11" fill="#5d5f6e">
+            <text x="0" y="22">0%</text><text x="160" y="22">25%</text><text x="320" y="22">50%</text><text x="480" y="22">75%</text><text x="616" y="22">100%</text>
+          </g>
+          <g>
+            <rect x="0" y="34" width="473.6" height="34" fill="#1e6b45"/>
+            <rect x="473.6" y="34" width="83.2" height="34" fill="#b96a14"/>
+            <rect x="556.8" y="34" width="57.6" height="34" fill="#9a5510" opacity=".55"/>
+            <rect x="614.4" y="34" width="19.2" height="34" fill="#1f2440"/>
+            <rect x="633.6" y="34" width="6.4" height="34" fill="#a83226"/>
+          </g>
+          <g font-size="12" font-weight="700">
+            <text x="8" y="55" fill="#fff">74% · <tspan font-weight="400">auto-approved</tspan></text>
+            <text x="636" y="92" fill="#1f2440" font-weight="400" text-anchor="end">13% corrected · 9% flagged</text>
+            <text x="636" y="107" fill="#1f2440" font-weight="400" text-anchor="end">3% escalated · 1% rejected</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2><span class="tr tr-en">Reviewers on duty</span><span class="tr tr-hi">ड्यूटी पर समीक्षक</span><span class="tr tr-te">డ్యూటీలో రివ్యూయర్లు</span></h2><span class="meta">38 <span class="tr tr-en">online</span><span class="tr tr-hi">ऑनलाइन</span><span class="tr tr-te">ఆన్‌లైన్</span></span></div>
+      <div class="panel-body" data-stagger>
+        <div class="duty-row">
+          <div class="nm"><span class="tr tr-en">Hindi reviewers</span><span class="tr tr-hi">हिन्दी समीक्षक</span><span class="tr tr-te">హిందీ రివ్యూయర్లు</span></div>
+          <div class="cnt" data-countup>24</div>
+          <div class="track"><div class="fill" style="width:63%"></div></div>
+        </div>
+        <div class="duty-row">
+          <div class="nm"><span class="tr tr-en">Telugu reviewers</span><span class="tr tr-hi">तेलुगु समीक्षक</span><span class="tr tr-te">తెలుగు రివ్యూయర్లు</span></div>
+          <div class="cnt" data-countup>11</div>
+          <div class="track"><div class="fill" style="width:29%"></div></div>
+        </div>
+        <div class="duty-row">
+          <div class="nm"><span class="tr tr-en">Officers</span><span class="tr tr-hi">अधिकारी</span><span class="tr tr-te">అధికారులు</span></div>
+          <div class="cnt" data-countup>3</div>
+          <div class="track"><div class="fill" style="width:8%"></div></div>
+        </div>
+        <p style="font-size:12.5px; color:var(--muted); margin:12px 0 0;"><span class="tr tr-en">Reviewers verify in the document's own language; officers can sign off in either script.</span><span class="tr tr-hi">समीक्षक दस्तावेज़ की भाषा में जाँच करते हैं; अधिकारी किसी भी लिपि में स्वीकृति दे सकते हैं।</span><span class="tr tr-te">రివ్యూయర్లు డాక్యుమెంట్ భాషలో సరిచూస్తారు; అధికారులు ఏ లిపిలోనైనా ఆమోదించవచ్చు.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap" style="margin:26px 0 8px;">
+    <a class="btn btn-line" href="index.html">← <span class="tr tr-en">Home</span><span class="tr tr-hi">होम</span><span class="tr tr-te">హోమ్</span></a>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Bhasha (demo) · <span class="tr tr-en">All figures illustrative.</span><span class="tr tr-hi">सभी आँकड़े उदाहरण हैं।</span><span class="tr tr-te">అన్ని సంఖ్యలు ఉదాహరణలే.</span></span>
+    <span class="demo-tag">PROTOTYPE 06 · BHASHA · MOCK DATA</span>
+  </div>
+</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneBhoomi — Offline Registry for Land Records</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F0E1;
+    --paper-deep:#EFE6D0;
+    --ink:#221D17;
+    --ink-soft:#5A5142;
+    --stamp:#A6193C;
+    --stamp-deep:#7C1030;
+    --rosette:#C99AA8;
+    --green:#2E6B4F;
+    --rule:#C9BC9F;
+    --rule-soft:#DCD2B8;
+    --serif:"Fraunces",Georgia,serif;
+    --type:"Courier Prime","Courier New",monospace;
+    --sans:"Archivo",system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--stamp);color:var(--paper)}
+
+  /* ---------- security guilloche backdrop ---------- */
+  .security-bg{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420' viewBox='0 0 420 420'%3E%3Cg fill='none' stroke='%23C99AA8' stroke-width='1' opacity='.33'%3E%3Ccircle cx='210' cy='210' r='196'/%3E%3Ccircle cx='210' cy='210' r='188' stroke-dasharray='3 6'/%3E%3Ccircle cx='210' cy='210' r='172'/%3E%3Ccircle cx='210' cy='210' r='164' stroke-dasharray='10 4'/%3E%3Ccircle cx='210' cy='210' r='148'/%3E%3Ccircle cx='210' cy='210' r='140' stroke-dasharray='2 5'/%3E%3Ccircle cx='210' cy='210' r='124'/%3E%3Ccircle cx='210' cy='210' r='116' stroke-dasharray='8 5'/%3E%3Ccircle cx='210' cy='210' r='100'/%3E%3Ccircle cx='210' cy='210' r='92' stroke-dasharray='4 4'/%3E%3Ccircle cx='210' cy='210' r='76'/%3E%3Ccircle cx='210' cy='210' r='68' stroke-dasharray='12 3'/%3E%3Ccircle cx='210' cy='210' r='52'/%3E%3Ccircle cx='210' cy='210' r='44'/%3E%3Ccircle cx='210' cy='210' r='36' stroke-dasharray='3 4'/%3E%3Ccircle cx='210' cy='210' r='20'/%3E%3C/g%3E%3C/svg%3E");
+    background-size:420px 420px;
+    opacity:.5;
+  }
+  .page{position:relative;z-index:1}
+
+  /* ---------- perforated top & bottom edges ---------- */
+  .perf{
+    height:26px;width:100%;
+    background-image:radial-gradient(circle at 13px 13px, var(--paper) 6px, transparent 7px);
+    background-size:26px 26px;
+    background-position:center top;
+  }
+  .perf.bottom{background-position:center bottom}
+
+  /* ---------- marginal punch holes ---------- */
+  .punches{position:fixed;left:18px;top:0;bottom:0;width:22px;z-index:2;display:flex;flex-direction:column;justify-content:space-evenly;pointer-events:none}
+  .punches i{width:20px;height:20px;border-radius:50%;background:var(--paper-deep);box-shadow:inset 0 2px 4px rgba(0,0,0,.22), 0 1px 0 rgba(255,255,255,.5);display:block}
+  @media(max-width:900px){.punches{display:none}}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:0 48px 0 68px}
+  @media(max-width:640px){.wrap{padding:0 22px}}
+
+  /* ---------- header as register heading ---------- */
+  
+  /* ---------- language selector badge (matches registry theme) ---------- */
+  .lang-picker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--paper-deep);
+    border: 1.5px solid var(--rule);
+    border-radius: 2px;
+    padding: 6px 12px;
+    box-shadow: 2px 2px 0 var(--rule);
+    transition: all .15s ease;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  .lang-picker:hover, .lang-picker:focus-within {
+    border-color: var(--stamp);
+    box-shadow: 2px 2px 0 var(--stamp-deep);
+    background: #FFFDF6;
+  }
+  .lang-picker svg.lang-svg {
+    width: 14px;
+    height: 14px;
+    stroke: var(--stamp);
+    fill: none;
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .lang-dropdown {
+    background: transparent;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    font-family: var(--type);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 2px 20px 2px 2px;
+    margin: 0;
+    line-height: 1.2;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23A6193C' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: 8px 5px;
+  }
+  .lang-dropdown:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  .lang-dropdown option {
+    background: #FFFDF6;
+    color: #221D17;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  
+  /* Font fallbacks for Indic languages */
+  html[lang="hi"] body, html[lang="hi"] p, html[lang="hi"] .lede, html[lang="hi"] span, html[lang="hi"] a { font-family: "Noto Sans Devanagari", var(--sans); }
+  html[lang="te"] body, html[lang="te"] p, html[lang="te"] .lede, html[lang="te"] span, html[lang="te"] a { font-family: "Noto Sans Telugu", var(--sans); }
+  html[lang="kn"] body, html[lang="kn"] p, html[lang="kn"] .lede, html[lang="kn"] span, html[lang="kn"] a { font-family: "Noto Sans Kannada", var(--sans); }
+  html[lang="ta"] body, html[lang="ta"] p, html[lang="ta"] .lede, html[lang="ta"] span, html[lang="ta"] a { font-family: "Noto Sans Tamil", var(--sans); }
+
+  header{border-bottom:3px double var(--rule)}
+  .reg-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 0;gap:24px;flex-wrap:nowrap;
+  }
+  .brand{
+    display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ink);
+    white-space:nowrap;flex-shrink:0;
+  }
+  .brand b{
+    font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.04em;
+    white-space:nowrap;
+  }
+  .brand span{
+    font-family:var(--type);font-size:11px;letter-spacing:.14em;color:var(--stamp);
+    text-transform:uppercase;white-space:nowrap;display:inline-block;
+  }
+  nav{
+    display:flex;gap:28px;align-items:center;white-space:nowrap;
+  }
+  nav a{
+    font-family:var(--type);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-soft);text-decoration:none;white-space:nowrap;
+  }
+  nav a:hover{color:var(--stamp)}
+  nav a:focus-visible{outline:2px solid var(--stamp);outline-offset:4px}
+  .reg-no{font-family:var(--type);font-size:11px;color:var(--ink-soft);letter-spacing:.12em;white-space:nowrap}
+  .reg-right{
+    display:flex;align-items:center;gap:16px;white-space:nowrap;flex-shrink:0;
+  }
+  .btn-head{
+    padding:11px 20px;font-size:11.5px;letter-spacing:.14em;word-spacing:.18em;
+    white-space:nowrap;flex:none;
+  }
+  @media(max-width:1100px){.reg-no{display:none}}
+  @media(max-width:820px){nav{display:none}}
+  @media(max-width:520px){.btn-head{padding:9px 14px}}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;padding:88px 0 72px;text-align:center}
+  .hero .eyebrow{
+    font-family:var(--type);font-size:12px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--stamp);margin-bottom:28px;
+  }
+  h1{
+    font-family:var(--serif);font-weight:560;
+    font-size:clamp(44px,7.4vw,96px);
+    line-height:1.02;letter-spacing:-.015em;
+    max-width:15ch;margin:0 auto;
+  }
+  h1 em{font-style:italic;font-weight:420;color:var(--stamp)}
+  .hero p.lede{
+    max-width:56ch;margin:30px auto 0;font-size:18px;color:var(--ink-soft);
+  }
+  .hero .acts{margin-top:40px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .btn{
+    font-family:var(--type);font-size:13px;letter-spacing:.16em;text-transform:uppercase;
+    text-decoration:none;padding:15px 30px;border-radius:2px;transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:focus-visible{outline:3px solid var(--stamp);outline-offset:3px}
+  .btn-primary{
+    background:var(--stamp);color:var(--paper);
+    box-shadow:3px 3px 0 var(--stamp-deep);
+  }
+  .btn-primary:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--stamp-deep)}
+  .btn-ghost{color:var(--ink);border:1.5px solid var(--ink)}
+  .btn-ghost:hover{background:var(--ink);color:var(--paper)}
+
+  /* ---------- rubber stamp (signature) ---------- */
+  .stamp{
+    position:absolute;right:6%;top:34%;width:190px;height:190px;
+    transform:rotate(-14deg) scale(3.4);opacity:0;
+    animation:slam .62s cubic-bezier(.2,1.6,.35,1) 1.05s forwards;
+    pointer-events:none;
+  }
+  @media(max-width:1000px){.stamp{right:2%;top:6%;width:130px;height:130px}}
+  @media(max-width:640px){.stamp{position:absolute;right:6px;top:-4px;width:104px;height:104px}}
+  .stamp svg{width:100%;height:100%;filter:url(#roughen)}
+  @keyframes slam{
+    0%{transform:rotate(9deg) scale(3.4);opacity:0}
+    60%{opacity:1}
+    100%{transform:rotate(-14deg) scale(1);opacity:.92}
+  }
+
+  /* ---------- particulars strip ---------- */
+  .particulars{border-top:3px double var(--rule);border-bottom:3px double var(--rule);padding:34px 0;background:rgba(255,255,255,.28);text-align:center}
+  .part-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;text-align:center;justify-items:center;align-items:start}
+  @media(max-width:820px){.part-grid{grid-template-columns:repeat(2,1fr)}}
+  .part{text-align:center;width:100%}
+  .part b{display:block;font-family:var(--serif);font-weight:700;font-size:44px;line-height:1;color:var(--stamp);text-align:center}
+  .part b sup{font-size:20px}
+  .part span{font-family:var(--type);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);display:block;margin-top:8px;text-align:center}
+
+  /* ---------- section chrome: legal double rules ---------- */
+  section{padding:96px 0}
+  .sec-head{display:flex;align-items:baseline;gap:20px;margin-bottom:18px;flex-wrap:wrap}
+  .sec-head .no{font-family:var(--type);font-size:12px;letter-spacing:.2em;color:var(--stamp);text-transform:uppercase;white-space:nowrap}
+  .sec-head h2{font-family:var(--serif);font-weight:620;font-size:clamp(30px,4.4vw,52px);letter-spacing:-.01em;line-height:1.08}
+  .sec-sub{max-width:62ch;color:var(--ink-soft);margin-bottom:48px;font-size:17px}
+  .double-rule{border:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);height:5px;margin:0 0 56px}
+
+  /* ---------- extraction demo: the parties clause ---------- */
+  .extract{display:grid;grid-template-columns:1fr 72px 1fr;gap:0;border:1.5px solid var(--ink);background:rgba(255,255,255,.5)}
+  @media(max-width:900px){.extract{grid-template-columns:1fr}}
+  .deed{padding:40px 44px;border-right:1.5px solid var(--ink);position:relative;overflow:hidden}
+  @media(max-width:900px){.deed{border-right:0;border-bottom:1.5px solid var(--ink)}}
+  .deed .clause-head{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:.02em;text-transform:uppercase;margin-bottom:16px}
+  .deed p{font-family:var(--type);font-size:14.5px;line-height:2.05;color:var(--ink)}
+  .hl{background:linear-gradient(transparent 18%, rgba(201,154,168,.55) 18%, rgba(201,154,168,.55) 92%, transparent 92%);padding:0 2px}
+  .hl.hot{background:linear-gradient(transparent 18%, rgba(166,25,60,.22) 18%, rgba(166,25,60,.22) 92%, transparent 92%)}
+  .fields{padding:32px 26px 36px;background:var(--paper-deep)}
+  .fields h3{font-family:var(--type);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--stamp);margin-bottom:20px}
+  .field{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px dotted var(--rule);font-size:13px}
+  .field:last-child{border-bottom:0}
+  .field .k{font-family:var(--type);color:var(--ink-soft);flex:none}
+  .field .v{font-family:var(--sans);font-weight:600;text-align:right;flex:1}
+  .field .conf{display:flex;align-items:center;gap:7px;flex:none}
+  .field .conf .bar{width:34px;height:5px;background:var(--rule-soft);border-radius:99px;overflow:hidden}
+  .field .conf .bar i{display:block;height:100%;border-radius:99px}
+  .field .conf .pc{font-family:var(--type);font-size:10.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  .conf.c-hi .pc{color:var(--green)}  .conf.c-hi .bar i{background:var(--green)}
+  .conf.c-md .pc{color:#A96A1F}      .conf.c-md .bar i{background:#A96A1F}
+  .conf.c-lo .pc{color:var(--stamp)} .conf.c-lo .bar i{background:var(--stamp)}
+  .field.flagged{background:rgba(166,25,60,.08);border-radius:2px}
+  .fields .more{margin-top:18px;font-family:var(--type);font-size:11.5px;color:var(--ink-soft);letter-spacing:.1em}
+
+  /* ---------- reading-bench motion (ported from prototype 05 · Sankalan) ---------- */
+  .pipe-arrow{display:grid;place-items:center;position:relative;z-index:1}
+  .pipe-arrow .shaft{
+    width:100%;height:2px;position:relative;
+    background:repeating-linear-gradient(90deg,var(--ink) 0 9px,transparent 9px 15px);
+    animation:pipeflow 1s linear infinite;
+  }
+  .pipe-arrow .shaft::after{
+    content:"";position:absolute;right:-1px;top:-6px;
+    border-left:12px solid var(--ink);border-top:7px solid transparent;border-bottom:7px solid transparent;
+  }
+  .pipe-arrow .lbl{
+    position:absolute;top:calc(50% + 18px);white-space:nowrap;
+    font-family:var(--type);font-size:10px;letter-spacing:.12em;color:var(--stamp-deep);
+    background:rgba(166,25,60,.12);padding:3px 8px;border-radius:2px;
+  }
+  @keyframes pipeflow{to{background-position:15px 0}}
+  @keyframes pipeflowV{to{background-position:0 15px}}
+  .deed::after{
+    content:"";position:absolute;left:0;right:0;top:-70px;height:46px;
+    background:linear-gradient(180deg,transparent,rgba(166,25,60,.18),transparent);
+    animation:scanline 4.6s ease-in-out infinite;pointer-events:none;
+  }
+  @keyframes scanline{0%{top:-70px}55%,100%{top:105%}}
+  @keyframes fieldIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+  .extract.in .field{animation:fieldIn .45s cubic-bezier(.22,.61,.36,1) backwards}
+  .extract.in .field:nth-of-type(1){animation-delay:.18s}
+  .extract.in .field:nth-of-type(2){animation-delay:.25s}
+  .extract.in .field:nth-of-type(3){animation-delay:.32s}
+  .extract.in .field:nth-of-type(4){animation-delay:.39s}
+  .extract.in .field:nth-of-type(5){animation-delay:.46s}
+  .extract.in .field:nth-of-type(6){animation-delay:.53s}
+  .extract.in .field:nth-of-type(7){animation-delay:.60s}
+  .extract.in .field:nth-of-type(8){animation-delay:.67s}
+  @media(max-width:900px){
+    .pipe-arrow{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 0 6px}
+    .pipe-arrow .shaft{
+      width:2px;height:38px;flex:none;
+      background:repeating-linear-gradient(180deg,var(--ink) 0 9px,transparent 9px 15px);
+      animation-name:pipeflowV;
+    }
+    .pipe-arrow .shaft::after{
+      right:auto;left:50%;top:auto;bottom:-1px;transform:translateX(-50%);
+      border-left:7px solid transparent;border-right:7px solid transparent;
+      border-top:12px solid var(--ink);border-bottom:0;
+    }
+    .pipe-arrow .lbl{position:static;white-space:normal}
+  }
+  @media(max-width:520px){
+    .field .conf .bar{width:26px}
+    .field .conf .pc{display:none}
+  }
+
+  /* ---------- schedules (workflow) ---------- */
+  .schedules{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  @media(max-width:900px){.schedules{grid-template-columns:1fr}}
+  .schedule{border:1.5px solid var(--ink);background:rgba(255,255,255,.45);display:flex;flex-direction:column}
+  .schedule .tab{
+    font-family:var(--type);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    background:var(--ink);color:var(--paper);padding:10px 18px;display:flex;justify-content:space-between
+  }
+  .schedule .tab em{font-style:normal;color:var(--rosette)}
+  .schedule .body{padding:26px 26px 30px;flex:1;display:flex;flex-direction:column}
+  .schedule h3{font-family:var(--serif);font-weight:700;font-size:24px;margin-bottom:12px}
+  .schedule p{color:var(--ink-soft);font-size:14.5px;flex:1}
+  .schedule .foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--rule);font-family:var(--type);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--stamp)}
+
+  /* ---------- sealing section ---------- */
+  .sealing{background:var(--ink);color:var(--paper);position:relative;overflow:hidden}
+  .sealing .wrap{position:relative;z-index:1}
+  .sealing .sec-head .no{color:var(--rosette)}
+  .sealing h2{color:var(--paper)}
+  .sealing .sec-sub{color:rgba(246,240,225,.72)}
+  .seal-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+  @media(max-width:900px){.seal-grid{grid-template-columns:1fr}}
+  .seal-grid p{color:rgba(246,240,225,.78);font-size:16px;max-width:48ch;margin-bottom:18px}
+  .seal-grid code{
+    display:block;font-family:var(--type);font-size:12.5px;color:var(--rosette);
+    background:rgba(246,240,225,.06);border:1px solid rgba(246,240,225,.18);
+    padding:16px 18px;line-height:1.8;overflow-x:auto;white-space:nowrap
+  }
+  .seal-visual{display:flex;justify-content:center;position:relative}
+  .big-seal{width:min(340px,80vw);animation:slowspin 90s linear infinite}
+  @keyframes slowspin{to{transform:rotate(360deg)}}
+  .seal-center{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;pointer-events:none;
+  }
+  .seal-center b{font-family:var(--serif);font-size:30px;letter-spacing:.06em}
+  .seal-center span{font-family:var(--type);font-size:10px;letter-spacing:.3em;color:var(--rosette);margin-top:6px;text-transform:uppercase}
+
+  /* ---------- LAN verify ---------- */
+  .lan{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+  @media(max-width:900px){.lan{grid-template-columns:1fr}}
+  .lan-copy p{color:var(--ink-soft);font-size:16px;margin-bottom:16px;max-width:50ch}
+  .lan-steps{list-style:none;margin-top:8px}
+  .lan-steps li{
+    display:flex;gap:16px;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--rule-soft);
+  }
+  .lan-steps li:last-child{border-bottom:0}
+  .lan-steps .n{font-family:var(--type);color:var(--stamp);font-size:12px;letter-spacing:.1em;white-space:nowrap}
+  .qr-card{
+    justify-self:center;background:#fff;border:1.5px solid var(--ink);padding:26px 26px 20px;
+    box-shadow:6px 6px 0 rgba(34,29,23,.14);transform:rotate(1.6deg);max-width:320px;text-align:center
+  }
+  .qr-card svg{width:100%;height:auto;display:block}
+  .qr-card figcaption{margin-top:14px;font-family:var(--type);font-size:11px;letter-spacing:.12em;color:var(--ink-soft);text-transform:uppercase}
+
+  /* ---------- footer ---------- */
+  footer{border-top:3px double var(--rule);padding:64px 0 40px;background:rgba(255,255,255,.3)}
+  .sig-row{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-bottom:56px}
+  @media(max-width:700px){.sig-row{grid-template-columns:1fr;gap:48px}}
+  .sig{font-family:var(--type);font-size:12px;color:var(--ink-soft)}
+  .sig .line{border-bottom:1.5px solid var(--ink);height:52px;margin-bottom:10px;display:flex;align-items:flex-end;padding:0 4px 6px;font-family:var(--serif);font-style:italic;font-size:22px;color:var(--stamp)}
+  .foot-note{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-family:var(--type);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+
+  /* ---------- reveals ---------- */
+  .rv{opacity:0;transform:translateY(26px);transition:opacity .7s ease, transform .7s ease}
+  .rv.in{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    .rv{opacity:1;transform:none;transition:none}
+    .stamp{animation:none;transform:rotate(-14deg) scale(1);opacity:.92}
+    .big-seal{animation:none}
+    html{scroll-behavior:auto}
+    .deed::after{display:none}
+    .pipe-arrow .shaft{animation:none}
+    .extract.in .field{animation:none}
+  }
+  .static .stamp{animation:none;transform:rotate(-14deg) scale(1);opacity:.92}
+  .static .big-seal{animation:none}
+  .static .rv{opacity:1;transform:none;transition:none}
+  .static .deed::after{display:none}
+  .static .pipe-arrow .shaft{animation:none}
+  .static .extract.in .field{animation:none}
+</style>
+</head>
+<body>
+
+<div class="security-bg" aria-hidden="true"></div>
+<div class="punches" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="roughen">
+    <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.5"/>
+  </filter>
+</svg>
+
+<div class="perf" aria-hidden="true"></div>
+<div class="page">
+
+<header>
+  <div class="wrap reg-bar">
+    <a class="brand" href="#top" style="display:inline-flex; align-items:center; text-decoration:none;">
+      <img src="/logo.png?v=20260904d" alt="OneBhoomi" style="height:64px; width:auto; display:block; mix-blend-mode:multiply; filter:contrast(1.02);">
+    </a>
+
+
+    <nav aria-label="Sections">
+      <a href="#extraction" data-i18n="nav_extract">Extraction</a>
+      <a href="#workflow" data-i18n="nav_workflow">Workflow</a>
+      <a href="#sealing" data-i18n="nav_sealing">Sealing</a>
+      <a href="#verify" data-i18n="nav_verify">Verify</a>
+    </nav>
+    <div class="reg-right">
+      <div class="lang-picker" title="Change Language">
+        <svg class="lang-svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <select id="langSelect" class="lang-dropdown" aria-label="Select Language">
+          <option value="en" selected>English</option>
+          <option value="hi">हिंदी (Hindi)</option>
+          <option value="te">తెలుగు (Telugu)</option>
+          <option value="kn">ಕನ್ನಡ (Kannada)</option>
+          <option value="ta">தமிழ் (Tamil)</option>
+        </select>
+      </div>
+      <a class="btn btn-primary btn-head" href="/dashboard" data-i18n="nav_dashboard">Go to Dashboard</a>
+    </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero" style="padding-top:96px">
+    <div class="wrap">
+      <h1 data-i18n="hero_h1">The deed becomes <em>data.</em><br>The data stays <em>provable.</em></h1>
+      <p class="lede" data-i18n="hero_lede">OneBhoomi reads sale deeds, agreements of sale and GPAs straight off the scanner — offline — turns them into checked, clerk-corrected records, and seals each one with an RSA-PSS signature your office owns.</p>
+      <div class="acts">
+        <a class="btn btn-primary" href="#workflow" data-i18n="hero_act_stages">See the three stages</a>
+        <a class="btn btn-ghost" href="#sealing" data-i18n="hero_act_seal">How the seal works</a>
+      </div>
+      <div class="stamp" aria-hidden="true">
+        <svg viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="94" fill="none" stroke="#A6193C" stroke-width="5"/>
+          <circle cx="100" cy="100" r="86" fill="none" stroke="#A6193C" stroke-width="1.6"/>
+          <circle cx="100" cy="100" r="60" fill="none" stroke="#A6193C" stroke-width="1.6"/>
+          <path id="stArcTop" d="M 100 100 m -74 0 a 74 74 0 1 1 148 0" fill="none"/>
+          <path id="stArcBot" d="M 100 100 m -73 0 a 73 73 0 1 0 146 0" fill="none"/>
+          <text font-family="Courier Prime, monospace" font-size="14.5" letter-spacing="3.4" fill="#A6193C" font-weight="700" text-anchor="middle">
+            <textPath href="#stArcTop" startOffset="50%" data-i18n="stamp_top">VERIFIED</textPath>
+          </text>
+          <text font-family="Courier Prime, monospace" font-size="11.5" letter-spacing="2.6" fill="#A6193C" text-anchor="middle">
+            <textPath href="#stArcBot" startOffset="50%" data-i18n="stamp_bot">RSA-PSS · 2048-BIT</textPath>
+          </text>
+          <text x="100" y="96" text-anchor="middle" font-family="Fraunces, serif" font-weight="900" font-size="19" fill="#A6193C" data-i18n="stamp_brand">OneBhoomi</text>
+          <text x="100" y="116" text-anchor="middle" font-family="Courier Prime, monospace" font-size="10" letter-spacing="2" fill="#A6193C" data-i18n="stamp_sub">वनभूमि</text>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARTICULARS -->
+  <div class="particulars">
+    <div class="wrap part-grid">
+      <div class="part rv"><b>14</b><span data-i18n="part_fields">canonical fields per deed</span></div>
+      <div class="part rv"><b>2048<sup>bit</sup></b><span data-i18n="part_keys">RSA-PSS local keypair</span></div>
+      <div class="part rv"><b>2</b><span data-i18n="part_stages">human review stages</span></div>
+      <div class="part rv"><b>0</b><span data-i18n="part_cloud">cloud calls, ever</span></div>
+    </div>
+  </div>
+
+  <!-- EXTRACTION -->
+  <section id="extraction">
+    <div class="wrap">
+      <div class="sec-head rv"><span class="no" data-i18n="sec1_no">§ 1 — Extraction</span><h2 data-i18n="sec1_h2">It reads like a clerk reads</h2></div>
+      <hr class="double-rule">
+      <p class="sec-sub rv" data-i18n="sec1_sub">PaddleOCR runs on the office CPU, or hops to a GPU worker over a tunnel when the queue is long. Either way, the parser knows this paperwork: Sy.No forms like <strong>CSNO.2(65/9</strong>, Dok numbers, stamp particulars, party clauses — and it refuses to invent what page&nbsp;2 didn't say.</p>
+      <!-- reading-bench motion ported from prototypes/05-sankalan: scan-line sweep, flowing arrow, field cascade, confidence fills -->
+      <div class="extract rv">
+        <div class="deed">
+          <p class="clause-head" data-i18n="deed_clause">Agreement of Sale-cum-General Power of Attorney</p>
+          <p data-i18n="deed_excerpt">THIS AGREEMENT OF SALE-CUM-GPA IS MADE AND EXECUTED ON THIS <span class="hl hot">03-08-2019</span> AT <span class="hl">WARANGAL</span> BY <span class="hl">GUDURU MALAKONDAIAH, S/o. CHINNA KONDAIAH, Age 52</span> … IN FAVOUR OF <span class="hl">1] RANGINENI VENKATESHWAR RAO</span> … 2] <span class="hl">KAKKERLA SURESH</span> … respect to <span class="hl hot">Sy.No. 1413</span>, <span class="hl">Dok No. 379230</span>, stamp <span class="hl hot">Rs. 50/-</span>, situated at <span class="hl">MANGAPET VILLAGE, MULUGU DISTRICT</span> …</p>
+        </div>
+        <div class="pipe-arrow" aria-hidden="true">
+          <div class="shaft"></div>
+          <span class="lbl" data-i18n="pipe_lbl">OCR → NLP → RULES</span>
+        </div>
+        <aside class="fields" aria-label="Extracted fields">
+          <h3 data-i18n="ext_first_pass">Extracted — first pass</h3>
+          <div class="field"><span class="k" data-i18n="k_doc_type">document_type</span><span class="v" data-i18n="v_doc_type">Agreement of Sale-cum-GPA</span><span class="conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="pc">99%</span></span></div>
+          <div class="field"><span class="k" data-i18n="k_survey_no">survey_number</span><span class="v">1413</span><span class="conf c-hi"><span class="bar"><i style="width:98%"></i></span><span class="pc">98%</span></span></div>
+          <div class="field"><span class="k" data-i18n="k_doc_date">document_date</span><span class="v">03-08-2019</span><span class="conf c-hi"><span class="bar"><i style="width:96%"></i></span><span class="pc">96%</span></span></div>
+          <div class="field"><span class="k" data-i18n="k_village">village</span><span class="v" data-i18n="v_village">Mangapet</span><span class="conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="pc">99%</span></span></div>
+          <div class="field"><span class="k" data-i18n="k_district">district</span><span class="v" data-i18n="v_district">Mulugu</span><span class="conf c-hi"><span class="bar"><i style="width:100%"></i></span><span class="pc">100%</span></span></div>
+          <div class="field"><span class="k" data-i18n="k_stamp_val">stamp_value</span><span class="v">₹50</span><span class="conf c-md"><span class="bar"><i style="width:94%"></i></span><span class="pc">94%</span></span></div>
+          <div class="field"><span class="k" data-i18n="k_stamp_no">stamp_number</span><span class="v">379230</span><span class="conf c-md"><span class="bar"><i style="width:91%"></i></span><span class="pc">91%</span></span></div>
+          <div class="field flagged"><span class="k" data-i18n="k_parties">parties</span><span class="v" data-i18n="v_parties">2 vendees</span><span class="conf c-lo"><span class="bar"><i style="width:88%"></i></span><span class="pc">88%</span></span></div>
+          <p class="more" data-i18n="ext_more">+ execution_date, sub_survey, mandal, serial_no, sold_to …</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKFLOW -->
+  <section id="workflow" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head rv"><span class="no" data-i18n="sec2_no">§ 2 — Workflow</span><h2 data-i18n="sec2_h2">Three schedules before a seal</h2></div>
+      <hr class="double-rule">
+      <div class="schedules">
+        <article class="schedule rv">
+          <div class="tab"><span data-i18n="sched_a_tab">Schedule A</span><em data-i18n="sched_a_sub">automated</em></div>
+          <div class="body">
+            <h3 data-i18n="sched_a_h3">Machine checklist</h3>
+            <p data-i18n="sched_a_p">Required fields present, area bounds sane, dates in order, survey formats legal. Obvious failures stop here instead of wasting a clerk's afternoon.</p>
+            <div class="foot" data-i18n="sched_a_foot">Stage 1 · No human time</div>
+          </div>
+        </article>
+        <article class="schedule rv">
+          <div class="tab"><span data-i18n="sched_b_tab">Schedule B</span><em data-i18n="sched_b_sub">clerk</em></div>
+          <div class="body">
+            <h3 data-i18n="sched_b_h3">Read &amp; correct</h3>
+            <p data-i18n="sched_b_p">Every extracted field sits in an editor beside its evidence. The clerk fixes OCR slips in place — the record keeps what they approved, not what the machine guessed.</p>
+            <div class="foot" data-i18n="sched_b_foot">Stage 2 · Human correction</div>
+          </div>
+        </article>
+        <article class="schedule rv">
+          <div class="tab"><span data-i18n="sched_c_tab">Schedule C</span><em data-i18n="sched_c_sub">officer</em></div>
+          <div class="body">
+            <h3 data-i18n="sched_c_h3">Approve, or reject with reasons</h3>
+            <p data-i18n="sched_c_p">The officer's approval freezes the record and triggers the seal. A rejection is also kept on file — reason, date, and who said it.</p>
+            <div class="foot" data-i18n="sched_c_foot">Stage 3 · Decision recorded</div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEALING -->
+  <section id="sealing" class="sealing">
+    <div class="wrap">
+      <div class="sec-head rv"><span class="no" data-i18n="sec3_no">§ 3 — The Seal</span><h2 data-i18n="sec3_h2">Unsigned paper is just paper</h2></div>
+      <hr class="double-rule" style="border-color:rgba(246,240,225,.25)">
+      <div class="seal-grid">
+        <div class="rv">
+          <p data-i18n="sec3_p1">The approved facts are flattened into canonical JSON — stable, deterministic, no rearranged keys. A SHA-256 digest is taken and signed with the office's own RSA-PSS 2048-bit key, kept on this machine, not in anyone's cloud.</p>
+          <p data-i18n="sec3_p2">Once sealed, a certified record is immutable. Change one comma and the signature stops matching.</p>
+          <code>{ "survey_number": "1413", "village": "Mangapet",<br>&nbsp;&nbsp;"district": "Mulugu", "stamp_value": "50",<br>&nbsp;&nbsp;"document_date": "2019-08-03" …<br>} → sha256 → RSA-PSS-2048 → seal</code>
+        </div>
+        <div class="seal-visual rv">
+          <svg class="big-seal" viewBox="0 0 340 340" aria-hidden="true">
+            <g fill="none" stroke="#C9A227">
+              <circle cx="170" cy="170" r="160" stroke-width="3"/>
+              <circle cx="170" cy="170" r="150" stroke-width="1.2" stroke-dasharray="4 6"/>
+              <circle cx="170" cy="170" r="120" stroke-width="2"/>
+              <circle cx="170" cy="170" r="112" stroke-width="1" stroke-dasharray="2 4"/>
+              <circle cx="170" cy="170" r="74" stroke-width="1.4"/>
+            </g>
+            <path id="sealTop" d="M 170 170 m -134 0 a 134 134 0 1 1 268 0" fill="none"/>
+            <path id="sealBot" d="M 170 170 m -134 0 a 134 134 0 1 0 268 0" fill="none"/>
+            <text font-family="Courier Prime, monospace" font-size="15" letter-spacing="6" fill="#C9A227">
+              <textPath href="#sealTop" startOffset="6%" data-i18n="seal_circle_top">CANONICAL · SHA-256</textPath>
+            </text>
+          <text font-family="Courier Prime, monospace" font-size="15" letter-spacing="6" fill="#C9A227">
+            <textPath href="#sealBot" startOffset="15%" data-i18n="seal_circle_bot">RSA-PSS · 2048 · LOCAL</textPath>
+          </text>
+            <g fill="#C9A227">
+              <circle cx="170" cy="110" r="4"/><circle cx="230" cy="170" r="4"/>
+              <circle cx="170" cy="230" r="4"/><circle cx="110" cy="170" r="4"/>
+            </g>
+          </svg>
+          <div class="seal-center"><b data-i18n="seal_center_h">Sealed</b><span data-i18n="seal_center_sub">Immutably on file</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LAN VERIFY -->
+  <section id="verify">
+    <div class="wrap">
+      <div class="sec-head rv"><span class="no" data-i18n="sec4_no">§ 4 — Verification</span><h2 data-i18n="sec4_h2">Any phone on the office Wi-Fi</h2></div>
+      <hr class="double-rule">
+      <div class="lan">
+        <div class="lan-copy rv">
+          <p data-i18n="sec4_p">The console prints a QR bound to the host's local network address. A buyer, a broker, an inspecting officer — anyone on the same LAN scans it and sees the certificate with the signature already checked, offline.</p>
+          <ul class="lan-steps">
+            <li><span class="n">i.</span><span data-i18n="sec4_step1">Scan the certificate QR from any phone on the LAN</span></li>
+            <li><span class="n">ii.</span><span data-i18n="sec4_step2">The standalone page recomputes the signature locally</span></li>
+            <li><span class="n">iii.</span><span data-i18n="sec4_step3">MATCH, or the record is reported as tampered</span></li>
+          </ul>
+        </div>
+        <figure class="qr-card rv" aria-label="Sample certificate QR code">
+          <svg viewBox="0 0 29 29" shape-rendering="crispEdges" role="img" aria-label="Decorative QR pattern">
+            <rect width="29" height="29" fill="#fff"/>
+            <g fill="#221D17">
+              <rect x="1" y="1" width="7" height="7"/><rect x="21" y="1" width="7" height="7"/><rect x="1" y="21" width="7" height="7"/>
+              <rect x="2" y="2" width="5" height="5" fill="#fff"/><rect x="22" y="2" width="5" height="5" fill="#fff"/><rect x="2" y="22" width="5" height="5" fill="#fff"/>
+              <rect x="3" y="3" width="3" height="3"/><rect x="23" y="3" width="3" height="3"/><rect x="3" y="23" width="3" height="3"/>
+              <path d="M10 1h2v2h-2zM14 1h2v1h-2zM17 2h2v2h-2zM10 4h1v2h-1zM13 4h2v2h-2zM16 5h1v2h-1zM19 4h1v3h-1zM11 7h2v1h-2zM14 7h1v2h-1zM17 8h2v1h-2zM10 10h1v1h-1zM12 10h2v2h-2zM15 11h2v1h-2zM18 10h1v2h-1zM20 11h2v2h-2zM23 11h1v2h-1zM25 10h2v1h-2zM10 13h2v2h-2zM13 14h2v2h-2zM16 14h1v2h-1zM19 15h2v1h-2zM22 14h2v2h-2zM25 13h1v2h-1zM10 17h1v2h-1zM12 18h2v1h-2zM15 18h2v2h-2zM18 18h1v1h-1zM20 18h2v2h-2zM23 19h2v1h-2zM25 17h1v2h-1zM11 20h2v2h-2zM14 21h1v2h-1zM17 21h2v2h-2zM20 21h1v2h-1zM22 22h2v2h-2zM25 21h1v2h-1zM10 24h1v2h-1zM13 25h2v2h-2zM16 25h1v2h-1zM19 25h2v1h-2zM22 25h1v2h-1zM24 25h2v1h-2zM26 27h2v1h-2z"/>
+            </g>
+          </svg>
+          <figcaption>verify → 10.71.0.80 : 8020</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="sig-row">
+      <div class="sig"><div class="line" data-i18n="sig_officer_line">executed &amp; sealed</div><span data-i18n="sig_officer_lbl">Signatory — Verification Officer</span></div>
+      <div class="sig"><div class="line" data-i18n="sig_witness_line">attested offline</div><span data-i18n="sig_witness_lbl">Witness — LAN Address 10.71.0.80</span></div>
+    </div>
+    <div class="foot-note">
+      <span data-i18n="footer_title">OneBhoomi · Offline Registry Console</span>
+      <span data-i18n="footer_sub">Sale Deeds · Agreements · GPA</span>
+      <span data-i18n="footer_cloud">No cloud. No keys leaving the office.</span>
+    </div>
+  </div>
+</footer>
+
+</div>
+<div class="perf bottom" aria-hidden="true"></div>
+
+<script>
+  const STATIC = new URLSearchParams(location.search).has('static');
+  if (STATIC) document.documentElement.classList.add('static');
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* confidence bars: zeroed here, filled when the bench reveals (ported from prototype 05) */
+  const bench = document.querySelector('.extract');
+  if (bench && !STATIC && !REDUCED && 'IntersectionObserver' in window) {
+    bench.querySelectorAll('.conf .bar i').forEach(bar=>{
+      bar.dataset.w = bar.style.width;
+      bar.style.width = '0%';
+    });
+  }
+
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting) return;
+      e.target.classList.add('in');
+      if(e.target === bench){
+        bench.querySelectorAll('.conf .bar i').forEach((bar,i)=>{
+          setTimeout(()=>{
+            bar.style.transition = 'width .5s cubic-bezier(.22,.61,.36,1)';
+            bar.style.width = bar.dataset.w;
+          }, 260 + i*70);
+        });
+      }
+      io.unobserve(e.target);
+    });
+  },{threshold:.15});
+  document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+</script>
+
+<script>
+const ONEBHOOMI_I18N = {"en": {"brand_title": "OneBhoomi", "brand_sub": "offline registry", "nav_extract": "Extraction", "nav_workflow": "Workflow", "nav_sealing": "Sealing", "nav_verify": "Verify", "nav_dashboard": "Go to Dashboard", "hero_eyebrow": "India Non-Judicial · ₹50 · Telangana", "hero_h1": "The deed becomes <em>data.</em><br>The data stays <em>provable.</em>", "hero_lede": "OneBhoomi reads sale deeds, agreements of sale and GPAs straight off the scanner — offline — turns them into checked, clerk-corrected records, and seals each one with an RSA-PSS signature your office owns.", "hero_act_stages": "See the three stages", "hero_act_seal": "How the seal works", "stamp_top": "VERIFIED", "stamp_bot": "RSA-PSS · 2048-BIT", "stamp_brand": "OneBhoomi", "stamp_sub": "वनभूमि", "part_fields": "canonical fields per deed", "part_keys": "RSA-PSS local keypair", "part_stages": "human review stages", "part_cloud": "cloud calls, ever", "sec1_no": "§ 1 — Extraction", "sec1_h2": "It reads like a clerk reads", "sec1_sub": "PaddleOCR runs on the office CPU, or hops to a GPU worker over a tunnel when the queue is long. Either way, the parser knows this paperwork: Sy.No forms like <strong>CSNO.2(65/9</strong>, Dok numbers, stamp particulars, party clauses — and it refuses to invent what page&nbsp;2 didn't say.", "deed_clause": "Agreement of Sale-cum-General Power of Attorney", "deed_excerpt": "THIS AGREEMENT OF SALE-CUM-GPA IS MADE AND EXECUTED ON THIS <span class=\"hl hot\">03-08-2019</span> AT <span class=\"hl\">WARANGAL</span> BY <span class=\"hl\">GUDURU MALAKONDAIAH, S/o. CHINNA KONDAIAH, Age 52</span> … IN FAVOUR OF <span class=\"hl\">1] RANGINENI VENKATESHWAR RAO</span> … 2] <span class=\"hl\">KAKKERLA SURESH</span> … respect to <span class=\"hl hot\">Sy.No. 1413</span>, <span class=\"hl\">Dok No. 379230</span>, stamp <span class=\"hl hot\">Rs. 50/-</span>, situated at <span class=\"hl\">MANGAPET VILLAGE, MULUGU DISTRICT</span> …", "pipe_lbl": "OCR → NLP → RULES", "ext_first_pass": "Extracted — first pass", "k_doc_type": "document_type", "v_doc_type": "Agreement of Sale-cum-GPA", "k_survey_no": "survey_number", "k_doc_date": "document_date", "k_village": "village", "v_village": "Mangapet", "k_district": "district", "v_district": "Mulugu", "k_stamp_val": "stamp_value", "k_stamp_no": "stamp_number", "k_parties": "parties", "v_parties": "2 vendees", "ext_more": "+ execution_date, sub_survey, mandal, serial_no, sold_to …", "sec2_no": "§ 2 — Workflow", "sec2_h2": "Three schedules before a seal", "sched_a_tab": "Schedule A", "sched_a_sub": "automated", "sched_a_h3": "Machine checklist", "sched_a_p": "Required fields present, area bounds sane, dates in order, survey formats legal. Obvious failures stop here instead of wasting a clerk's afternoon.", "sched_a_foot": "Stage 1 · No human time", "sched_b_tab": "Schedule B", "sched_b_sub": "clerk", "sched_b_h3": "Read &amp; correct", "sched_b_p": "Every extracted field sits in an editor beside its evidence. The clerk fixes OCR slips in place — the record keeps what they approved, not what the machine guessed.", "sched_b_foot": "Stage 2 · Human correction", "sched_c_tab": "Schedule C", "sched_c_sub": "officer", "sched_c_h3": "Approve, or reject with reasons", "sched_c_p": "The officer's approval freezes the record and triggers the seal. A rejection is also kept on file — reason, date, and who said it.", "sched_c_foot": "Stage 3 · Decision recorded", "sec3_no": "§ 3 — The Seal", "sec3_h2": "Unsigned paper is just paper", "sec3_p1": "The approved facts are flattened into canonical JSON — stable, deterministic, no rearranged keys. A SHA-256 digest is taken and signed with the office's own RSA-PSS 2048-bit key, kept on this machine, not in anyone's cloud.", "sec3_p2": "Once sealed, a certified record is immutable. Change one comma and the signature stops matching.", "seal_circle_top": "CANONICAL · SHA-256", "seal_circle_bot": "RSA-PSS · 2048 · LOCAL", "seal_center_h": "Sealed", "seal_center_sub": "Immutably on file", "sec4_no": "§ 4 — Verification", "sec4_h2": "Any phone on the office Wi-Fi", "sec4_p": "The console prints a QR bound to the host's local network address. A buyer, a broker, an inspecting officer — anyone on the same LAN scans it and sees the certificate with the signature already checked, offline.", "sec4_step1": "Scan the certificate QR from any phone on the LAN", "sec4_step2": "The standalone page recomputes the signature locally", "sec4_step3": "MATCH, or the record is reported as tampered", "sig_officer_line": "executed &amp; sealed", "sig_officer_lbl": "Signatory — Verification Officer", "sig_witness_line": "attested offline", "sig_witness_lbl": "Witness — LAN Address 10.71.0.80", "footer_title": "OneBhoomi · Offline Registry Console", "footer_sub": "Sale Deeds · Agreements · GPA", "footer_cloud": "No cloud. No keys leaving the office."}, "hi": {"brand_title": "वनभूमि", "brand_sub": "वनभूमि &nbsp;·&nbsp; ऑफ़लाइन रजिस्ट्री", "nav_extract": "निष्कर्षण", "nav_workflow": "कार्यप्रणाली", "nav_sealing": "डिजिटल मुहर", "nav_verify": "सत्यापन", "nav_dashboard": "डैशबोर्ड पर जाएं", "hero_eyebrow": "भारत गैर-न्यायिक · ₹50 · तेलंगाना", "hero_h1": "विलेख बनता है <em>डेटा।</em><br>डेटा रहता है <em>प्रमाण्य।</em>", "hero_lede": "वनभूमि बिक्री विलेख, बिक्री समझौते और जीपीए को स्कैनर से सीधे ऑफ़लाइन पढ़ता है — क्लर्क द्वारा सत्यापित रिकॉर्ड में बदलता है, और कार्यालय की अपनी RSA-PSS डिजिटल सील से प्रमाणित करता है।", "hero_act_stages": "तीनों चरण देखें", "hero_act_seal": "मुहर कैसे काम करती है", "stamp_top": "सत्यापित", "stamp_bot": "RSA-PSS · 2048-बिट", "stamp_brand": "वनभूमि", "stamp_sub": "सत्यापित अभिलेख", "part_fields": "प्रति विलेख प्रामाणिक फ़ील्ड्स", "part_keys": "RSA-PSS स्थानीय कुंजी युग्म", "part_stages": "मानवीय समीक्षा चरण", "part_cloud": "कभी कोई क्लाउड कॉल नहीं", "sec1_no": "§ 1 — निष्कर्षण", "sec1_h2": "जैसे एक क्लर्क पढ़ता है", "sec1_sub": "PaddleOCR कार्यालय के सीपीयू पर चलता है, या कतार लंबी होने पर टनल के माध्यम से जीपीयू पर चलता है। यह Sy.No प्रारूप जैसे <strong>CSNO.2(65/9</strong>, डॉक नंबर, स्टाम्प विवरण और पक्षों की शर्तों को समझता है — और खाली पृष्ठ पर कुछ भी मनगढ़ंत नहीं बनाता।", "deed_clause": "बिक्री-सह-मुख्तारनामा (जीपीए) समझौता", "deed_excerpt": "यह बिक्री-सह-जीपीए समझौता दिनांक <span class=\"hl hot\">03-08-2019</span> को <span class=\"hl\">वारंगल</span> में <span class=\"hl\">गुदुरु मलाकोंडैया, आत्मज चिन्ना कोंडैया, आयु 52</span> द्वारा निष्पादित किया गया … पक्ष में <span class=\"hl\">1] रंगिनेनी वेंकटेश्वर राव</span> … 2] <span class=\"hl\">कक्केरला सुरेश</span> … संबंधित <span class=\"hl hot\">सर्वे क्र. 1413</span>, <span class=\"hl\">दस्तावेज़ संख्या 379230</span>, स्टाम्प <span class=\"hl hot\">₹50/-</span>, स्थित <span class=\"hl\">मंगापेट ग्राम, मुलुगु ज़िला</span> …", "pipe_lbl": "OCR → NLP → नियम", "ext_first_pass": "निष्कर्षण — प्रथम चरण", "k_doc_type": "दस्तावेज़_प्रकार", "v_doc_type": "बिक्री-सह-जीपीए समझौता", "k_survey_no": "सर्वेक्षण_संख्या", "k_doc_date": "दस्तावेज़_दिनांक", "k_village": "ग्राम", "v_village": "मंगापेट", "k_district": "ज़िला", "v_district": "मुलुगु", "k_stamp_val": "स्टाम्प_मूल्य", "k_stamp_no": "स्टाम्प_क्रमांक", "k_parties": "पक्षकार", "v_parties": "2 क्रेता (Vendees)", "ext_more": "+ निष्पादन तिथि, उप-सर्वेक्षण, मंडल, क्रम संख्या, क्रेता …", "sec2_no": "§ 2 — कार्यप्रणाली", "sec2_h2": "मुहर लगाने से पहले तीन अनुसूचियां", "sched_a_tab": "अनुसूची क", "sched_a_sub": "स्वचालित", "sched_a_h3": "मशीन चेकलिस्ट", "sched_a_p": "अनिवार्य फ़ील्ड मौजूद हैं, क्षेत्र सीमाएं वैध हैं, तारीखें क्रमबद्ध हैं, और सर्वेक्षण प्रारूप कानूनी हैं। स्पष्ट त्रुटियां यहीं रुक जाती हैं।", "sched_a_foot": "चरण 1 · कोई मानवीय समय नहीं", "sched_b_tab": "अनुसूची ख", "sched_b_sub": "क्लर्क", "sched_b_h3": "पढ़ें और सुधारें", "sched_b_p": "प्रत्येक निकाला गया फ़ील्ड दस्तावेज़ प्रमाण के साथ बैठता है। क्लर्क गलतियों को सुधारता है — रिकॉर्ड वही रखता है जो क्लर्क ने अनुमोदित किया।", "sched_b_foot": "चरण 2 · मानवीय सुधार", "sched_c_tab": "अनुसूची ग", "sched_c_sub": "अधिकारी", "sched_c_h3": "स्वीकृति या कारण सहित अस्वीकृति", "sched_c_p": "अधिकारी का अनुमोदन रिकॉर्ड को लॉक करता है और डिजिटल मुहर लगाता है। अस्वीकृति भी कारण सहित दर्ज की जाती है।", "sched_c_foot": "चरण 3 · निर्णय दर्ज", "sec3_no": "§ 3 — डिजिटल मुहर", "sec3_h2": "बिना हस्ताक्षर का कागज़ सिर्फ कागज़ है", "sec3_p1": "अनुमोदित तथ्यों को अपरिवर्तनीय JSON में बदला जाता है। SHA-256 डाइजेस्ट लिया जाता है और कार्यालय की 2048-बिट RSA-PSS कुंजी से हस्ताक्षरित किया जाता है, जो इसी मशीन पर सुरक्षित रहती है।", "sec3_p2": "मुहर लगने के बाद प्रमाणित रिकॉर्ड अपरिवर्तनीय हो जाता है। एक कॉमा भी बदला तो डिजिटल हस्ताक्षर मेल नहीं खाएगा।", "seal_circle_top": "कैनोनिकल · SHA-256", "seal_circle_bot": "RSA-PSS · 2048 · स्थानीय", "seal_center_h": "मुहरबंद", "seal_center_sub": "अपरिवर्तनीय रूप से दर्ज", "sec4_no": "§ 4 — सत्यापन", "sec4_h2": "कार्यालय वाई-फ़ाई पर कोई भी फ़ोन", "sec4_p": "कंसोल स्थानीय नेटवर्क से जुड़ा एक क्यूआर कोड दिखाता है। खरीदार, ब्रोकर या अधिकारी उसी LAN पर क्यूआर स्कैन करके तुरंत प्रमाण पत्र देख सकते हैं।", "sec4_step1": "LAN पर किसी भी फ़ोन से प्रमाणपत्र का क्यूआर स्कैन करें", "sec4_step2": "स्वतंत्र पृष्ठ हस्ताक्षर की स्थानीय रूप से पुनर्गणना करता है", "sec4_step3": "हस्ताक्षर मेल खाता है, या दस्तावेज़ के साथ छेड़छाड़ की रिपोर्ट मिलती है", "sig_officer_line": "निष्पादित एवं मुहरबंद", "sig_officer_lbl": "हस्ताक्षरकर्ता — सत्यापन अधिकारी", "sig_witness_line": "ऑफ़लाइन अनुप्रमाणित", "sig_witness_lbl": "साक्षी — LAN पता 10.71.0.80", "footer_title": "वनभूमि · ऑफ़लाइन रजिस्ट्री कंसोल", "footer_sub": "बिक्री विलेख · अनुबंध · जीपीए", "footer_cloud": "कोई क्लाउड नहीं। कोई भी कुंजी कार्यालय से बाहर नहीं जाती।"}, "te": {"brand_title": "వన్‌భూమి", "brand_sub": "వన్‌భూమి &nbsp;·&nbsp; ఆఫ్‌లైన్ రిజిస్ట్రీ", "nav_extract": "సమాచార సేకరణ", "nav_workflow": "పని విధానం", "nav_sealing": "డిజిటల్ ముద్ర", "nav_verify": "ధృవీకరణ", "nav_dashboard": "డ్యాష్‌బోర్డుకు వెళ్లండి", "hero_eyebrow": "భారత నాన్-జ్యుడీషియల్ · ₹50 · తెలంగాణ", "hero_h1": "దస్తావేజు <em>డేటా</em> అవుతుంది.<br>డేటా <em>రుజువు చేయగలదిగా</em> నిలుస్తుంది.", "hero_lede": "వన్‌భూమి సేల్ డీడ్‌లు, సేల్ అగ్రిమెంట్లు, జీపీఏలను స్కానర్ నుండి నేరుగా ఆఫ్‌లైన్‌లో చదివి, క్లర్క్ సరిచేసిన రికార్డులుగా మార్చి, మీ కార్యాలయ RSA-PSS సంతకంతో సీల్ చేస్తుంది.", "hero_act_stages": "మూడు దశలను చూడండి", "hero_act_seal": "ముద్ర ఎలా పనిచేస్తుంది", "stamp_top": "ధృవీకరించబడింది", "stamp_bot": "RSA-PSS · 2048-బిట్", "stamp_brand": "వన్‌భూమి", "stamp_sub": "ధృవీకరించబడిన రికార్డు", "part_fields": "ప్రతి దస్తావేజుకు ప్రామాణిక రంగాలు", "part_keys": "RSA-PSS స్థానిక కీజత", "part_stages": "మానవ సమీక్ష దశలు", "part_cloud": "ఎన్నటికీ క్లౌడ్ కాల్స్ లేవు", "sec1_no": "§ 1 — సమాచార సేకరణ", "sec1_h2": "ఒక క్లర్క్ చదివినట్లే చదువుతుంది", "sec1_sub": "PaddleOCR ఆఫీస్ CPUపై నడుస్తుంది, లేదా రద్దీగా ఉన్నప్పుడు GPUకి మారుతుంది. ఇది సర్వే నంబర్లు <strong>CSNO.2(65/9</strong>, దస్తావేజు నంబర్లు, స్టాంప్ వివరాలు మరియు పార్టీల నిబంధనలను స్పష్టంగా గుర్తిస్తుంది.", "deed_clause": "అగ్రిమెంట్ ఆఫ్ సేల్-కమ్-జనరల్ పవర్ ఆఫ్ అటార్నీ (GPA)", "deed_excerpt": "ఈ సేల్-కమ్-GPA ఒప్పందం తేది <span class=\"hl hot\">03-08-2019</span> న <span class=\"hl\">వరంగల్</span> వద్ద <span class=\"hl\">గుడురు మాలకొండయ్య, తండ్రి చిన్న కొండయ్య, వయస్సు 52</span> చేత వ్రాయబడినది … ఎవరికి అనగా <span class=\"hl\">1] రంగినేని వెంకటేశ్వరరావు</span> … 2] <span class=\"hl\">కక్కెర్ల సురేష్</span> … సంబంధిత <span class=\"hl hot\">సర్వే నం. 1413</span>, <span class=\"hl\">డాక్యుమెంట్ నం. 379230</span>, స్టాంప్ <span class=\"hl hot\">రూ. 50/-</span>, ఉన్న స్థలం <span class=\"hl\">మంగపేట గ్రామం, ములుగు జిల్లా</span> …", "pipe_lbl": "OCR → NLP → నిబంధనలు", "ext_first_pass": "సేకరణ — మొదటి దశ", "k_doc_type": "పత్రం_రకం", "v_doc_type": "సేల్-కమ్-GPA ఒప్పందం", "k_survey_no": "సర్వే_నంబర్", "k_doc_date": "పత్రం_తేదీ", "k_village": "గ్రామం", "v_village": "మంగపేట", "k_district": "జిల్లా", "v_district": "ములుగు", "k_stamp_val": "స్టాంప్_విలువ", "k_stamp_no": "స్టాంప్_సంఖ్య", "k_parties": "పార్టీలు", "v_parties": "2 కొనుగోలుదారులు", "ext_more": "+ అమలు తేదీ, సబ్ సర్వే, మండలం, క్రమ సంఖ్య, కొనుగోలుదారు …", "sec2_no": "§ 2 — పని విధానం", "sec2_h2": "ముద్ర వేసే ముందు మూడు షెడ్యూల్స్", "sched_a_tab": "షెడ్యూల్ A", "sched_a_sub": "ఆటోమేటెడ్", "sched_a_h3": "మెషిన్ చెక్‌లిస్ట్", "sched_a_p": "అవసరమైన ఫీల్డులు ఉన్నాయా, విస్తీర్ణం సరిగ్గా ఉందా, తేదీల క్రమం చట్టబద్ధంగా ఉందా అని తనిఖీ చేస్తుంది. స్పష్టమైన లోపాలు ఇక్కడే ఆగిపోతాయి.", "sched_a_foot": "దశ 1 · మానవ సమయం అవసరం లేదు", "sched_b_tab": "షెడ్యూల్ B", "sched_b_sub": "క్లర్క్", "sched_b_h3": "చదవడం &amp; సవరించడం", "sched_b_p": "సేకరించిన ప్రతి ఫీల్డ్ సాక్ష్యంతో పాటు కనిపిస్తుంది. క్లర్క్ లోపాలను సరిదిద్దుతారు — మెషిన్ ఊహించినది కాకుండా ఆమోదించినదే రికార్డు అవుతుంది.", "sched_b_foot": "దశ 2 · మానవ సవరణ", "sched_c_tab": "షెడ్యూల్ C", "sched_c_sub": "అధికారి", "sched_c_h3": "ఆమోదం లేదా కారణంతో తిరస్కరణ", "sched_c_p": "అధికారి ఆమోదం రికార్డును లాక్ చేసి డిజిటల్ ముద్రను వేస్తుంది. తిరస్కరణ కూడా కారణం, తేదీతో నమోదు చేయబడుతుంది.", "sched_c_foot": "దశ 3 · నిర్ణయం నమోదు చేయబడింది", "sec3_no": "§ 3 — డిజిటల్ ముద్ర", "sec3_h2": "సంతకం లేని కాగితం కేవలం కాగితమే", "sec3_p1": "ఆమోదించబడిన వాస్తవాలు ఖచ్చితమైన JSONగా మార్చబడతాయి. SHA-256 తీసుకొని కార్యాలయపు 2048-బిట్ RSA-PSS కీతో సంతకం చేయబడుతుంది, ఇది ఈ మెషీన్‌లోనే ఉంటుంది.", "sec3_p2": "ఒక్కసారి ముద్ర వేసిన తర్వాత రికార్డు మార్చలేనిది. ఒక్క కామా మారినా సంతకం సరిపోలదు.", "seal_circle_top": "కానానికల్ · SHA-256", "seal_circle_bot": "RSA-PSS · 2048 · స్థానిక", "seal_center_h": "ముద్రించబడింది", "seal_center_sub": "మార్చలేని విధంగా ఫైల్‌లో భద్రం", "sec4_no": "§ 4 — ధృవీకరణ", "sec4_h2": "కార్యాలయ వై-ఫైలో ఏ ఫోన్ అయినా", "sec4_p": "కన్సోల్ స్థానిక నెట్‌వర్క్ చిరునామాకు అనుసంధానించబడిన QR కోడ్‌ను ప్రదర్శిస్తుంది. కొనుగోలుదారు లేదా అధికారి అదే LANలో స్కాన్ చేసి ఆఫ్‌లైన్‌లో సర్టిఫికెట్‌ను తనిఖీ చేయవచ్చు.", "sec4_step1": "LANలోని ఏదైనా ఫోన్ నుండి సర్టిఫికెట్ QRని స్కాన్ చేయండి", "sec4_step2": "స్టాండ్‌అలోన్ పేజీ సంతకాన్ని స్థానికంగా మళ్లీ గణిస్తుంది", "sec4_step3": "సంతకం సరిపోలుతుంది, లేదా రికార్డు మార్చబడిందని నివేదిస్తుంది", "sig_officer_line": "అమలు చేయబడింది &amp; ముద్రించబడింది", "sig_officer_lbl": "సంతకందారు — ధృవీకరణ అధికారి", "sig_witness_line": "ఆఫ్‌లైన్ సాక్ష్యం", "sig_witness_lbl": "సాక్షి — LAN చిరునామా 10.71.0.80", "footer_title": "వన్‌భూమి · ఆఫ్‌లైన్ రిజిస్ట్రీ కన్సోల్", "footer_sub": "సేల్ డీడ్‌లు · ఒప్పందాలు · GPA", "footer_cloud": "క్లౌడ్ లేదు. కార్యాలయం నుండి కీలు ఎక్కడికీ వెళ్లవు."}, "kn": {"brand_title": "ವನ್‌ಭೂಮಿ", "brand_sub": "ವನ್‌ಭೂಮಿ &nbsp;·&nbsp; ಆಫ್‌ಲೈನ್ ನೋಂದಣಿ", "nav_extract": "ಮಾಹಿತಿ ಹೊರತೆಗೆಯುವಿಕೆ", "nav_workflow": "ಕಾರ್ಯವಿಧಾನ", "nav_sealing": "ಡಿಜಿಟಲ್ ಮುದ್ರೆ", "nav_verify": "ಪರಿಶೀಲನೆ", "nav_dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ", "hero_eyebrow": "ಭಾರತ ನ್ಯಾಯಾಂಗೇತರ · ₹50 · ತೆಲಂಗಾಣ", "hero_h1": "ಪತ್ರವು <em>ಡೇಟಾ</em> ಆಗುತ್ತದೆ.<br>ಡೇಟಾ <em>ಸಾಬೀತುಪಡಿಸಬಹುದಾಗಿದೆ.</em>", "hero_lede": "ವನ್‌ಭೂಮಿ ಮಾರಾಟ ಪತ್ರಗಳು, ಒಪ್ಪಂದಗಳು ಮತ್ತು ಜಿಪಿಎಗಳನ್ನು ಸ್ಕ್ಯಾನರ್‌ನಿಂದ ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಓದಿ, ಸಿಬ್ಬಂದಿ ಸರಿಪಡಿಸಿದ ದಾಖಲೆಗಳಾಗಿ ಪರಿವರ್ತಿಸಿ, ಕಚೇರಿಯ RSA-PSS ಡಿಜಿಟಲ್ ಸಹಿಯೊಂದಿಗೆ ಮುದ್ರೆ ಹಾಕುತ್ತದೆ.", "hero_act_stages": "ಮೂರು ಹಂತಗಳನ್ನು ನೋಡಿ", "hero_act_seal": "ಮುದ್ರೆ ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ", "stamp_top": "ಪರಿಶೀಲಿಸಲಾಗಿದೆ", "stamp_bot": "RSA-PSS · 2048-ಬಿಟ್", "stamp_brand": "ವನ್‌ಭೂಮಿ", "stamp_sub": "ದೃಢೀಕೃತ ದಾಖಲೆ", "part_fields": "ಪ್ರತಿ ಪತ್ರಕ್ಕೆ ಪ್ರಮಾಣಿತ ಕ್ಷೇತ್ರಗಳು", "part_keys": "RSA-PSS ಸ್ಥಳೀಯ ಕೀ ಜೋಡಿ", "part_stages": "ಮಾನವ ಪರಿಶೀಲನಾ ಹಂತಗಳು", "part_cloud": "ಯಾವತ್ತೂ ಕ್ಲೌಡ್ ಕರೆಗಳಿಲ್ಲ", "sec1_no": "§ 1 — ಮಾಹಿತಿ ಹೊರತೆಗೆಯುವಿಕೆ", "sec1_h2": "ಗುಮಾಸ್ತ ಓದುವಂತೆಯೇ ಓದುತ್ತದೆ", "sec1_sub": "PaddleOCR ಕಚೇರಿಯ ಸಿಪಿಯುನಲ್ಲಿ ಚಲಿಸುತ್ತದೆ ಅಥವಾ ಸರತಿ ಉದ್ದವಿದ್ದಾಗ ಜಿಪಿಯುಗೆ ವರ್ಗಾಯಿಸುತ್ತದೆ. ಸರ್ವೇ ನಂಬರ್‌ಗಳು <strong>CSNO.2(65/9</strong>, ದಸ್ತಾವೇಜು ಸಂಖ್ಯೆಗಳು, ಮುದ್ರಾಂಕ ವಿವರಗಳು ಮತ್ತು ಷರತ್ತುಗಳನ್ನು ಇದು ನಿಖರವಾಗಿ ಗುರುತಿಸುತ್ತದೆ.", "deed_clause": "ಮಾರಾಟ ಒಪ್ಪಂದ ಮತ್ತು ಜನರಲ್ ಪವರ್ ಆಫ್ ಅಟಾರ್ನಿ (GPA)", "deed_excerpt": "ಈ ಮಾರಾಟ ಮತ್ತು ಜಿಪಿಎ ಒಪ್ಪಂದವನ್ನು <span class=\"hl hot\">03-08-2019</span> ರಂದು <span class=\"hl\">ವಾರಂಗಲ್</span>‌ನಲ್ಲಿ <span class=\"hl\">ಗುಡುರು ಮಲಕೊಂಡಯ್ಯ, ತಂದೆ ಚಿನ್ನ ಕೊಂಡಯ್ಯ, ವಯಸ್ಸು 52</span> ಇವರಿಂದ ಕಾರ್ಯಗತಗೊಳಿಸಲಾಗಿದೆ … ಯಾರ ಪರವಾಗಿ ಎಂದರೆ <span class=\"hl\">1] ರಂಗಿನೇನಿ ವೆಂಕಟೇಶ್ವರ ರಾವ್</span> … 2] <span class=\"hl\">ಕಕ್ಕೇರ್ಲ ಸುರೇಶ್</span> … ಸಂಬಂಧಿತ <span class=\"hl hot\">ಸರ್ವೇ ನಂ. 1413</span>, <span class=\"hl\">ದಾಖಲೆ ನಂ. 379230</span>, ಮುದ್ರಾಂಕ <span class=\"hl hot\">ರೂ. 50/-</span>, ಸ್ಥಳ <span class=\"hl\">ಮಂಗಪೇಟೆ ಗ್ರಾಮ, ಮುಲುಗು ಜಿಲ್ಲೆ</span> …", "pipe_lbl": "OCR → NLP → ನಿಯಮಗಳು", "ext_first_pass": "ಹೊರತೆಗೆಯಲಾದ ಮಾಹಿತಿ — ಮೊದಲ ಹಂತ", "k_doc_type": "ದಾಖಲೆ_ಪ್ರಕಾರ", "v_doc_type": "ಮಾರಾಟ ಮತ್ತು ಜಿಪಿಎ ಒಪ್ಪಂದ", "k_survey_no": "ಸರ್ವೇ_ಸಂಖ್ಯೆ", "k_doc_date": "ದಾಖಲೆ_ದಿನಾಂಕ", "k_village": "ಗ್ರಾಮ", "v_village": "ಮಂಗಪೇಟೆ", "k_district": "ಜಿಲ್ಲೆ", "v_district": "ಮುಲುಗು", "k_stamp_val": "ಮುದ್ರಾಂಕ_ಮೌಲ್ಯ", "k_stamp_no": "ಮುದ್ರಾಂಕ_ಸಂಖ್ಯೆ", "k_parties": "ಪಕ್ಷಗಳು", "v_parties": "2 ಖರೀದಿದಾರರು", "ext_more": "+ ನೋಂದಣಿ ದಿನಾಂಕ, ಉಪ-ಸರ್ವೇ, ಹೋಬಳಿ, ಕ್ರಮಾಂಕ, ಖರೀದಿದಾರ …", "sec2_no": "§ 2 — ಕಾರ್ಯವಿಧಾನ", "sec2_h2": "ಮುದ್ರೆಗೆ ಮುನ್ನ ಮೂರು ಹಂತಗಳು", "sched_a_tab": "ಹಂತ A", "sched_a_sub": "ಸ್ವಯಂಚಾಲಿತ", "sched_a_h3": "ಯಂತ್ರ ಪರಿಶೀಲನಾಪಟ್ಟಿ", "sched_a_p": "ಅಗತ್ಯವಿರುವ ಕ್ಷೇತ್ರಗಳು, ವಿಸ್ತೀರ್ಣ ಮಿತಿಗಳು, ದಿನಾಂಕಗಳ ಕ್ರಮಬದ್ಧತೆ ಮತ್ತು ಸರ್ವೇ ಮಾದರಿಗಳನ್ನು ಕಾನೂನುಬದ್ಧವಾಗಿ ಪರಿಶೀಲಿಸುತ್ತದೆ. ತಪ್ಪುಗಳು ಇಲ್ಲಿಯೇ ಪತ್ತೆಯಾಗುತ್ತವೆ.", "sched_a_foot": "ಹಂತ 1 · ಮಾನವ ಶ್ರಮವಿಲ್ಲ", "sched_b_tab": "ಹಂತ B", "sched_b_sub": "ಗುಮಾಸ್ತ", "sched_b_h3": "ಓದಿ ಮತ್ತು ಸರಿಪಡಿಸಿ", "sched_b_p": "ಹೊರತೆಗೆಯಲಾದ ಪ್ರತಿಯೊಂದು ಕ್ಷೇತ್ರವು ಸಾಕ್ಷಿಯೊಂದಿಗೆ ಕಾಣಿಸುತ್ತದೆ. ಗುಮಾಸ್ತರು ತಪ್ಪುಗಳನ್ನು ಸರಿಪಡಿಸುತ್ತಾರೆ — ಅನುಮೋದಿಸಿದ ಅಂಶಗಳಷ್ಟೇ ದಾಖಲಾಗುತ್ತವೆ.", "sched_b_foot": "ಹಂತ 2 · ಮಾನವ ತಿದ್ದುಪಡಿ", "sched_c_tab": "ಹಂತ C", "sched_c_sub": "ಅಧಿಕಾರಿ", "sched_c_h3": "ಅನುಮೋದನೆ ಅಥವಾ ಕಾರಣ ಸಹಿತ ತಿರಸ್ಕಾರ", "sched_c_p": "ಅಧಿಕಾರಿಯ ಅನುಮೋದನೆಯು ದಾಖಲೆಯನ್ನು ಅಂತಿಮಗೊಳಿಸಿ ಡಿಜಿಟಲ್ ಮುದ್ರೆ ಹಾಕುತ್ತದೆ. ತಿರಸ್ಕಾರವನ್ನು ಸಹ ಕಾರಣದೊಂದಿಗೆ ದಾಖಲಿಸಲಾಗುತ್ತದೆ.", "sched_c_foot": "ಹಂತ 3 · ನಿರ್ಧಾರ ದಾಖಲಿಸಲಾಗಿದೆ", "sec3_no": "§ 3 — ಡಿಜಿಟಲ್ ಮುದ್ರೆ", "sec3_h2": "ಸಹಿ ಇಲ್ಲದ ಕಾಗದ ಬರೀ ಕಾಗದವಷ್ಟೇ", "sec3_p1": "ಅನುಮೋದಿತ ಅಂಶಗಳನ್ನು ಪ್ರಮಾಣಿತ JSON ಆಗಿ ಪರಿವರ್ತಿಸಲಾಗುತ್ತದೆ. SHA-256 ಹ್ಯಾಶ್ ತೆಗೆದುಕೊಂಡು ಕಚೇರಿಯ 2048-ಬಿಟ್ RSA-PSS ಕೀಯಿಂದ ಸಹಿ ಮಾಡಲಾಗುತ್ತದೆ, ಇದು ಸ್ಥಳೀಯ ಯಂತ್ರದಲ್ಲೇ ಉಳಿಯುತ್ತದೆ.", "sec3_p2": "ಒಮ್ಮೆ ಮುದ್ರೆ ಬಿದ್ದ ನಂತರ ದಾಖಲೆಯನ್ನು ಬದಲಾಯಿಸಲಾಗುವುದಿಲ್ಲ. ಒಂದು ಅಲ್ಪವಿರಾಮ ಬದಲಾದರೂ ಸಹಿ ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ.", "seal_circle_top": "ಕ್ಯಾನೊನಿಕಲ್ · SHA-256", "seal_circle_bot": "RSA-PSS · 2048 · ಸ್ಥಳೀಯ", "seal_center_h": "ಮುದ್ರೆ ಹಾಕಲಾಗಿದೆ", "seal_center_sub": "ಬದಲಾಯಿಸಲಾಗದಂತೆ ದಾಖಲಿಸಲಾಗಿದೆ", "sec4_no": "§ 4 — ಪರಿಶೀಲನೆ", "sec4_h2": "ಕಚೇರಿ ವೈ-ಫೈನಲ್ಲಿ ಯಾವುದೇ ಮೊಬೈಲ್", "sec4_p": "ಕನ್ಸೋಲ್ ಸ್ಥಳೀಯ ನೆಟ್‌ವರ್ಕ್ ವಿಳಾಸಕ್ಕೆ ಲಿಂಕ್ ಆದ QR ಕೋಡ್ ಪ್ರದರ್ಶಿಸುತ್ತದೆ. ಖರೀದಿದಾರರು ಅಥವಾ ಅಧಿಕಾರಿಗಳು ಅದೇ LAN ನಲ್ಲಿ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ತಕ್ಷಣ ಪ್ರಮಾಣಪತ್ರ ಪರಿಶೀಲಿಸಬಹುದು.", "sec4_step1": "LAN ನಲ್ಲಿನ ಯಾವುದೇ ಫೋನ್‌ನಿಂದ ಪ್ರಮಾಣಪತ್ರದ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ", "sec4_step2": "ಸ್ವತಂತ್ರ ಪುಟವು ಸಹಿಯನ್ನು ಸ್ಥಳೀಯವಾಗಿ ಮರು-ಪರಿಶೀಲಿಸುತ್ತದೆ", "sec4_step3": "ಸಹಿ ಹೊಂದಿಕೆಯಾಗುತ್ತದೆ, ಅಥವಾ ದಾಖಲೆ ತಿದ್ದಲಾಗಿದೆ ಎಂದು ಎಚ್ಚರಿಸುತ್ತದೆ", "sig_officer_line": "ಕಾರ್ಯಗತಗೊಳಿಸಿ ಮುದ್ರೆ ಹಾಕಲಾಗಿದೆ", "sig_officer_lbl": "ಸಹಿದಾರರು — ಪರಿಶೀಲನಾ ಅಧಿಕಾರಿ", "sig_witness_line": "ಆಫ್‌ಲೈನ್ ದೃಢೀಕರಣ", "sig_witness_lbl": "ಸಾಕ್ಷಿ — LAN ವಿಳಾಸ 10.71.0.80", "footer_title": "ವನ್‌ಭೂಮಿ · ಆಫ್‌ಲೈನ್ ನೋಂದಣಿ ಕನ್ಸೋಲ್", "footer_sub": "ಮಾರಾಟ ಪತ್ರಗಳು · ಒಪ್ಪಂದಗಳು · ಜಿಪಿಎ", "footer_cloud": "ಯಾವುದೇ ಕ್ಲೌಡ್ ಇಲ್ಲ. ಕಚೇರಿಯಿಂದ ಕೀಗಳು ಹೊರಹೋಗುವುದಿಲ್ಲ."}, "ta": {"brand_title": "ஒன்பூமி", "brand_sub": "ஒன்பூமி &nbsp;·&nbsp; ஆஃப்லைன் பதிவேடு", "nav_extract": "தரவுப் பிரித்தெடுத்தல்", "nav_workflow": "பணிப்பாய்வு", "nav_sealing": "டிஜிட்டல் முத்திரை", "nav_verify": "சரிபார்ப்பு", "nav_dashboard": "டாஷ்போர்டுக்கு செல்க", "hero_eyebrow": "இந்தியா நீதித்துறை சாரா · ₹50 · தெலங்கானா", "hero_h1": "பத்திரம் <em>தரவாக</em> மாறுகிறது.<br>தரவு <em>நிரூபிக்கத்தக்கதாக</em> உள்ளது.", "hero_lede": "ஒன்பூமி கிரயப் பத்திரங்கள், ஒப்பந்தங்கள் மற்றும் ஜிபிஏக்களை ஸ்கேனரிலிருந்து நேரடியாக ஆஃப்லைனில் படித்து, சரிபார்க்கப்பட்ட பதிவுகளாக மாற்றி, அலுவலகத்தின் RSA-PSS டிஜிட்டல் முத்திரையுடன் பாதுகாக்கிறது.", "hero_act_stages": "மூன்று நிலைகளைக் காண்க", "hero_act_seal": "முத்திரை எவ்வாறு செயல்படுகிறது", "stamp_top": "சரிபார்க்கப்பட்டது", "stamp_bot": "RSA-PSS · 2048-பிட்", "stamp_brand": "ஒன்பூமி", "stamp_sub": "சான்றளிக்கப்பட்ட ஆவணம்", "part_fields": "ஒரு பத்திரத்திற்கான முக்கிய புலங்கள்", "part_keys": "RSA-PSS உள்ளூர் விசை", "part_stages": "மனித மதிப்பாய்வு நிலைகள்", "part_cloud": "எப்போதும் கிளவுட் அழைப்புகள் இல்லை", "sec1_no": "§ 1 — தரவுப் பிரித்தெடுத்தல்", "sec1_h2": "எழுத்தர் வாசிப்பது போல வாசிக்கிறது", "sec1_sub": "PaddleOCR அலுவலக CPU-ல் இயங்குகிறது, அல்லது வரிசை நீளமாக இருக்கும்போது GPU-க்கு மாறுகிறது. சர்வே எண்கள் <strong>CSNO.2(65/9</strong>, ஆவண எண்கள், முத்திரை விவரங்கள் மற்றும் நபர்களின் விவரங்களை இது துல்லியமாகப் பகுப்பாய்வு செய்கிறது.", "deed_clause": "விற்பனை ஒப்பந்தம் மற்றும் பொது அதிகாரப் பத்திரம் (GPA)", "deed_excerpt": "இந்த விற்பனை மற்றும் பொது அதிகார ஒப்பந்தம் <span class=\"hl hot\">03-08-2019</span> அன்று <span class=\"hl\">வாரங்கல்</span> நகரில் <span class=\"hl\">குதுரு மல கொண்டையா, தந்தை சின்ன கொண்டையா, வயது 52</span> என்பவரால் நிறைவேற்றப்பட்டது … யாருக்கு சாதகமாக என்றால் <span class=\"hl\">1] ரங்கினேனி வெங்கடேஸ்வர ராவ்</span> … 2] <span class=\"hl\">கக்கெர்லா சுரேஷ்</span> … தொடர்புடைய <span class=\"hl hot\">சர்வே எண் 1413</span>, <span class=\"hl\">ஆவண எண் 379230</span>, முத்திரைத்தாள் <span class=\"hl hot\">ரூ. 50/-</span>, அமைந்துள்ள இடம் <span class=\"hl\">மங்கபேட் கிராமம், முலுகு மாவட்டம்</span> …", "pipe_lbl": "OCR → NLP → விதிகள்", "ext_first_pass": "பிரித்தெடுக்கப்பட்டது — முதல் நிலை", "k_doc_type": "ஆவண_வகை", "v_doc_type": "விற்பனை மற்றும் ஜிபிஏ ஒப்பந்தம்", "k_survey_no": "சர்வே_எண்", "k_doc_date": "ஆவண_தேதி", "k_village": "கிராமம்", "v_village": "மங்கபேட்", "k_district": "மாவட்டம்", "v_district": "முலுகு", "k_stamp_val": "முத்திரை_மதிப்பு", "k_stamp_no": "முத்திரை_எண்", "k_parties": "நபர்கள்", "v_parties": "2 வாங்குபவர்கள்", "ext_more": "+ நிறைவேற்றப்பட்ட தேதி, உட்பிரிவு சர்வே, மண்டலம், வரிசை எண், வாங்குபவர் …", "sec2_no": "§ 2 — பணிப்பாய்வு", "sec2_h2": "முத்திரையிடுவதற்கு முன் மூன்று நிலைகள்", "sched_a_tab": "அட்டவணை A", "sched_a_sub": "தானியங்கி", "sched_a_h3": "இயந்திர சரிபார்ப்பு பட்டியல்", "sched_a_p": "தேவையான புலங்கள், பரப்பளவு வரம்புகள், தேதிகளின் ஒழுங்கு மற்றும் சர்வே வடிவங்களைச் சட்டப்பூர்வமாகச் சரிபார்க்கிறது. வெளிப்படையான தவறுகள் இங்கேயே தடுக்கப்படுகின்றன.", "sched_a_foot": "நிலை 1 · மனித நேரம் தேவையில்லை", "sched_b_tab": "அட்டவணை B", "sched_b_sub": "எழுத்தர்", "sched_b_h3": "படித்து திருத்துதல்", "sched_b_p": "பிரித்தெடுக்கப்பட்ட ஒவ்வொரு புலமும் சான்றுடன் காட்டப்படுகிறது. எழுத்தர் பிழைகளைத் திருத்துகிறார் — இயந்திரம் கணித்ததை விட அங்கீகரிக்கப்பட்டதே பதிவாகிறது.", "sched_b_foot": "நிலை 2 · மனித திருத்தம்", "sched_c_tab": "அட்டவணை C", "sched_c_sub": "அதிகாரி", "sched_c_h3": "ஒப்புதல் அல்லது காரணத்துடன் நிராகரிப்பு", "sched_c_p": "அதிகாரியின் ஒப்புதல் ஆவணத்தை உறுதிசெய்து டிஜிட்டல் முத்திரையிடுகிறது. நிராகரிப்பும் காரணத்துடன் பதிவு செய்யப்படுகிறது.", "sched_c_foot": "நிலை 3 · முடிவு பதிவு செய்யப்பட்டது", "sec3_no": "§ 3 — டிஜிட்டல் முத்திரை", "sec3_h2": "கையொப்பமில்லாத காகிதம் வெறும் காகிதமே", "sec3_p1": "அங்கீகரிக்கப்பட்ட உண்மைகள் நிலையான JSON ஆக மாற்றப்படுகின்றன. SHA-256 எடுக்கப்பட்டு, அலுவலகத்தின் 2048-பிட் RSA-PSS விசை மூலம் கையொப்பமிடப்படுகிறது, ಇದು இந்த கணினியிலேயே பாதுகாப்பாக இருக்கும்.", "sec3_p2": "முத்திரையிடப்பட்ட பதிவு மாற்ற முடியாதது. ஒரு கமாவைக் கூட மாற்றினால் டிஜிட்டல் கையொப்பம் பொருந்தாது.", "seal_circle_top": "கேனோனிகல் · SHA-256", "seal_circle_bot": "RSA-PSS · 2048 · உள்ளூர்", "seal_center_h": "முத்திரையிடப்பட்டது", "seal_center_sub": "மாற்ற முடியாத வகையில் பாதுகாப்பானது", "sec4_no": "§ 4 — சரிபார்ப்பு", "sec4_h2": "அலுவலக வைஃபை உள்ள எந்த போனிலும்", "sec4_p": "கணினி உள்ளூர் நெட்வொர்க்குடன் இணைக்கப்பட்ட QR குறியீட்டை உருவாக்குகிறது. வாங்குபவர் அல்லது அதிகாரி அதே LAN-ல் ஸ்கேன் செய்து ஆஃப்லைனிலேயே சான்றிதழைச் சரிபார்க்கலாம்.", "sec4_step1": "LAN-ல் உள்ள எந்த போனிலிருந்தும் சான்றிதழ் QR ஐ ஸ்கேன் செய்யவும்", "sec4_step2": "பக்கம் கையொப்பத்தை உள்ளூரிலேயே மீண்டும் கணக்கிடுகிறது", "sec4_step3": "கையொப்பம் பொருந்துகிறது, அல்லது ஆவணம் மாற்றப்பட்டதாக அறிவிக்கிறது", "sig_officer_line": "நிறைவேற்றப்பட்டு முத்திரையிடப்பட்டது", "sig_officer_lbl": "கையொப்பமிட்டவர் — சரிபார்ப்பு அதிகாரி", "sig_witness_line": "ஆஃப்லைன் சான்றொப்பம்", "sig_witness_lbl": "சாட்சி — LAN முகவரி 10.71.0.80", "footer_title": "ஒன்பூமி · ஆஃப்லைன் பதிவேடு கன்சோல்", "footer_sub": "விற்பனைப் பத்திரங்கள் · ஒப்பந்தங்கள் · ஜிபிஏ", "footer_cloud": "கிளவுட் இல்லை. விசைகள் அலுவலகத்தை விட்டு வெளியேறாது."}};
+
+function applyLanguage(lang) {
+  if (!ONEBHOOMI_I18N[lang]) lang = 'en';
+  document.documentElement.lang = lang;
+  try { localStorage.setItem('onebhoomi_lang', lang); } catch(e) {}
+  
+  const select = document.getElementById('langSelect');
+  if (select && select.value !== lang) select.value = lang;
+
+  const dict = ONEBHOOMI_I18N[lang] || ONEBHOOMI_I18N['en'];
+  
+  // Update document title
+  document.title = (dict['brand_title'] || 'OneBhoomi') + " — " + (lang === 'hi' ? 'भूमि अभिलेख ऑफ़लाइन रजिस्ट्री' : lang === 'te' ? 'భూ రికార్డుల ఆఫ్‌లైన్ రిజిస్ట్రీ' : lang === 'kn' ? 'ಭೂ ದಾಖಲೆಗಳ ಆಫ್‌ಲೈನ್ ನೋಂದಣಿ' : lang === 'ta' ? 'நில ஆவணங்கள் ஆஃப்லைன் பதிவேடு' : 'Offline Registry for Land Records');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (dict[key] !== undefined) {
+      // SVG text elements require textContent or SVG text updates
+      if (el.tagName && (el.tagName.toLowerCase() === 'textpath' || el.tagName.toLowerCase() === 'text')) {
+        el.textContent = dict[key];
+      } else if (el.tagName === 'INPUT' && el.type === 'button') {
+        el.value = dict[key];
+      } else {
+        el.innerHTML = dict[key];
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  let savedLang = 'en';
+  try { savedLang = localStorage.getItem('onebhoomi_lang') || 'en'; } catch(e) {}
+  applyLanguage(savedLang);
+
+  const select = document.getElementById('langSelect');
+  if (select) {
+    select.addEventListener('change', (e) => {
+      applyLanguage(e.target.value);
+    });
+  }
+});
+</script>
+
+</body>
+</html>

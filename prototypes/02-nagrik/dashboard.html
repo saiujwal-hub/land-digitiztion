@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Nagrik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">ना</span>
+      <span><b>Nagrik</b><small>Operations Dashboard</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="#" aria-current="page">Dashboard</a>
+      <a href="#queue">Review queue</a>
+      <a href="#coverage">Coverage</a>
+    </nav>
+    <div class="head-actions">
+      <a class="btn btn-ghost" href="#">Export report</a>
+      <a class="btn btn-primary" href="#queue">Review queue (1,273)</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="dash-top">
+    <div class="wrap">
+      <h1>Good afternoon, Verifier.</h1>
+      <p>Madhya Pradesh pilot · 01 Aug – 02 Sep 2026 · figures refresh every 15 minutes.</p>
+    </div>
+  </section>
+
+  <section class="wrap" aria-label="Key metrics">
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="v" data-countup>4,82,140</div><div class="l">Documents processed</div><span class="trend up">▲ 6,214 this week</span></div>
+      <div class="kpi-card"><div class="v" data-countup>96.8%</div><div class="l">Extraction accuracy</div><span class="trend up">▲ 0.4 pts vs July</span></div>
+      <div class="kpi-card"><div class="v" data-countup>1,273</div><div class="l">Pending verification</div><span class="trend down">▼ oldest 2d 6h</span></div>
+      <div class="kpi-card"><div class="v" data-countup>41 s</div><div class="l">Median time per page</div><span class="trend up">▲ faster by 4 s</span></div>
+    </div>
+  </section>
+
+  <section class="wrap dash-grid" aria-label="Throughput and validation">
+    <div class="panel-card">
+      <header><h2>Processing throughput</h2><span>documents per day · last 7 days</span></header>
+      <svg viewBox="0 0 560 230" width="100%" role="img" aria-label="Bar chart of daily throughput: 4,200; 5,100; 4,800; 6,200; 5,900; 3,400; 2,100 documents">
+        <g stroke="#e4e4de"><line x1="36" y1="24" x2="544" y2="24"/><line x1="36" y1="70" x2="544" y2="70"/><line x1="36" y1="116" x2="544" y2="116"/><line x1="36" y1="162" x2="544" y2="162"/><line x1="36" y1="200" x2="544" y2="200"/></g>
+        <g fill="#5c6b68" font-size="10">
+          <text x="30" y="28" text-anchor="end">6k</text><text x="30" y="74" text-anchor="end">4k</text>
+          <text x="30" y="120" text-anchor="end">2k</text><text x="30" y="204" text-anchor="end">0</text>
+        </g>
+        <!-- bars: h = v/6000*176 ; base 200 -->
+        <g class="chart-bars" fill="#0e7490">
+          <rect x="52"  y="76.8" width="44" height="123.2" rx="6"/>
+          <rect x="122" y="50.4" width="44" height="149.6" rx="6"/>
+          <rect x="192" y="59.2" width="44" height="140.8" rx="6"/>
+          <rect x="262" y="17.9" width="44" height="182.1" rx="6"/>
+          <rect x="332" y="26.9" width="44" height="173.1" rx="6"/>
+          <rect x="402" y="100.1" width="44" height="99.9" rx="6" fill="#0b5e75" opacity=".55"/>
+          <rect x="472" y="138.4" width="44" height="61.6" rx="6" fill="#0b5e75" opacity=".35"/>
+        </g>
+        <g fill="#5c6b68" font-size="10" text-anchor="middle">
+          <text x="74" y="216">27</text><text x="144" y="216">28</text><text x="214" y="216">29</text>
+          <text x="284" y="216">30</text><text x="354" y="216">31</text><text x="424" y="216">01</text><text x="494" y="216">02*</text>
+        </g>
+        <text x="284" y="14" text-anchor="middle" font-size="11" font-weight="700" fill="#162321">6,200</text>
+      </svg>
+      <div class="legend"><span><i style="background:#0e7490"></i>Completed days</span><span><i style="background:#0b5e75;opacity:.55"></i>Partial days (today &amp; yesterday)</span></div>
+    </div>
+
+    <div class="panel-card">
+      <header><h2>Validation breakdown</h2><span>all processed documents</span></header>
+      <svg viewBox="0 0 240 200" width="100%" role="img" aria-label="Donut: auto-approved 74%, corrected 13%, flagged 9%, escalated 3%, rejected 1%">
+        <g transform="translate(120,90)" fill="none" stroke-width="30" class="chart-donut">
+          <!-- r=62 -> C=389.6 ; dash = pct*389.6, gap = C - dash ; each slice starts where the previous ends -->
+          <circle r="62" stroke="#15803d" stroke-dasharray="288.3 101.3" transform="rotate(-90)"/>
+          <circle r="62" stroke="#0e7490" stroke-dasharray="50.6 339.0" transform="rotate(176.4)"/>
+          <circle r="62" stroke="#b45309" stroke-dasharray="35.1 354.5" transform="rotate(223.2)"/>
+          <circle r="62" stroke="#162321" stroke-dasharray="11.7 377.9" transform="rotate(255.6)"/>
+          <circle r="62" stroke="#b42318" stroke-dasharray="3.9 385.7" transform="rotate(266.4)"/>
+        </g>
+        <text x="120" y="88" text-anchor="middle" font-size="22" font-weight="700" fill="#162321" font-family="Archivo">74%</text>
+        <text x="120" y="106" text-anchor="middle" font-size="9.5" fill="#5c6b68">AUTO-APPROVED</text>
+      </svg>
+      <div class="legend">
+        <span><i style="background:#15803d"></i>Auto-approved 74%</span>
+        <span><i style="background:#0e7490"></i>Corrected by clerk 13%</span>
+        <span><i style="background:#b45309"></i>Flagged 9%</span>
+        <span><i style="background:#162321"></i>Escalated 3%</span>
+        <span><i style="background:#b42318"></i>Rejected 1%</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap dash-grid" id="queue" aria-label="Review queue and coverage">
+    <div class="panel-card">
+      <header><h2>Pending review queue</h2><span>1,273 items · oldest first</span></header>
+      <div data-stagger>
+      <div class="q-item">
+        <span class="who"><b>MP/DHR/2026/08399</b><small>Jamabandi 1971–72 · Dhar · 3 flagged fields</small></span>
+        <span class="q-badge rev">Review</span><span class="age">2d 6h</span>
+      </div>
+      <div class="q-item">
+        <span class="who"><b>MP/IND/2026/08396</b><small>Khasra Register 1994 · Indore · 1 flagged field</small></span>
+        <span class="q-badge rev">Review</span><span class="age">1d 9h</span>
+      </div>
+      <div class="q-item">
+        <span class="who"><b>MP/UJN/2026/08391</b><small>Mutation Entry 1489 · Ujjain · 2 flagged fields</small></span>
+        <span class="q-badge rev">Review</span><span class="age">11h</span>
+      </div>
+      <div class="q-item">
+        <span class="who"><b>MP/RTL/2026/08385</b><small>Record-of-Rights · Ratlam · awaiting officer</small></span>
+        <span class="q-badge ext">Approve</span><span class="age">6h</span>
+      </div>
+      <div class="q-item">
+        <span class="who"><b>MP/GWL/2026/08387</b><small>Sale Deed 2210/2019 · Gwalior · awaiting officer</small></span>
+        <span class="q-badge ext">Approve</span><span class="age">4h</span>
+      </div>
+      </div>
+    </div>
+
+    <div class="panel-card" id="coverage">
+      <header><h2>District coverage</h2><span>villages digitized</span></header>
+      <ul class="progress-list" data-stagger>
+        <li><span>Indore</span><span class="bar"><span class="fill" style="width:86%"></span></span><span class="pct">86%</span></li>
+        <li><span>Bhopal</span><span class="bar"><span class="fill" style="width:78%"></span></span><span class="pct">78%</span></li>
+        <li><span>Ujjain</span><span class="bar"><span class="fill" style="width:64%"></span></span><span class="pct">64%</span></li>
+        <li><span>Gwalior</span><span class="bar"><span class="fill" style="width:59%"></span></span><span class="pct">59%</span></li>
+        <li><span>Dhar</span><span class="bar"><span class="fill" style="width:47%"></span></span><span class="pct">47%</span></li>
+        <li><span>Ratlam</span><span class="bar"><span class="fill" style="width:38%"></span></span><span class="pct">38%</span></li>
+      </ul>
+      <p style="color:var(--muted); font-size:13px; margin:14px 0 0;">Dhar and Ratlam are scanning-constrained; two additional scanner crews deploy next week.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="foot-legal">
+    <div class="wrap">
+      <span>© 2026 Nagrik (demo). All figures illustrative.</span>
+      <span class="demo-tag">PROTOTYPE 02 · NAGRIK · MOCK DATA</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

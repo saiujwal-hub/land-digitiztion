@@ -1,0 +1,5270 @@
+{
+  "metadata": {
+    "source_document": "C:\\Users\\meesa\\Downloads\\telangana_official_land_document.pdf",
+    "total_pages": 6,
+    "total_ocr_pages": 6,
+    "processed_page_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "cache_used": false,
+    "complete_processing": true,
+    "failed_pages": [],
+    "validation_errors": [],
+    "total_processing_time_s": 29.23,
+    "total_lines_extracted": 229,
+    "render_scale": 1.5,
+    "omp_num_threads": 8,
+    "execution_mode": "remote_gpu",
+    "requested_language": "en",
+    "pages_sent": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "pages_received": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "remote_failures": [],
+    "fallback_used": false,
+    "remote_run_summary": {
+      "execution_mode": "remote_gpu",
+      "requested_language": "en",
+      "pages_sent": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "pages_received": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "remote_failures": [],
+      "fallback_used": false
+    }
+  },
+  "multilingual_metadata": {
+    "language_strategy": "en",
+    "detected_document_languages": [
+      "English"
+    ],
+    "primary_document_language": "English",
+    "language_detection_method": "unicode_script",
+    "models_available_locally": {
+      "en": true,
+      "te": true,
+      "hi": false,
+      "kn": false,
+      "ta": false,
+      "mr": false,
+      "ur": false
+    }
+  },
+  "handwriting": {
+    "detected": true,
+    "recognized": false,
+    "needs_review": true
+  },
+  "pages_ocr": [
+    {
+      "page_number": 1,
+      "image_dimensions": {
+        "width": 1122,
+        "height": 1500
+      },
+      "processing_time_ms": 3846.77,
+      "pdf_render_ms": 75.57,
+      "ocr_inference_ms": 3771.19,
+      "line_count": 43,
+      "average_confidence": 0.9134,
+      "raw_text": "12104\nno12736/5\n100Rs.\nC·S.12719\nR$100\n200T\nONEHUNDRED RUPEES\nA23 CC\n19615\nAar\nSoriaì No : 11.670\nDt9-102003\nFor Whem :\nH S. SHINIDHI HOHES(F)LTD, REP\nPurchased By :\nSub Rogigtrar\nEx.Ofticio Stamp Vendot\nF.SRINIVAS REDDT, S/O.VEIKU\nP.SRINIVAS REDDY\nS.R.O.GHATKESAP\nREDDY\nP/0. 9-121/5\nS_A__L__E___D__E__E__D\nHMT NAGAR\nP.R.DIST\n2003 by :-\nday of ____ac_______\nSRINIDHI HOMES PRIVATE LIMITED, ROPPeBOnTOd bY Sto\n600\nM/e.\nNo. 101 & 102, 1st FI oor, S. R. Compl ex, Opp. C. C. M. B. Habsi guda,\nHyderabad-50e e07.\n(HEREINAFTER CALLED THE \"VENDOR) of the First Part.\nIN_EAYQUB_QE\nSHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS,\nHOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH\nNAGAR. HALKAJGIRI, SECUNDERABAD. R. R. DIST.\nOCCUPATION:\n(HEREINAFTER CALLED THE *PURCHASER\") of the Sooond Part.\nContd..2\nTRUE COPY\nSub - Resras\nCHATKSAR",
+      "model_status": "AVAILABLE",
+      "detected_languages": [
+        "English"
+      ],
+      "primary_language": "English",
+      "language_detection_method": "unicode_script",
+      "ocr_language_model": null,
+      "ocr_elements": [
+        {
+          "text": "12104",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.9367,
+          "bbox": [
+            817,
+            41,
+            884,
+            68
+          ],
+          "bounding_box": [
+            817,
+            41,
+            884,
+            68
+          ],
+          "page": 1
+        },
+        {
+          "text": "no12736/5",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9186,
+          "bbox": [
+            552,
+            65,
+            745,
+            122
+          ],
+          "bounding_box": [
+            552,
+            65,
+            745,
+            122
+          ],
+          "page": 1
+        },
+        {
+          "text": "100Rs.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9995,
+          "bbox": [
+            829,
+            70,
+            919,
+            102
+          ],
+          "bounding_box": [
+            829,
+            70,
+            919,
+            102
+          ],
+          "page": 1
+        },
+        {
+          "text": "C·S.12719",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9147,
+          "bbox": [
+            320,
+            108,
+            451,
+            130
+          ],
+          "bounding_box": [
+            320,
+            108,
+            451,
+            130
+          ],
+          "page": 1
+        },
+        {
+          "text": "R$100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9361,
+          "bbox": [
+            668,
+            289,
+            826,
+            340
+          ],
+          "bounding_box": [
+            668,
+            289,
+            826,
+            340
+          ],
+          "page": 1
+        },
+        {
+          "text": "200T",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9272,
+          "bbox": [
+            259,
+            308,
+            394,
+            356
+          ],
+          "bounding_box": [
+            259,
+            308,
+            394,
+            356
+          ],
+          "page": 1
+        },
+        {
+          "text": "ONEHUNDRED RUPEES",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9305,
+          "bbox": [
+            229,
+            403,
+            861,
+            474
+          ],
+          "bounding_box": [
+            229,
+            403,
+            861,
+            474
+          ],
+          "page": 1
+        },
+        {
+          "text": "A23 CC",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9471,
+          "bbox": [
+            307,
+            521,
+            451,
+            565
+          ],
+          "bounding_box": [
+            307,
+            521,
+            451,
+            565
+          ],
+          "page": 1
+        },
+        {
+          "text": "19615",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.7934,
+          "bbox": [
+            499,
+            539,
+            571,
+            569
+          ],
+          "bounding_box": [
+            499,
+            539,
+            571,
+            569
+          ],
+          "page": 1
+        },
+        {
+          "text": "Aar",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8196,
+          "bbox": [
+            755,
+            555,
+            884,
+            615
+          ],
+          "bounding_box": [
+            755,
+            555,
+            884,
+            615
+          ],
+          "page": 1
+        },
+        {
+          "text": "Soriaì No : 11.670",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8285,
+          "bbox": [
+            282,
+            567,
+            455,
+            588
+          ],
+          "bounding_box": [
+            282,
+            567,
+            455,
+            588
+          ],
+          "page": 1
+        },
+        {
+          "text": "Dt9-102003",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7113,
+          "bbox": [
+            103,
+            575,
+            255,
+            596
+          ],
+          "bounding_box": [
+            103,
+            575,
+            255,
+            596
+          ],
+          "page": 1
+        },
+        {
+          "text": "For Whem :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9078,
+          "bbox": [
+            487,
+            588,
+            578,
+            609
+          ],
+          "bounding_box": [
+            487,
+            588,
+            578,
+            609
+          ],
+          "page": 1
+        },
+        {
+          "text": "H S. SHINIDHI HOHES(F)LTD, REP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8706,
+          "bbox": [
+            407,
+            597,
+            662,
+            635
+          ],
+          "bounding_box": [
+            407,
+            597,
+            662,
+            635
+          ],
+          "page": 1
+        },
+        {
+          "text": "Purchased By :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9761,
+          "bbox": [
+            177,
+            599,
+            303,
+            619
+          ],
+          "bounding_box": [
+            177,
+            599,
+            303,
+            619
+          ],
+          "page": 1
+        },
+        {
+          "text": "Sub Rogigtrar",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9253,
+          "bbox": [
+            754,
+            603,
+            877,
+            624
+          ],
+          "bounding_box": [
+            754,
+            603,
+            877,
+            624
+          ],
+          "page": 1
+        },
+        {
+          "text": "Ex.Ofticio Stamp Vendot",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9124,
+          "bbox": [
+            721,
+            613,
+            934,
+            639
+          ],
+          "bounding_box": [
+            721,
+            613,
+            934,
+            639
+          ],
+          "page": 1
+        },
+        {
+          "text": "F.SRINIVAS REDDT, S/O.VEIKU",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9101,
+          "bbox": [
+            120,
+            616,
+            351,
+            640
+          ],
+          "bounding_box": [
+            120,
+            616,
+            351,
+            640
+          ],
+          "page": 1
+        },
+        {
+          "text": "P.SRINIVAS REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9779,
+          "bbox": [
+            411,
+            625,
+            555,
+            645
+          ],
+          "bounding_box": [
+            411,
+            625,
+            555,
+            645
+          ],
+          "page": 1
+        },
+        {
+          "text": "S.R.O.GHATKESAP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9967,
+          "bbox": [
+            710,
+            630,
+            852,
+            653
+          ],
+          "bounding_box": [
+            710,
+            630,
+            852,
+            653
+          ],
+          "page": 1
+        },
+        {
+          "text": "REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9921,
+          "bbox": [
+            120,
+            639,
+            168,
+            657
+          ],
+          "bounding_box": [
+            120,
+            639,
+            168,
+            657
+          ],
+          "page": 1
+        },
+        {
+          "text": "P/0. 9-121/5",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.6663,
+          "bbox": [
+            122,
+            655,
+            230,
+            676
+          ],
+          "bounding_box": [
+            122,
+            655,
+            230,
+            676
+          ],
+          "page": 1
+        },
+        {
+          "text": "S_A__L__E___D__E__E__D",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9036,
+          "bbox": [
+            408,
+            673,
+            646,
+            708
+          ],
+          "bounding_box": [
+            408,
+            673,
+            646,
+            708
+          ],
+          "page": 1
+        },
+        {
+          "text": "HMT NAGAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9573,
+          "bbox": [
+            123,
+            676,
+            206,
+            695
+          ],
+          "bounding_box": [
+            123,
+            676,
+            206,
+            695
+          ],
+          "page": 1
+        },
+        {
+          "text": "P.R.DIST",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9703,
+          "bbox": [
+            124,
+            696,
+            197,
+            714
+          ],
+          "bounding_box": [
+            124,
+            696,
+            197,
+            714
+          ],
+          "page": 1
+        },
+        {
+          "text": "2003 by :-",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9244,
+          "bbox": [
+            465,
+            746,
+            571,
+            767
+          ],
+          "bounding_box": [
+            465,
+            746,
+            571,
+            767
+          ],
+          "page": 1
+        },
+        {
+          "text": "day of ____ac_______",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.861,
+          "bbox": [
+            224,
+            751,
+            455,
+            778
+          ],
+          "bounding_box": [
+            224,
+            751,
+            455,
+            778
+          ],
+          "page": 1
+        },
+        {
+          "text": "SRINIDHI HOMES PRIVATE LIMITED, ROPPeBOnTOd bY Sto",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8991,
+          "bbox": [
+            287,
+            771,
+            869,
+            827
+          ],
+          "bounding_box": [
+            287,
+            771,
+            869,
+            827
+          ],
+          "page": 1
+        },
+        {
+          "text": "600",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.9742,
+          "bbox": [
+            145,
+            806,
+            201,
+            832
+          ],
+          "bounding_box": [
+            145,
+            806,
+            201,
+            832
+          ],
+          "page": 1
+        },
+        {
+          "text": "M/e.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7201,
+          "bbox": [
+            217,
+            808,
+            260,
+            826
+          ],
+          "bounding_box": [
+            217,
+            808,
+            260,
+            826
+          ],
+          "page": 1
+        },
+        {
+          "text": "No. 101 & 102, 1st FI oor, S. R. Compl ex, Opp. C. C. M. B. Habsi guda,",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9367,
+          "bbox": [
+            217,
+            820,
+            867,
+            879
+          ],
+          "bounding_box": [
+            217,
+            820,
+            867,
+            879
+          ],
+          "page": 1
+        },
+        {
+          "text": "Hyderabad-50e e07.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9104,
+          "bbox": [
+            220,
+            866,
+            406,
+            890
+          ],
+          "bounding_box": [
+            220,
+            866,
+            406,
+            890
+          ],
+          "page": 1
+        },
+        {
+          "text": "(HEREINAFTER CALLED THE \"VENDOR) of the First Part.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9756,
+          "bbox": [
+            262,
+            872,
+            812,
+            922
+          ],
+          "bounding_box": [
+            262,
+            872,
+            812,
+            922
+          ],
+          "page": 1
+        },
+        {
+          "text": "IN_EAYQUB_QE",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.909,
+          "bbox": [
+            475,
+            935,
+            604,
+            959
+          ],
+          "bounding_box": [
+            475,
+            935,
+            604,
+            959
+          ],
+          "page": 1
+        },
+        {
+          "text": "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS,",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9637,
+          "bbox": [
+            269,
+            967,
+            873,
+            1015
+          ],
+          "bounding_box": [
+            269,
+            967,
+            873,
+            1015
+          ],
+          "page": 1
+        },
+        {
+          "text": "HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.981,
+          "bbox": [
+            361,
+            983,
+            878,
+            1028
+          ],
+          "bounding_box": [
+            361,
+            983,
+            878,
+            1028
+          ],
+          "page": 1
+        },
+        {
+          "text": "NAGAR. HALKAJGIRI, SECUNDERABAD. R. R. DIST.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9618,
+          "bbox": [
+            228,
+            1010,
+            666,
+            1049
+          ],
+          "bounding_box": [
+            228,
+            1010,
+            666,
+            1049
+          ],
+          "page": 1
+        },
+        {
+          "text": "OCCUPATION:",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9913,
+          "bbox": [
+            228,
+            1012,
+            344,
+            1032
+          ],
+          "bounding_box": [
+            228,
+            1012,
+            344,
+            1032
+          ],
+          "page": 1
+        },
+        {
+          "text": "(HEREINAFTER CALLED THE *PURCHASER\") of the Sooond Part.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9565,
+          "bbox": [
+            251,
+            1049,
+            842,
+            1094
+          ],
+          "bounding_box": [
+            251,
+            1049,
+            842,
+            1094
+          ],
+          "page": 1
+        },
+        {
+          "text": "Contd..2",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9962,
+          "bbox": [
+            759,
+            1080,
+            855,
+            1102
+          ],
+          "bounding_box": [
+            759,
+            1080,
+            855,
+            1102
+          ],
+          "page": 1
+        },
+        {
+          "text": "TRUE COPY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9803,
+          "bbox": [
+            759,
+            1188,
+            922,
+            1237
+          ],
+          "bounding_box": [
+            759,
+            1188,
+            922,
+            1237
+          ],
+          "page": 1
+        },
+        {
+          "text": "Sub - Resras",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7611,
+          "bbox": [
+            751,
+            1246,
+            954,
+            1297
+          ],
+          "bounding_box": [
+            751,
+            1246,
+            954,
+            1297
+          ],
+          "page": 1
+        },
+        {
+          "text": "CHATKSAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9453,
+          "bbox": [
+            767,
+            1272,
+            947,
+            1329
+          ],
+          "bounding_box": [
+            767,
+            1272,
+            947,
+            1329
+          ],
+          "page": 1
+        }
+      ],
+      "ocr_language_model_status": "AVAILABLE"
+    },
+    {
+      "page_number": 2,
+      "image_dimensions": {
+        "width": 1073,
+        "height": 1500
+      },
+      "processing_time_ms": 6031.29,
+      "pdf_render_ms": 99.56,
+      "ocr_inference_ms": 5931.72,
+      "line_count": 38,
+      "average_confidence": 0.8635,
+      "raw_text": "100Rs.\nR$100\n200T\nQEFTCONEHUNDRED RUPEES\n10610\n4200\nDencminotien: 100\nrka\nD3te:04-1-2003:50ria1 No:1,575\nFor whca :\nH/S.SRINIDHI HCHES(P)LTD, REE\nSub Registrat\n: Purchasyd By :\nEx.Ofticio Stamp Vendoc\nP.SKINTVAS REDDYIS/G.VENKU\nP.SRINIVAS. REDDY\nS.R.O.GHATKESAP\nREDDY\n9/0. 9-1313\n1: 2:1\nHMT NAGAR\n.R.R.DIST\nSurvey No. 281, admeasuring Aor 3-32 Gts., and 1n Survey No. 282\nadmeasuring Ac: 8-24 Gts.. totall y admeasuring Ao: 15-32 Gts.,\nSituated at Aushapur Village and Gram panohayat, Ghatkosar\nMandal, Ranga Reddy District, having acquired by virtue of\nRegd. Doot. Nos. 5121/2002 & 5941/2002, Rogd., rpspeotivel y at\nS. R. O. Ghatkesar.\nWHEREAS the VENDOR has offered to'sell a piece of land ad-\nmeasuring 48@ Sq. yds., or 401. 4 Sq. Mtrs., Marked as pl ot\nNos.1023/1 & 1023/2, of SRIN1DHI ENCLAVE-11, S1tuated at\nAushapur Village, free from enoumbaranoes for a total consid-\neration of Rs. 48, G0@/- and the PURCHASER agreed to purchase\nthe same for the said consideration.\nAong\nContd. 3\nTRUE COPY\nSeb Resssa",
+      "model_status": "AVAILABLE",
+      "detected_languages": [
+        "English"
+      ],
+      "primary_language": "English",
+      "language_detection_method": "unicode_script",
+      "ocr_language_model": null,
+      "ocr_elements": [
+        {
+          "text": "100Rs.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9637,
+          "bbox": [
+            789,
+            59,
+            879,
+            97
+          ],
+          "bounding_box": [
+            789,
+            59,
+            879,
+            97
+          ],
+          "page": 2
+        },
+        {
+          "text": "R$100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9097,
+          "bbox": [
+            634,
+            283,
+            789,
+            338
+          ],
+          "bounding_box": [
+            634,
+            283,
+            789,
+            338
+          ],
+          "page": 2
+        },
+        {
+          "text": "200T",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7923,
+          "bbox": [
+            215,
+            307,
+            370,
+            363
+          ],
+          "bounding_box": [
+            215,
+            307,
+            370,
+            363
+          ],
+          "page": 2
+        },
+        {
+          "text": "QEFTCONEHUNDRED RUPEES",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8758,
+          "bbox": [
+            196,
+            402,
+            826,
+            482
+          ],
+          "bounding_box": [
+            196,
+            402,
+            826,
+            482
+          ],
+          "page": 2
+        },
+        {
+          "text": "10610",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.7933,
+          "bbox": [
+            467,
+            538,
+            539,
+            566
+          ],
+          "bounding_box": [
+            467,
+            538,
+            539,
+            566
+          ],
+          "page": 2
+        },
+        {
+          "text": "4200",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.5438,
+          "bbox": [
+            311,
+            550,
+            453,
+            585
+          ],
+          "bounding_box": [
+            311,
+            550,
+            453,
+            585
+          ],
+          "page": 2
+        },
+        {
+          "text": "Dencminotien: 100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8736,
+          "bbox": [
+            470,
+            555,
+            640,
+            590
+          ],
+          "bounding_box": [
+            470,
+            555,
+            640,
+            590
+          ],
+          "page": 2
+        },
+        {
+          "text": "rka",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.3485,
+          "bbox": [
+            722,
+            560,
+            822,
+            617
+          ],
+          "bounding_box": [
+            722,
+            560,
+            822,
+            617
+          ],
+          "page": 2
+        },
+        {
+          "text": "D3te:04-1-2003:50ria1 No:1,575",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.6833,
+          "bbox": [
+            74,
+            570,
+            425,
+            603
+          ],
+          "bounding_box": [
+            74,
+            570,
+            425,
+            603
+          ],
+          "page": 2
+        },
+        {
+          "text": "For whca :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.6477,
+          "bbox": [
+            455,
+            592,
+            545,
+            613
+          ],
+          "bounding_box": [
+            455,
+            592,
+            545,
+            613
+          ],
+          "page": 2
+        },
+        {
+          "text": "H/S.SRINIDHI HCHES(P)LTD, REE",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9265,
+          "bbox": [
+            377,
+            601,
+            632,
+            641
+          ],
+          "bounding_box": [
+            377,
+            601,
+            632,
+            641
+          ],
+          "page": 2
+        },
+        {
+          "text": "Sub Registrat",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.986,
+          "bbox": [
+            720,
+            603,
+            843,
+            629
+          ],
+          "bounding_box": [
+            720,
+            603,
+            843,
+            629
+          ],
+          "page": 2
+        },
+        {
+          "text": ": Purchasyd By :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8084,
+          "bbox": [
+            84,
+            604,
+            274,
+            627
+          ],
+          "bounding_box": [
+            84,
+            604,
+            274,
+            627
+          ],
+          "page": 2
+        },
+        {
+          "text": "Ex.Ofticio Stamp Vendoc",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9242,
+          "bbox": [
+            688,
+            614,
+            899,
+            643
+          ],
+          "bounding_box": [
+            688,
+            614,
+            899,
+            643
+          ],
+          "page": 2
+        },
+        {
+          "text": "P.SKINTVAS REDDYIS/G.VENKU",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7246,
+          "bbox": [
+            90,
+            619,
+            322,
+            648
+          ],
+          "bounding_box": [
+            90,
+            619,
+            322,
+            648
+          ],
+          "page": 2
+        },
+        {
+          "text": "P.SRINIVAS. REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9596,
+          "bbox": [
+            380,
+            629,
+            523,
+            652
+          ],
+          "bounding_box": [
+            380,
+            629,
+            523,
+            652
+          ],
+          "page": 2
+        },
+        {
+          "text": "S.R.O.GHATKESAP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9839,
+          "bbox": [
+            671,
+            634,
+            817,
+            657
+          ],
+          "bounding_box": [
+            671,
+            634,
+            817,
+            657
+          ],
+          "page": 2
+        },
+        {
+          "text": "REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9587,
+          "bbox": [
+            87,
+            645,
+            141,
+            663
+          ],
+          "bounding_box": [
+            87,
+            645,
+            141,
+            663
+          ],
+          "page": 2
+        },
+        {
+          "text": "9/0. 9-1313",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.7823,
+          "bbox": [
+            94,
+            661,
+            204,
+            685
+          ],
+          "bounding_box": [
+            94,
+            661,
+            204,
+            685
+          ],
+          "page": 2
+        },
+        {
+          "text": "1: 2:1",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.6958,
+          "bbox": [
+            460,
+            673,
+            534,
+            694
+          ],
+          "bounding_box": [
+            460,
+            673,
+            534,
+            694
+          ],
+          "page": 2
+        },
+        {
+          "text": "HMT NAGAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9222,
+          "bbox": [
+            97,
+            682,
+            180,
+            703
+          ],
+          "bounding_box": [
+            97,
+            682,
+            180,
+            703
+          ],
+          "page": 2
+        },
+        {
+          "text": ".R.R.DIST",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9532,
+          "bbox": [
+            93,
+            702,
+            171,
+            721
+          ],
+          "bounding_box": [
+            93,
+            702,
+            171,
+            721
+          ],
+          "page": 2
+        },
+        {
+          "text": "Survey No. 281, admeasuring Aor 3-32 Gts., and 1n Survey No. 282",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9768,
+          "bbox": [
+            196,
+            826,
+            839,
+            890
+          ],
+          "bounding_box": [
+            196,
+            826,
+            839,
+            890
+          ],
+          "page": 2
+        },
+        {
+          "text": "admeasuring Ac: 8-24 Gts.. totall y admeasuring Ao: 15-32 Gts.,",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9659,
+          "bbox": [
+            197,
+            843,
+            837,
+            905
+          ],
+          "bounding_box": [
+            197,
+            843,
+            837,
+            905
+          ],
+          "page": 2
+        },
+        {
+          "text": "Situated at Aushapur Village and Gram panohayat, Ghatkosar",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9657,
+          "bbox": [
+            199,
+            859,
+            838,
+            921
+          ],
+          "bounding_box": [
+            199,
+            859,
+            838,
+            921
+          ],
+          "page": 2
+        },
+        {
+          "text": "Mandal, Ranga Reddy District, having acquired by virtue of",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9903,
+          "bbox": [
+            200,
+            876,
+            839,
+            937
+          ],
+          "bounding_box": [
+            200,
+            876,
+            839,
+            937
+          ],
+          "page": 2
+        },
+        {
+          "text": "Regd. Doot. Nos. 5121/2002 & 5941/2002, Rogd., rpspeotivel y at",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9412,
+          "bbox": [
+            203,
+            894,
+            840,
+            951
+          ],
+          "bounding_box": [
+            203,
+            894,
+            840,
+            951
+          ],
+          "page": 2
+        },
+        {
+          "text": "S. R. O. Ghatkesar.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9902,
+          "bbox": [
+            204,
+            941,
+            375,
+            964
+          ],
+          "bounding_box": [
+            204,
+            941,
+            375,
+            964
+          ],
+          "page": 2
+        },
+        {
+          "text": "WHEREAS the VENDOR has offered to'sell a piece of land ad-",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9628,
+          "bbox": [
+            206,
+            957,
+            842,
+            1013
+          ],
+          "bounding_box": [
+            206,
+            957,
+            842,
+            1013
+          ],
+          "page": 2
+        },
+        {
+          "text": "measuring 48@ Sq. yds., or 401. 4 Sq. Mtrs., Marked as pl ot",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9714,
+          "bbox": [
+            209,
+            974,
+            843,
+            1027
+          ],
+          "bounding_box": [
+            209,
+            974,
+            843,
+            1027
+          ],
+          "page": 2
+        },
+        {
+          "text": "Nos.1023/1 & 1023/2, of SRIN1DHI ENCLAVE-11, S1tuated at",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9433,
+          "bbox": [
+            211,
+            990,
+            844,
+            1043
+          ],
+          "bounding_box": [
+            211,
+            990,
+            844,
+            1043
+          ],
+          "page": 2
+        },
+        {
+          "text": "Aushapur Village, free from enoumbaranoes for a total consid-",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9809,
+          "bbox": [
+            213,
+            1006,
+            844,
+            1058
+          ],
+          "bounding_box": [
+            213,
+            1006,
+            844,
+            1058
+          ],
+          "page": 2
+        },
+        {
+          "text": "eration of Rs. 48, G0@/- and the PURCHASER agreed to purchase",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9408,
+          "bbox": [
+            213,
+            1023,
+            846,
+            1073
+          ],
+          "bounding_box": [
+            213,
+            1023,
+            846,
+            1073
+          ],
+          "page": 2
+        },
+        {
+          "text": "the same for the said consideration.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9925,
+          "bbox": [
+            215,
+            1053,
+            581,
+            1089
+          ],
+          "bounding_box": [
+            215,
+            1053,
+            581,
+            1089
+          ],
+          "page": 2
+        },
+        {
+          "text": "Aong",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.5736,
+          "bbox": [
+            552,
+            1055,
+            714,
+            1159
+          ],
+          "bounding_box": [
+            552,
+            1055,
+            714,
+            1159
+          ],
+          "page": 2
+        },
+        {
+          "text": "Contd. 3",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9938,
+          "bbox": [
+            738,
+            1072,
+            818,
+            1092
+          ],
+          "bounding_box": [
+            738,
+            1072,
+            818,
+            1092
+          ],
+          "page": 2
+        },
+        {
+          "text": "TRUE COPY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9812,
+          "bbox": [
+            795,
+            1198,
+            961,
+            1245
+          ],
+          "bounding_box": [
+            795,
+            1198,
+            961,
+            1245
+          ],
+          "page": 2
+        },
+        {
+          "text": "Seb Resssa",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.5853,
+          "bbox": [
+            781,
+            1265,
+            973,
+            1302
+          ],
+          "bounding_box": [
+            781,
+            1265,
+            973,
+            1302
+          ],
+          "page": 2
+        }
+      ],
+      "ocr_language_model_status": "AVAILABLE"
+    },
+    {
+      "page_number": 3,
+      "image_dimensions": {
+        "width": 1094,
+        "height": 1500
+      },
+      "processing_time_ms": 5765.14,
+      "pdf_render_ms": 171.39,
+      "ocr_inference_ms": 5593.74,
+      "line_count": 41,
+      "average_confidence": 0.9034,
+      "raw_text": "100Rs\nR$100\n300\n5\nA23 ICC 10510\nDonsmination . 10\nfwy\nSっcial No 1 11, 676\nDot:0-1ー2ハ\nFor Whom :\nH/S.SRINIDHI HCMES(P) LTD, RGP\nSut Roglatrar\nPurchased By :\nEx.Officio Sramp Vondot\nP.SRINIVAS REDDY,3/O.VENNJ\nS.R.O.GHATKESAR\nP.SRINIVAS REDDY\nREDDY\nR/C. 9-131:8\n:13t:\nHMT NAGAR\nR.R.DIST\nhereby a. dmits and acknowl edged.\nthe said VENDOR as absol ute owner of the said property de-\nsoribed in the scheduie hereto and more olearly del ineated in\nthe plan annexed with the boundaries thereof shown in red\ncolour does hereby transfer, convey and amign free from\nencumbrances all the said property to hold the same to the\nsaid PURCHASER as absol ute owner together with appurtonanoes\nbel onging hereto and all the estate, right, title, interest\nand ol aim whatsoever of the VENDOR in or to the said property\nhereby conveyed. The PURCHASER shai) hold and enjoy the same\nas absol ute owner.\nIHE_YENDQB_HEBEBY_COYENANIS_VIIH_IHE_PUBCHASBB_AS_POLLOYSL\n1. The said property shall be quietly entered into and upon\nby the PURCHASER who shall hold and enjoy the same as abso-\nIute owner without any interruption from the vendor or any\npersons.glaiming through the vENDOR.\nContd. 4\nSub\nGHAY",
+      "model_status": "AVAILABLE",
+      "detected_languages": [
+        "English"
+      ],
+      "primary_language": "English",
+      "language_detection_method": "unicode_script",
+      "ocr_language_model": null,
+      "ocr_elements": [
+        {
+          "text": "100Rs",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9951,
+          "bbox": [
+            797,
+            45,
+            886,
+            84
+          ],
+          "bounding_box": [
+            797,
+            45,
+            886,
+            84
+          ],
+          "page": 3
+        },
+        {
+          "text": "R$100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8778,
+          "bbox": [
+            644,
+            274,
+            801,
+            332
+          ],
+          "bounding_box": [
+            644,
+            274,
+            801,
+            332
+          ],
+          "page": 3
+        },
+        {
+          "text": "300",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.893,
+          "bbox": [
+            214,
+            296,
+            362,
+            347
+          ],
+          "bounding_box": [
+            214,
+            296,
+            362,
+            347
+          ],
+          "page": 3
+        },
+        {
+          "text": "5",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.3432,
+          "bbox": [
+            462,
+            406,
+            523,
+            423
+          ],
+          "bounding_box": [
+            462,
+            406,
+            523,
+            423
+          ],
+          "page": 3
+        },
+        {
+          "text": "A23 ICC 10510",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.895,
+          "bbox": [
+            330,
+            530,
+            582,
+            568
+          ],
+          "bounding_box": [
+            330,
+            530,
+            582,
+            568
+          ],
+          "page": 3
+        },
+        {
+          "text": "Donsmination . 10",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.896,
+          "bbox": [
+            480,
+            551,
+            656,
+            589
+          ],
+          "bounding_box": [
+            480,
+            551,
+            656,
+            589
+          ],
+          "page": 3
+        },
+        {
+          "text": "fwy",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.4412,
+          "bbox": [
+            728,
+            562,
+            844,
+            622
+          ],
+          "bounding_box": [
+            728,
+            562,
+            844,
+            622
+          ],
+          "page": 3
+        },
+        {
+          "text": "Sっcial No 1 11, 676",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7858,
+          "bbox": [
+            254,
+            570,
+            433,
+            593
+          ],
+          "bounding_box": [
+            254,
+            570,
+            433,
+            593
+          ],
+          "page": 3
+        },
+        {
+          "text": "Dot:0-1ー2ハ",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.5151,
+          "bbox": [
+            63,
+            579,
+            224,
+            602
+          ],
+          "bounding_box": [
+            63,
+            579,
+            224,
+            602
+          ],
+          "page": 3
+        },
+        {
+          "text": "For Whom :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9972,
+          "bbox": [
+            466,
+            591,
+            557,
+            614
+          ],
+          "bounding_box": [
+            466,
+            591,
+            557,
+            614
+          ],
+          "page": 3
+        },
+        {
+          "text": "H/S.SRINIDHI HCMES(P) LTD, RGP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9505,
+          "bbox": [
+            385,
+            598,
+            646,
+            643
+          ],
+          "bounding_box": [
+            385,
+            598,
+            646,
+            643
+          ],
+          "page": 3
+        },
+        {
+          "text": "Sut Roglatrar",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8106,
+          "bbox": [
+            736,
+            598,
+            859,
+            625
+          ],
+          "bounding_box": [
+            736,
+            598,
+            859,
+            625
+          ],
+          "page": 3
+        },
+        {
+          "text": "Purchased By :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9891,
+          "bbox": [
+            143,
+            604,
+            275,
+            627
+          ],
+          "bounding_box": [
+            143,
+            604,
+            275,
+            627
+          ],
+          "page": 3
+        },
+        {
+          "text": "Ex.Officio Sramp Vondot",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9013,
+          "bbox": [
+            705,
+            606,
+            918,
+            642
+          ],
+          "bounding_box": [
+            705,
+            606,
+            918,
+            642
+          ],
+          "page": 3
+        },
+        {
+          "text": "P.SRINIVAS REDDY,3/O.VENNJ",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9511,
+          "bbox": [
+            83,
+            622,
+            328,
+            651
+          ],
+          "bounding_box": [
+            83,
+            622,
+            328,
+            651
+          ],
+          "page": 3
+        },
+        {
+          "text": "S.R.O.GHATKESAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9737,
+          "bbox": [
+            693,
+            629,
+            836,
+            656
+          ],
+          "bounding_box": [
+            693,
+            629,
+            836,
+            656
+          ],
+          "page": 3
+        },
+        {
+          "text": "P.SRINIVAS REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9978,
+          "bbox": [
+            389,
+            631,
+            535,
+            654
+          ],
+          "bounding_box": [
+            389,
+            631,
+            535,
+            654
+          ],
+          "page": 3
+        },
+        {
+          "text": "REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9998,
+          "bbox": [
+            85,
+            650,
+            134,
+            669
+          ],
+          "bounding_box": [
+            85,
+            650,
+            134,
+            669
+          ],
+          "page": 3
+        },
+        {
+          "text": "R/C. 9-131:8",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8199,
+          "bbox": [
+            87,
+            667,
+            203,
+            691
+          ],
+          "bounding_box": [
+            87,
+            667,
+            203,
+            691
+          ],
+          "page": 3
+        },
+        {
+          "text": ":13t:",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.6953,
+          "bbox": [
+            442,
+            687,
+            497,
+            708
+          ],
+          "bounding_box": [
+            442,
+            687,
+            497,
+            708
+          ],
+          "page": 3
+        },
+        {
+          "text": "HMT NAGAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9993,
+          "bbox": [
+            89,
+            689,
+            178,
+            712
+          ],
+          "bounding_box": [
+            89,
+            689,
+            178,
+            712
+          ],
+          "page": 3
+        },
+        {
+          "text": "R.R.DIST",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9994,
+          "bbox": [
+            92,
+            711,
+            168,
+            730
+          ],
+          "bounding_box": [
+            92,
+            711,
+            168,
+            730
+          ],
+          "page": 3
+        },
+        {
+          "text": "hereby a. dmits and acknowl edged.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.981,
+          "bbox": [
+            190,
+            767,
+            535,
+            810
+          ],
+          "bounding_box": [
+            190,
+            767,
+            535,
+            810
+          ],
+          "page": 3
+        },
+        {
+          "text": "the said VENDOR as absol ute owner of the said property de-",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9805,
+          "bbox": [
+            199,
+            831,
+            861,
+            915
+          ],
+          "bounding_box": [
+            199,
+            831,
+            861,
+            915
+          ],
+          "page": 3
+        },
+        {
+          "text": "soribed in the scheduie hereto and more olearly del ineated in",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9758,
+          "bbox": [
+            201,
+            848,
+            863,
+            932
+          ],
+          "bounding_box": [
+            201,
+            848,
+            863,
+            932
+          ],
+          "page": 3
+        },
+        {
+          "text": "the plan annexed with the boundaries thereof shown in red",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9958,
+          "bbox": [
+            204,
+            864,
+            864,
+            947
+          ],
+          "bounding_box": [
+            204,
+            864,
+            864,
+            947
+          ],
+          "page": 3
+        },
+        {
+          "text": "colour does hereby transfer, convey and amign free from",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9733,
+          "bbox": [
+            206,
+            881,
+            865,
+            964
+          ],
+          "bounding_box": [
+            206,
+            881,
+            865,
+            964
+          ],
+          "page": 3
+        },
+        {
+          "text": "encumbrances all the said property to hold the same to the",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9956,
+          "bbox": [
+            207,
+            898,
+            866,
+            981
+          ],
+          "bounding_box": [
+            207,
+            898,
+            866,
+            981
+          ],
+          "page": 3
+        },
+        {
+          "text": "said PURCHASER as absol ute owner together with appurtonanoes",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9566,
+          "bbox": [
+            209,
+            915,
+            866,
+            996
+          ],
+          "bounding_box": [
+            209,
+            915,
+            866,
+            996
+          ],
+          "page": 3
+        },
+        {
+          "text": "bel onging hereto and all the estate, right, title, interest",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9566,
+          "bbox": [
+            210,
+            931,
+            867,
+            1012
+          ],
+          "bounding_box": [
+            210,
+            931,
+            867,
+            1012
+          ],
+          "page": 3
+        },
+        {
+          "text": "and ol aim whatsoever of the VENDOR in or to the said property",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9704,
+          "bbox": [
+            212,
+            948,
+            868,
+            1028
+          ],
+          "bounding_box": [
+            212,
+            948,
+            868,
+            1028
+          ],
+          "page": 3
+        },
+        {
+          "text": "hereby conveyed. The PURCHASER shai) hold and enjoy the same",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9768,
+          "bbox": [
+            215,
+            964,
+            869,
+            1043
+          ],
+          "bounding_box": [
+            215,
+            964,
+            869,
+            1043
+          ],
+          "page": 3
+        },
+        {
+          "text": "as absol ute owner.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9838,
+          "bbox": [
+            217,
+            1026,
+            407,
+            1057
+          ],
+          "bounding_box": [
+            217,
+            1026,
+            407,
+            1057
+          ],
+          "page": 3
+        },
+        {
+          "text": "IHE_YENDQB_HEBEBY_COYENANIS_VIIH_IHE_PUBCHASBB_AS_POLLOYSL",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9242,
+          "bbox": [
+            222,
+            1031,
+            841,
+            1107
+          ],
+          "bounding_box": [
+            222,
+            1031,
+            841,
+            1107
+          ],
+          "page": 3
+        },
+        {
+          "text": "1. The said property shall be quietly entered into and upon",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9699,
+          "bbox": [
+            225,
+            1075,
+            879,
+            1154
+          ],
+          "bounding_box": [
+            225,
+            1075,
+            879,
+            1154
+          ],
+          "page": 3
+        },
+        {
+          "text": "by the PURCHASER who shall hold and enjoy the same as abso-",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9718,
+          "bbox": [
+            226,
+            1090,
+            880,
+            1171
+          ],
+          "bounding_box": [
+            226,
+            1090,
+            880,
+            1171
+          ],
+          "page": 3
+        },
+        {
+          "text": "Iute owner without any interruption from the vendor or any",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9749,
+          "bbox": [
+            229,
+            1108,
+            881,
+            1186
+          ],
+          "bounding_box": [
+            229,
+            1108,
+            881,
+            1186
+          ],
+          "page": 3
+        },
+        {
+          "text": "persons.glaiming through the vENDOR.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.948,
+          "bbox": [
+            230,
+            1149,
+            610,
+            1204
+          ],
+          "bounding_box": [
+            230,
+            1149,
+            610,
+            1204
+          ],
+          "page": 3
+        },
+        {
+          "text": "Contd. 4",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9847,
+          "bbox": [
+            783,
+            1159,
+            865,
+            1183
+          ],
+          "bounding_box": [
+            783,
+            1159,
+            865,
+            1183
+          ],
+          "page": 3
+        },
+        {
+          "text": "Sub",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9182,
+          "bbox": [
+            797,
+            1270,
+            903,
+            1311
+          ],
+          "bounding_box": [
+            797,
+            1270,
+            903,
+            1311
+          ],
+          "page": 3
+        },
+        {
+          "text": "GHAY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8722,
+          "bbox": [
+            813,
+            1301,
+            895,
+            1335
+          ],
+          "bounding_box": [
+            813,
+            1301,
+            895,
+            1335
+          ],
+          "page": 3
+        }
+      ],
+      "ocr_language_model_status": "AVAILABLE"
+    },
+    {
+      "page_number": 4,
+      "image_dimensions": {
+        "width": 1061,
+        "height": 1500
+      },
+      "processing_time_ms": 4478.91,
+      "pdf_render_ms": 154.0,
+      "ocr_inference_ms": 4324.9,
+      "line_count": 38,
+      "average_confidence": 0.9234,
+      "raw_text": "100Rs.\nJUDICY\nR$100\n2005\nHR\nA23 CC 10521\nDenemination , 100\nALy\nSoriol No , 11, 677\nDat-09-10-2003\nFor Whom\nPurchased By :\nM/S.SRINIDHI HOMES(P)LTD, RBP\nSub Registrar\nEx.Officio Stapp Vendor\nP.SRINIVAS REDDT, S/O.VENKU\nP.SRINIVAS REDDY\nS.R.O.GHATKESAP\nREDDY\nR/O. 9-131'8\nHMT NAGAR\nt14ts\nR.P.DIST\nerty to the PURCHASER.\ntaxes etc., payable hereafter.\n5.The previous title deeds relating to the said property\nhereby handedover to the PURCHASER.\n6. The VENDOR hereby agrees to co-operate with the PURCHASER\nto get the title of the said property ohanged in the name of\nthe PURCHASER in Revenue Reoords.\n7. The VENDOR does hereby further agree with the PURCHASER\nat all times hereafter and at the cost of the PURCHASER to do\nand execute all suoh lawful aots, deeds and things for\nfurther and more perfectly assuring the said property to the\nPURCHASER according to the true intent and meaning if this\nContd. 5\nDeed.\nSub",
+      "model_status": "AVAILABLE",
+      "detected_languages": [
+        "English"
+      ],
+      "primary_language": "English",
+      "language_detection_method": "unicode_script",
+      "ocr_language_model": null,
+      "ocr_elements": [
+        {
+          "text": "100Rs.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.999,
+          "bbox": [
+            776,
+            62,
+            867,
+            96
+          ],
+          "bounding_box": [
+            776,
+            62,
+            867,
+            96
+          ],
+          "page": 4
+        },
+        {
+          "text": "JUDICY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9981,
+          "bbox": [
+            480,
+            165,
+            669,
+            202
+          ],
+          "bounding_box": [
+            480,
+            165,
+            669,
+            202
+          ],
+          "page": 4
+        },
+        {
+          "text": "R$100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9416,
+          "bbox": [
+            621,
+            286,
+            776,
+            339
+          ],
+          "bounding_box": [
+            621,
+            286,
+            776,
+            339
+          ],
+          "page": 4
+        },
+        {
+          "text": "2005",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.8799,
+          "bbox": [
+            206,
+            302,
+            355,
+            352
+          ],
+          "bounding_box": [
+            206,
+            302,
+            355,
+            352
+          ],
+          "page": 4
+        },
+        {
+          "text": "HR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7495,
+          "bbox": [
+            434,
+            411,
+            507,
+            428
+          ],
+          "bounding_box": [
+            434,
+            411,
+            507,
+            428
+          ],
+          "page": 4
+        },
+        {
+          "text": "A23 CC 10521",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8149,
+          "bbox": [
+            322,
+            529,
+            551,
+            581
+          ],
+          "bounding_box": [
+            322,
+            529,
+            551,
+            581
+          ],
+          "page": 4
+        },
+        {
+          "text": "Denemination , 100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8446,
+          "bbox": [
+            459,
+            560,
+            631,
+            597
+          ],
+          "bounding_box": [
+            459,
+            560,
+            631,
+            597
+          ],
+          "page": 4
+        },
+        {
+          "text": "ALy",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.6324,
+          "bbox": [
+            717,
+            566,
+            830,
+            623
+          ],
+          "bounding_box": [
+            717,
+            566,
+            830,
+            623
+          ],
+          "page": 4
+        },
+        {
+          "text": "Soriol No , 11, 677",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8154,
+          "bbox": [
+            238,
+            576,
+            413,
+            596
+          ],
+          "bounding_box": [
+            238,
+            576,
+            413,
+            596
+          ],
+          "page": 4
+        },
+        {
+          "text": "Dat-09-10-2003",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8177,
+          "bbox": [
+            58,
+            580,
+            212,
+            602
+          ],
+          "bounding_box": [
+            58,
+            580,
+            212,
+            602
+          ],
+          "page": 4
+        },
+        {
+          "text": "For Whom",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.996,
+          "bbox": [
+            444,
+            600,
+            529,
+            621
+          ],
+          "bounding_box": [
+            444,
+            600,
+            529,
+            621
+          ],
+          "page": 4
+        },
+        {
+          "text": "Purchased By :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9883,
+          "bbox": [
+            134,
+            606,
+            261,
+            627
+          ],
+          "bounding_box": [
+            134,
+            606,
+            261,
+            627
+          ],
+          "page": 4
+        },
+        {
+          "text": "M/S.SRINIDHI HOMES(P)LTD, RBP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9155,
+          "bbox": [
+            364,
+            606,
+            620,
+            649
+          ],
+          "bounding_box": [
+            364,
+            606,
+            620,
+            649
+          ],
+          "page": 4
+        },
+        {
+          "text": "Sub Registrar",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9596,
+          "bbox": [
+            711,
+            610,
+            833,
+            634
+          ],
+          "bounding_box": [
+            711,
+            610,
+            833,
+            634
+          ],
+          "page": 4
+        },
+        {
+          "text": "Ex.Officio Stapp Vendor",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9688,
+          "bbox": [
+            679,
+            619,
+            890,
+            650
+          ],
+          "bounding_box": [
+            679,
+            619,
+            890,
+            650
+          ],
+          "page": 4
+        },
+        {
+          "text": "P.SRINIVAS REDDT, S/O.VENKU",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9501,
+          "bbox": [
+            77,
+            626,
+            310,
+            650
+          ],
+          "bounding_box": [
+            77,
+            626,
+            310,
+            650
+          ],
+          "page": 4
+        },
+        {
+          "text": "P.SRINIVAS REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9999,
+          "bbox": [
+            370,
+            639,
+            511,
+            659
+          ],
+          "bounding_box": [
+            370,
+            639,
+            511,
+            659
+          ],
+          "page": 4
+        },
+        {
+          "text": "S.R.O.GHATKESAP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9985,
+          "bbox": [
+            667,
+            639,
+            810,
+            663
+          ],
+          "bounding_box": [
+            667,
+            639,
+            810,
+            663
+          ],
+          "page": 4
+        },
+        {
+          "text": "REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 1.0,
+          "bbox": [
+            79,
+            650,
+            125,
+            667
+          ],
+          "bounding_box": [
+            79,
+            650,
+            125,
+            667
+          ],
+          "page": 4
+        },
+        {
+          "text": "R/O. 9-131'8",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7627,
+          "bbox": [
+            80,
+            666,
+            189,
+            687
+          ],
+          "bounding_box": [
+            80,
+            666,
+            189,
+            687
+          ],
+          "page": 4
+        },
+        {
+          "text": "HMT NAGAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.984,
+          "bbox": [
+            81,
+            688,
+            166,
+            707
+          ],
+          "bounding_box": [
+            81,
+            688,
+            166,
+            707
+          ],
+          "page": 4
+        },
+        {
+          "text": "t14ts",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.6195,
+          "bbox": [
+            441,
+            699,
+            495,
+            717
+          ],
+          "bounding_box": [
+            441,
+            699,
+            495,
+            717
+          ],
+          "page": 4
+        },
+        {
+          "text": "R.P.DIST",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9621,
+          "bbox": [
+            83,
+            708,
+            156,
+            726
+          ],
+          "bounding_box": [
+            83,
+            708,
+            156,
+            726
+          ],
+          "page": 4
+        },
+        {
+          "text": "erty to the PURCHASER.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9797,
+          "bbox": [
+            174,
+            751,
+            402,
+            778
+          ],
+          "bounding_box": [
+            174,
+            751,
+            402,
+            778
+          ],
+          "page": 4
+        },
+        {
+          "text": "taxes etc., payable hereafter.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9979,
+          "bbox": [
+            180,
+            812,
+            491,
+            845
+          ],
+          "bounding_box": [
+            180,
+            812,
+            491,
+            845
+          ],
+          "page": 4
+        },
+        {
+          "text": "5.The previous title deeds relating to the said property",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9805,
+          "bbox": [
+            187,
+            880,
+            835,
+            947
+          ],
+          "bounding_box": [
+            187,
+            880,
+            835,
+            947
+          ],
+          "page": 4
+        },
+        {
+          "text": "hereby handedover to the PURCHASER.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9908,
+          "bbox": [
+            191,
+            921,
+            550,
+            958
+          ],
+          "bounding_box": [
+            191,
+            921,
+            550,
+            958
+          ],
+          "page": 4
+        },
+        {
+          "text": "6. The VENDOR hereby agrees to co-operate with the PURCHASER",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9764,
+          "bbox": [
+            191,
+            927,
+            839,
+            994
+          ],
+          "bounding_box": [
+            191,
+            927,
+            839,
+            994
+          ],
+          "page": 4
+        },
+        {
+          "text": "to get the title of the said property ohanged in the name of",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9909,
+          "bbox": [
+            194,
+            945,
+            838,
+            1009
+          ],
+          "bounding_box": [
+            194,
+            945,
+            838,
+            1009
+          ],
+          "page": 4
+        },
+        {
+          "text": "the PURCHASER in Revenue Reoords.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9742,
+          "bbox": [
+            197,
+            986,
+            534,
+            1020
+          ],
+          "bounding_box": [
+            197,
+            986,
+            534,
+            1020
+          ],
+          "page": 4
+        },
+        {
+          "text": "7. The VENDOR does hereby further agree with the PURCHASER",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9601,
+          "bbox": [
+            197,
+            993,
+            843,
+            1054
+          ],
+          "bounding_box": [
+            197,
+            993,
+            843,
+            1054
+          ],
+          "page": 4
+        },
+        {
+          "text": "at all times hereafter and at the cost of the PURCHASER to do",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9941,
+          "bbox": [
+            200,
+            1010,
+            843,
+            1070
+          ],
+          "bounding_box": [
+            200,
+            1010,
+            843,
+            1070
+          ],
+          "page": 4
+        },
+        {
+          "text": "and execute all suoh lawful aots, deeds and things for",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9706,
+          "bbox": [
+            201,
+            1027,
+            843,
+            1086
+          ],
+          "bounding_box": [
+            201,
+            1027,
+            843,
+            1086
+          ],
+          "page": 4
+        },
+        {
+          "text": "further and more perfectly assuring the said property to the",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9941,
+          "bbox": [
+            202,
+            1044,
+            844,
+            1102
+          ],
+          "bounding_box": [
+            202,
+            1044,
+            844,
+            1102
+          ],
+          "page": 4
+        },
+        {
+          "text": "PURCHASER according to the true intent and meaning if this",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9862,
+          "bbox": [
+            203,
+            1060,
+            845,
+            1116
+          ],
+          "bounding_box": [
+            203,
+            1060,
+            845,
+            1116
+          ],
+          "page": 4
+        },
+        {
+          "text": "Contd. 5",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.925,
+          "bbox": [
+            713,
+            1111,
+            793,
+            1132
+          ],
+          "bounding_box": [
+            713,
+            1111,
+            793,
+            1132
+          ],
+          "page": 4
+        },
+        {
+          "text": "Deed.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9328,
+          "bbox": [
+            205,
+            1112,
+            254,
+            1130
+          ],
+          "bounding_box": [
+            205,
+            1112,
+            254,
+            1130
+          ],
+          "page": 4
+        },
+        {
+          "text": "Sub",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8378,
+          "bbox": [
+            799,
+            1275,
+            915,
+            1306
+          ],
+          "bounding_box": [
+            799,
+            1275,
+            915,
+            1306
+          ],
+          "page": 4
+        }
+      ],
+      "ocr_language_model_status": "AVAILABLE"
+    },
+    {
+      "page_number": 5,
+      "image_dimensions": {
+        "width": 1034,
+        "height": 1500
+      },
+      "processing_time_ms": 4843.08,
+      "pdf_render_ms": 159.05,
+      "ocr_inference_ms": 4684.02,
+      "line_count": 37,
+      "average_confidence": 0.8857,
+      "raw_text": "100Rs\n200T\nR$100\n19623\nDencnination : 100\nD:99-10-2003\nSorial No : 11,679\nJuL\nPurchased by :\nPor Whom :\nHWS. BRINICHI HCMESIP)LTD, REP\nSub Pagisttar\nP.SRIHIVAS REDDY, S/O.VENKU\nEx.officio Stamp Vendor\nREDDY\nP.SRYNIVAS REDDY\nS.R.O.GHATYESAP\nR/O. 9-121/8\nIMT NAGAR\nR.P.DIST\n118:1\nSCHEDULE_QE_IHE_PBOPEBIY\nNORTH :: 40'-0° Uide Road.\nNeighbours land.\nSOUTH :\nEAST 1: P1ot No=.104B/1 & 1048/2.\nUEST :: 30' -0\" Uide Road.\nmore fully shown in the plan in rod colour annexed horeto.\nIN VITNESS UHEREOF the VENDOR hereunto has sot his hand to\nthis Deed of sale with his free will and sound mind on the\nday, month and the year first above mentioned in the presenoe\nof the following witnesses:\nVIINESSESL\nQauace\nTHE VENDOR\n2.\nSub -",
+      "model_status": "AVAILABLE",
+      "detected_languages": [
+        "English"
+      ],
+      "primary_language": "English",
+      "language_detection_method": "unicode_script",
+      "ocr_language_model": null,
+      "ocr_elements": [
+        {
+          "text": "100Rs",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9724,
+          "bbox": [
+            765,
+            68,
+            851,
+            102
+          ],
+          "bounding_box": [
+            765,
+            68,
+            851,
+            102
+          ],
+          "page": 5
+        },
+        {
+          "text": "200T",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7395,
+          "bbox": [
+            194,
+            286,
+            346,
+            346
+          ],
+          "bounding_box": [
+            194,
+            286,
+            346,
+            346
+          ],
+          "page": 5
+        },
+        {
+          "text": "R$100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9433,
+          "bbox": [
+            607,
+            290,
+            764,
+            347
+          ],
+          "bounding_box": [
+            607,
+            290,
+            764,
+            347
+          ],
+          "page": 5
+        },
+        {
+          "text": "19623",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.8578,
+          "bbox": [
+            446,
+            531,
+            519,
+            562
+          ],
+          "bounding_box": [
+            446,
+            531,
+            519,
+            562
+          ],
+          "page": 5
+        },
+        {
+          "text": "Dencnination : 100",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9026,
+          "bbox": [
+            443,
+            562,
+            611,
+            592
+          ],
+          "bounding_box": [
+            443,
+            562,
+            611,
+            592
+          ],
+          "page": 5
+        },
+        {
+          "text": "D:99-10-2003",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7876,
+          "bbox": [
+            48,
+            564,
+            203,
+            582
+          ],
+          "bounding_box": [
+            48,
+            564,
+            203,
+            582
+          ],
+          "page": 5
+        },
+        {
+          "text": "Sorial No : 11,679",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8466,
+          "bbox": [
+            228,
+            567,
+            399,
+            586
+          ],
+          "bounding_box": [
+            228,
+            567,
+            399,
+            586
+          ],
+          "page": 5
+        },
+        {
+          "text": "JuL",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.5241,
+          "bbox": [
+            706,
+            568,
+            805,
+            626
+          ],
+          "bounding_box": [
+            706,
+            568,
+            805,
+            626
+          ],
+          "page": 5
+        },
+        {
+          "text": "Purchased by :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9523,
+          "bbox": [
+            125,
+            593,
+            251,
+            611
+          ],
+          "bounding_box": [
+            125,
+            593,
+            251,
+            611
+          ],
+          "page": 5
+        },
+        {
+          "text": "Por Whom :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9176,
+          "bbox": [
+            430,
+            599,
+            515,
+            615
+          ],
+          "bounding_box": [
+            430,
+            599,
+            515,
+            615
+          ],
+          "page": 5
+        },
+        {
+          "text": "HWS. BRINICHI HCMESIP)LTD, REP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8066,
+          "bbox": [
+            353,
+            609,
+            599,
+            639
+          ],
+          "bounding_box": [
+            353,
+            609,
+            599,
+            639
+          ],
+          "page": 5
+        },
+        {
+          "text": "Sub Pagisttar",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8369,
+          "bbox": [
+            690,
+            610,
+            811,
+            635
+          ],
+          "bounding_box": [
+            690,
+            610,
+            811,
+            635
+          ],
+          "page": 5
+        },
+        {
+          "text": "P.SRIHIVAS REDDY, S/O.VENKU",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9331,
+          "bbox": [
+            67,
+            613,
+            300,
+            632
+          ],
+          "bounding_box": [
+            67,
+            613,
+            300,
+            632
+          ],
+          "page": 5
+        },
+        {
+          "text": "Ex.officio Stamp Vendor",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9099,
+          "bbox": [
+            658,
+            621,
+            869,
+            651
+          ],
+          "bounding_box": [
+            658,
+            621,
+            869,
+            651
+          ],
+          "page": 5
+        },
+        {
+          "text": "REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9996,
+          "bbox": [
+            70,
+            631,
+            116,
+            646
+          ],
+          "bounding_box": [
+            70,
+            631,
+            116,
+            646
+          ],
+          "page": 5
+        },
+        {
+          "text": "P.SRYNIVAS REDDY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9894,
+          "bbox": [
+            358,
+            635,
+            495,
+            651
+          ],
+          "bounding_box": [
+            358,
+            635,
+            495,
+            651
+          ],
+          "page": 5
+        },
+        {
+          "text": "S.R.O.GHATYESAP",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9878,
+          "bbox": [
+            647,
+            641,
+            787,
+            665
+          ],
+          "bounding_box": [
+            647,
+            641,
+            787,
+            665
+          ],
+          "page": 5
+        },
+        {
+          "text": "R/O. 9-121/8",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7548,
+          "bbox": [
+            72,
+            652,
+            180,
+            668
+          ],
+          "bounding_box": [
+            72,
+            652,
+            180,
+            668
+          ],
+          "page": 5
+        },
+        {
+          "text": "IMT NAGAR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9626,
+          "bbox": [
+            73,
+            672,
+            157,
+            688
+          ],
+          "bounding_box": [
+            73,
+            672,
+            157,
+            688
+          ],
+          "page": 5
+        },
+        {
+          "text": "R.P.DIST",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9993,
+          "bbox": [
+            75,
+            694,
+            148,
+            708
+          ],
+          "bounding_box": [
+            75,
+            694,
+            148,
+            708
+          ],
+          "page": 5
+        },
+        {
+          "text": "118:1",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.7474,
+          "bbox": [
+            406,
+            709,
+            458,
+            725
+          ],
+          "bounding_box": [
+            406,
+            709,
+            458,
+            725
+          ],
+          "page": 5
+        },
+        {
+          "text": "SCHEDULE_QE_IHE_PBOPEBIY",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.94,
+          "bbox": [
+            310,
+            735,
+            557,
+            760
+          ],
+          "bounding_box": [
+            310,
+            735,
+            557,
+            760
+          ],
+          "page": 5
+        },
+        {
+          "text": "NORTH :: 40'-0° Uide Road.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8663,
+          "bbox": [
+            289,
+            881,
+            560,
+            906
+          ],
+          "bounding_box": [
+            289,
+            881,
+            560,
+            906
+          ],
+          "page": 5
+        },
+        {
+          "text": "Neighbours land.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.896,
+          "bbox": [
+            388,
+            899,
+            551,
+            919
+          ],
+          "bounding_box": [
+            388,
+            899,
+            551,
+            919
+          ],
+          "page": 5
+        },
+        {
+          "text": "SOUTH :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9189,
+          "bbox": [
+            292,
+            905,
+            397,
+            919
+          ],
+          "bounding_box": [
+            292,
+            905,
+            397,
+            919
+          ],
+          "page": 5
+        },
+        {
+          "text": "EAST 1: P1ot No=.104B/1 & 1048/2.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9115,
+          "bbox": [
+            291,
+            909,
+            645,
+            938
+          ],
+          "bounding_box": [
+            291,
+            909,
+            645,
+            938
+          ],
+          "page": 5
+        },
+        {
+          "text": "UEST :: 30' -0\" Uide Road.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9029,
+          "bbox": [
+            293,
+            929,
+            563,
+            953
+          ],
+          "bounding_box": [
+            293,
+            929,
+            563,
+            953
+          ],
+          "page": 5
+        },
+        {
+          "text": "more fully shown in the plan in rod colour annexed horeto.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9862,
+          "bbox": [
+            183,
+            951,
+            775,
+            990
+          ],
+          "bounding_box": [
+            183,
+            951,
+            775,
+            990
+          ],
+          "page": 5
+        },
+        {
+          "text": "IN VITNESS UHEREOF the VENDOR hereunto has sot his hand to",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9457,
+          "bbox": [
+            186,
+            982,
+            815,
+            1021
+          ],
+          "bounding_box": [
+            186,
+            982,
+            815,
+            1021
+          ],
+          "page": 5
+        },
+        {
+          "text": "this Deed of sale with his free will and sound mind on the",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9892,
+          "bbox": [
+            187,
+            999,
+            814,
+            1036
+          ],
+          "bounding_box": [
+            187,
+            999,
+            814,
+            1036
+          ],
+          "page": 5
+        },
+        {
+          "text": "day, month and the year first above mentioned in the presenoe",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9822,
+          "bbox": [
+            188,
+            1016,
+            815,
+            1051
+          ],
+          "bounding_box": [
+            188,
+            1016,
+            815,
+            1051
+          ],
+          "page": 5
+        },
+        {
+          "text": "of the following witnesses:",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9912,
+          "bbox": [
+            188,
+            1044,
+            460,
+            1066
+          ],
+          "bounding_box": [
+            188,
+            1044,
+            460,
+            1066
+          ],
+          "page": 5
+        },
+        {
+          "text": "VIINESSESL",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9067,
+          "bbox": [
+            191,
+            1079,
+            294,
+            1098
+          ],
+          "bounding_box": [
+            191,
+            1079,
+            294,
+            1098
+          ],
+          "page": 5
+        },
+        {
+          "text": "Qauace",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.4817,
+          "bbox": [
+            192,
+            1102,
+            309,
+            1138
+          ],
+          "bounding_box": [
+            192,
+            1102,
+            309,
+            1138
+          ],
+          "page": 5
+        },
+        {
+          "text": "THE VENDOR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9938,
+          "bbox": [
+            674,
+            1111,
+            787,
+            1130
+          ],
+          "bounding_box": [
+            674,
+            1111,
+            787,
+            1130
+          ],
+          "page": 5
+        },
+        {
+          "text": "2.",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.9178,
+          "bbox": [
+            195,
+            1143,
+            214,
+            1160
+          ],
+          "bounding_box": [
+            195,
+            1143,
+            214,
+            1160
+          ],
+          "page": 5
+        },
+        {
+          "text": "Sub -",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7693,
+          "bbox": [
+            751,
+            1221,
+            847,
+            1252
+          ],
+          "bounding_box": [
+            751,
+            1221,
+            847,
+            1252
+          ],
+          "page": 5
+        }
+      ],
+      "ocr_language_model_status": "AVAILABLE"
+    },
+    {
+      "page_number": 6,
+      "image_dimensions": {
+        "width": 1052,
+        "height": 1500
+      },
+      "processing_time_ms": 4258.14,
+      "pdf_render_ms": 142.84,
+      "ocr_inference_ms": 4115.3,
+      "line_count": 32,
+      "average_confidence": 0.9113,
+      "raw_text": "ENCLAVE-IIAUSHAPUR\nVillage, Ghatkesar Mandal,\nR.R. Dist. A.P.\nVENDOR: M/s SRINIDHI HOMES PVT. LTD.,\nH0-WIDE ROAD\nREFERENCES:\n7/001x1/9101-50N20\ns00\nSCALE: 1 INCH = 30 FEET\nROAD\nINCLUDED:\nPLOT-NOS-1023/1,023\nEXCLUDED:\nPLOT AREA: 488.O SQ. YDS.\n480. sQups\n(OR): HOf-4 SQ. MTS.\nMIODE\n119-96\nN\n-1\n30\nNEIGHBOURS LAND\nP-T\nSRINIDHE\nAD GNCLAVE\nWARANGAL\nHYDE\nLOCATION PLAN\nGIGNATURE OF VENDOR\nWITNESSES :\n1. Reecrhe\n2.",
+      "model_status": "AVAILABLE",
+      "detected_languages": [
+        "English"
+      ],
+      "primary_language": "English",
+      "language_detection_method": "unicode_script",
+      "ocr_language_model": null,
+      "ocr_elements": [
+        {
+          "text": "ENCLAVE-IIAUSHAPUR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9894,
+          "bbox": [
+            114,
+            170,
+            483,
+            235
+          ],
+          "bounding_box": [
+            114,
+            170,
+            483,
+            235
+          ],
+          "page": 6
+        },
+        {
+          "text": "Village, Ghatkesar Mandal,",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9962,
+          "bbox": [
+            520,
+            176,
+            864,
+            233
+          ],
+          "bounding_box": [
+            520,
+            176,
+            864,
+            233
+          ],
+          "page": 6
+        },
+        {
+          "text": "R.R. Dist. A.P.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9997,
+          "bbox": [
+            119,
+            216,
+            307,
+            259
+          ],
+          "bounding_box": [
+            119,
+            216,
+            307,
+            259
+          ],
+          "page": 6
+        },
+        {
+          "text": "VENDOR: M/s SRINIDHI HOMES PVT. LTD.,",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9627,
+          "bbox": [
+            126,
+            264,
+            550,
+            313
+          ],
+          "bounding_box": [
+            126,
+            264,
+            550,
+            313
+          ],
+          "page": 6
+        },
+        {
+          "text": "H0-WIDE ROAD",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9129,
+          "bbox": [
+            296,
+            438,
+            545,
+            479
+          ],
+          "bounding_box": [
+            296,
+            438,
+            545,
+            479
+          ],
+          "page": 6
+        },
+        {
+          "text": "REFERENCES:",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9967,
+          "bbox": [
+            695,
+            481,
+            828,
+            511
+          ],
+          "bounding_box": [
+            695,
+            481,
+            828,
+            511
+          ],
+          "page": 6
+        },
+        {
+          "text": "7/001x1/9101-50N20",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7602,
+          "bbox": [
+            491,
+            492,
+            547,
+            717
+          ],
+          "bounding_box": [
+            491,
+            492,
+            547,
+            717
+          ],
+          "page": 6
+        },
+        {
+          "text": "s00",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8019,
+          "bbox": [
+            330,
+            493,
+            414,
+            530
+          ],
+          "bounding_box": [
+            330,
+            493,
+            414,
+            530
+          ],
+          "page": 6
+        },
+        {
+          "text": "SCALE: 1 INCH = 30 FEET",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9565,
+          "bbox": [
+            661,
+            504,
+            883,
+            538
+          ],
+          "bounding_box": [
+            661,
+            504,
+            883,
+            538
+          ],
+          "page": 6
+        },
+        {
+          "text": "ROAD",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9811,
+          "bbox": [
+            222,
+            513,
+            263,
+            608
+          ],
+          "bounding_box": [
+            222,
+            513,
+            263,
+            608
+          ],
+          "page": 6
+        },
+        {
+          "text": "INCLUDED:",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9986,
+          "bbox": [
+            632,
+            539,
+            730,
+            565
+          ],
+          "bounding_box": [
+            632,
+            539,
+            730,
+            565
+          ],
+          "page": 6
+        },
+        {
+          "text": "PLOT-NOS-1023/1,023",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8487,
+          "bbox": [
+            283,
+            556,
+            468,
+            592
+          ],
+          "bounding_box": [
+            283,
+            556,
+            468,
+            592
+          ],
+          "page": 6
+        },
+        {
+          "text": "EXCLUDED:",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9998,
+          "bbox": [
+            633,
+            562,
+            731,
+            588
+          ],
+          "bounding_box": [
+            633,
+            562,
+            731,
+            588
+          ],
+          "page": 6
+        },
+        {
+          "text": "PLOT AREA: 488.O SQ. YDS.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9075,
+          "bbox": [
+            634,
+            579,
+            879,
+            617
+          ],
+          "bounding_box": [
+            634,
+            579,
+            879,
+            617
+          ],
+          "page": 6
+        },
+        {
+          "text": "480. sQups",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8916,
+          "bbox": [
+            305,
+            592,
+            430,
+            624
+          ],
+          "bounding_box": [
+            305,
+            592,
+            430,
+            624
+          ],
+          "page": 6
+        },
+        {
+          "text": "(OR): HOf-4 SQ. MTS.",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.8425,
+          "bbox": [
+            698,
+            602,
+            881,
+            641
+          ],
+          "bounding_box": [
+            698,
+            602,
+            881,
+            641
+          ],
+          "page": 6
+        },
+        {
+          "text": "MIODE",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.4633,
+          "bbox": [
+            230,
+            607,
+            275,
+            697
+          ],
+          "bounding_box": [
+            230,
+            607,
+            275,
+            697
+          ],
+          "page": 6
+        },
+        {
+          "text": "119-96",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.8857,
+          "bbox": [
+            282,
+            615,
+            312,
+            682
+          ],
+          "bounding_box": [
+            282,
+            615,
+            312,
+            682
+          ],
+          "page": 6
+        },
+        {
+          "text": "N",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9964,
+          "bbox": [
+            735,
+            659,
+            765,
+            693
+          ],
+          "bounding_box": [
+            735,
+            659,
+            765,
+            693
+          ],
+          "page": 6
+        },
+        {
+          "text": "-1",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.9945,
+          "bbox": [
+            240,
+            706,
+            272,
+            728
+          ],
+          "bounding_box": [
+            240,
+            706,
+            272,
+            728
+          ],
+          "page": 6
+        },
+        {
+          "text": "30",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 0.9924,
+          "bbox": [
+            247,
+            727,
+            276,
+            764
+          ],
+          "bounding_box": [
+            247,
+            727,
+            276,
+            764
+          ],
+          "page": 6
+        },
+        {
+          "text": "NEIGHBOURS LAND",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.997,
+          "bbox": [
+            308,
+            753,
+            484,
+            817
+          ],
+          "bounding_box": [
+            308,
+            753,
+            484,
+            817
+          ],
+          "page": 6
+        },
+        {
+          "text": "P-T",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.5663,
+          "bbox": [
+            474,
+            805,
+            504,
+            854
+          ],
+          "bounding_box": [
+            474,
+            805,
+            504,
+            854
+          ],
+          "page": 6
+        },
+        {
+          "text": "SRINIDHE",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9157,
+          "bbox": [
+            381,
+            875,
+            457,
+            892
+          ],
+          "bounding_box": [
+            381,
+            875,
+            457,
+            892
+          ],
+          "page": 6
+        },
+        {
+          "text": "AD GNCLAVE",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9193,
+          "bbox": [
+            342,
+            891,
+            458,
+            912
+          ],
+          "bounding_box": [
+            342,
+            891,
+            458,
+            912
+          ],
+          "page": 6
+        },
+        {
+          "text": "WARANGAL",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9749,
+          "bbox": [
+            452,
+            956,
+            591,
+            988
+          ],
+          "bounding_box": [
+            452,
+            956,
+            591,
+            988
+          ],
+          "page": 6
+        },
+        {
+          "text": "HYDE",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9901,
+          "bbox": [
+            257,
+            971,
+            335,
+            993
+          ],
+          "bounding_box": [
+            257,
+            971,
+            335,
+            993
+          ],
+          "page": 6
+        },
+        {
+          "text": "LOCATION PLAN",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.935,
+          "bbox": [
+            339,
+            987,
+            565,
+            1025
+          ],
+          "bounding_box": [
+            339,
+            987,
+            565,
+            1025
+          ],
+          "page": 6
+        },
+        {
+          "text": "GIGNATURE OF VENDOR",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9759,
+          "bbox": [
+            648,
+            1007,
+            879,
+            1045
+          ],
+          "bounding_box": [
+            648,
+            1007,
+            879,
+            1045
+          ],
+          "page": 6
+        },
+        {
+          "text": "WITNESSES :",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.9912,
+          "bbox": [
+            209,
+            1039,
+            324,
+            1064
+          ],
+          "bounding_box": [
+            209,
+            1039,
+            324,
+            1064
+          ],
+          "page": 6
+        },
+        {
+          "text": "1. Reecrhe",
+          "language": "English",
+          "script": "Latin",
+          "confidence": 0.7174,
+          "bbox": [
+            212,
+            1073,
+            355,
+            1104
+          ],
+          "bounding_box": [
+            212,
+            1073,
+            355,
+            1104
+          ],
+          "page": 6
+        },
+        {
+          "text": "2.",
+          "language": "Unknown",
+          "script": "Unknown",
+          "confidence": 1.0,
+          "bbox": [
+            213,
+            1113,
+            239,
+            1137
+          ],
+          "bounding_box": [
+            213,
+            1113,
+            239,
+            1137
+          ],
+          "page": 6
+        }
+      ],
+      "ocr_language_model_status": "AVAILABLE"
+    }
+  ],
+  "structured_extraction": {
+    "document_type": {
+      "field_name": "document_type",
+      "value": "Sale Deed",
+      "status": "EXTRACTED",
+      "confidence": 0.98,
+      "needs_review": false,
+      "candidates": [
+        "Sale Deed"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 5,
+      "source_text": "this Deed of sale with his free will and sound mind on the",
+      "bounding_box": [
+        187,
+        999,
+        814,
+        1036
+      ],
+      "original_ocr_value": "Sale Deed",
+      "correction_applied": false,
+      "evidence": [
+        "Page 1 title & deed-body 'THIS DEED OF SALE'"
+      ]
+    },
+    "document_number": {
+      "field_name": "document_number",
+      "value": "12736/5",
+      "status": "EXTRACTED",
+      "confidence": 0.9432,
+      "needs_review": false,
+      "candidates": [
+        "12736/5",
+        "121/5"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "no12736/5",
+      "bounding_box": [
+        552,
+        65,
+        745,
+        122
+      ],
+      "original_ocr_value": "12736/5",
+      "correction_applied": false,
+      "evidence": [
+        "no12736/5"
+      ]
+    },
+    "vendor_owner": {
+      "field_name": "vendor_owner",
+      "value": "M/s. Srinidhi Homes Private Limited",
+      "status": "EXTRACTED",
+      "confidence": 0.94,
+      "needs_review": false,
+      "candidates": [
+        "M/s. Srinidhi Homes Private Limited",
+        "M/s. Srinidhi Homes"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": " SRINIDHI HOMES PRIVATE LIMITED",
+      "bounding_box": [
+        287,
+        771,
+        869,
+        827
+      ],
+      "original_ocr_value": " SRINIDHI HOMES PRIVATE LIMITED",
+      "correction_applied": false,
+      "evidence": [
+        " SRINIDHI HOMES PRIVATE LIMITED",
+        "PURCHASED BY : M/S.SRINIDHI HOMES"
+      ],
+      "role": "Vendor / Owner",
+      "details": {
+        "name": "M/s. Srinidhi Homes Private Limited",
+        "role": "Vendor",
+        "represented_by": null,
+        "raw_text": " SRINIDHI HOMES PRIVATE LIMITED",
+        "original_ocr_value": " SRINIDHI HOMES PRIVATE LIMITED",
+        "page_number": 1,
+        "candidates": [
+          "M/s. Srinidhi Homes Private Limited",
+          "M/s. Srinidhi Homes"
+        ],
+        "conflicting_candidates": [],
+        "status": "EXTRACTED",
+        "confidence": 0.94,
+        "needs_review": false,
+        "correction_applied": false,
+        "evidence": [
+          " SRINIDHI HOMES PRIVATE LIMITED",
+          "PURCHASED BY : M/S.SRINIDHI HOMES"
+        ]
+      }
+    },
+    "purchaser": {
+      "field_name": "purchaser",
+      "value": "Smt. B. Suvarna (W/o Sri. B. Yadaiah)",
+      "status": "EXTRACTED",
+      "confidence": 0.7735,
+      "needs_review": true,
+      "candidates": [
+        "Smt. B. Suvarna (W/o Sri. B. Yadaiah)"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS, HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH NAGAR. HALKAJGIRI, SECUNDERABAD. R",
+      "bounding_box": [
+        269,
+        967,
+        873,
+        1015
+      ],
+      "original_ocr_value": "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS, HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH NAGAR. HALKAJGIRI, SECUNDERABAD. R",
+      "correction_applied": true,
+      "evidence": [
+        "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS, HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH NAGAR. HALKAJGIRI, SECUNDERABAD. R"
+      ],
+      "role": "Purchaser",
+      "details": {
+        "name": "Smt. B. Suvarna",
+        "role": "Purchaser",
+        "relation": "W/o Sri. B. Yadaiah",
+        "represented_by": null,
+        "raw_text": "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS, HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH NAGAR. HALKAJGIRI, SECUNDERABAD. R",
+        "original_ocr_value": "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS, HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH NAGAR. HALKAJGIRI, SECUNDERABAD. R",
+        "page_number": 1,
+        "candidates": [
+          "Smt. B. Suvarna (W/o Sri. B. Yadaiah)"
+        ],
+        "conflicting_candidates": [],
+        "status": "EXTRACTED",
+        "confidence": 0.91,
+        "needs_review": true,
+        "correction_applied": true,
+        "evidence": [
+          "SHT. B. SUVARNA U/O SRI. B. YADAIAH, AGED ABOUT 4B YBARS, HOUSE UIFE, RESIDENT OF H. NO. 9-77, VBNKHATESH NAGAR. HALKAJGIRI, SECUNDERABAD. R"
+        ]
+      }
+    },
+    "survey_number": {
+      "field_name": "survey_number",
+      "value": "281, 282",
+      "status": "EXTRACTED",
+      "confidence": 0.9461,
+      "needs_review": false,
+      "candidates": [
+        "281",
+        "282",
+        "281, 282"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 2,
+      "source_text": "Survey No. 281, admeasuring Aor 3-32 Gts., and 1n Survey No. 282",
+      "bounding_box": [
+        196,
+        826,
+        839,
+        890
+      ],
+      "original_ocr_value": "281, 282",
+      "correction_applied": false,
+      "evidence": [
+        "Multiple survey numbers on page 2: 281, 282"
+      ]
+    },
+    "city_survey_number": {
+      "field_name": "city_survey_number",
+      "value": "12719",
+      "status": "EXTRACTED",
+      "confidence": 0.78,
+      "needs_review": true,
+      "candidates": [
+        "12719"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "C·S.12719",
+      "bounding_box": [
+        320,
+        108,
+        451,
+        130
+      ],
+      "original_ocr_value": "12719",
+      "correction_applied": false,
+      "evidence": [
+        "C·S.12719"
+      ]
+    },
+    "khasra_number": {
+      "field_name": "khasra_number",
+      "value": null,
+      "status": "NOT_FOUND",
+      "confidence": 0.0,
+      "needs_review": true,
+      "candidates": [],
+      "conflicting_candidates": [],
+      "evidence": [],
+      "page_number": null,
+      "source_text": null,
+      "bounding_box": null,
+      "original_ocr_value": null,
+      "correction_applied": false
+    },
+    "khata_number": {
+      "field_name": "khata_number",
+      "value": null,
+      "status": "NOT_FOUND",
+      "confidence": 0.0,
+      "needs_review": true,
+      "candidates": [],
+      "conflicting_candidates": [],
+      "evidence": [],
+      "page_number": null,
+      "source_text": null,
+      "bounding_box": null,
+      "original_ocr_value": null,
+      "correction_applied": false
+    },
+    "patta_number": {
+      "field_name": "patta_number",
+      "value": null,
+      "status": "NOT_FOUND",
+      "confidence": 0.0,
+      "needs_review": true,
+      "candidates": [],
+      "conflicting_candidates": [],
+      "evidence": [],
+      "page_number": null,
+      "source_text": null,
+      "bounding_box": null,
+      "original_ocr_value": null,
+      "correction_applied": false
+    },
+    "plot_number": {
+      "field_name": "plot_number",
+      "value": "1023/1, 1023/2",
+      "status": "EXTRACTED",
+      "confidence": 0.938,
+      "needs_review": false,
+      "candidates": [
+        "1023/1, 1023/2",
+        "1023/1"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 2,
+      "source_text": "Nos.1023/1 & 1023/2, of SRIN1DHI ENCLAVE-11, S1tuated at",
+      "bounding_box": [
+        211,
+        990,
+        844,
+        1043
+      ],
+      "original_ocr_value": "1023/1, 1023/2",
+      "correction_applied": false,
+      "evidence": [
+        "PL OT NOS.1023/1 & 1023/2, "
+      ]
+    },
+    "layout_name": {
+      "field_name": "layout_name",
+      "value": "Srinidhi Enclave-II",
+      "status": "EXTRACTED",
+      "confidence": 0.9155,
+      "needs_review": false,
+      "candidates": [
+        "Srinidhi Enclave-II"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "SRINIDHI HOMES PRIVATE LIMITED, ROPPeBOnTOd bY Sto",
+      "bounding_box": [
+        287,
+        771,
+        869,
+        827
+      ],
+      "original_ocr_value": "Srinidhi Enclave-II",
+      "correction_applied": false,
+      "evidence": [
+        "OF SRIN1DHI ENCLAVE-11"
+      ]
+    },
+    "locality_or_address": {
+      "field_name": "locality_or_address",
+      "value": "Hmt Nagar",
+      "status": "EXTRACTED",
+      "confidence": 0.9544,
+      "needs_review": false,
+      "candidates": [
+        "Hmt Nagar",
+        "Hmt Nagar",
+        "Hmt Nagar",
+        "Hmt Nagar",
+        "Hmt Nagar"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "HMT NAGAR",
+      "bounding_box": [
+        123,
+        676,
+        206,
+        695
+      ],
+      "original_ocr_value": "Hmt Nagar",
+      "correction_applied": false,
+      "evidence": [
+        "HMT NAGAR",
+        "HMT NAGAR",
+        "HMT NAGAR",
+        "HMT NAGAR",
+        "IMT NAGAR"
+      ]
+    },
+    "area": {
+      "field_name": "area",
+      "value": 488,
+      "status": "CONFLICT",
+      "confidence": 0.4997,
+      "needs_review": true,
+      "candidates": [
+        "480 sq. yards (401.4 sq. metres)",
+        "488 sq. yards"
+      ],
+      "conflicting_candidates": [
+        "488 sq. yards",
+        "480 sq. yards (401.4 sq. metres)"
+      ],
+      "page_number": 6,
+      "source_text": "PLOT AREA: 488.O SQ. YDS.",
+      "bounding_box": [
+        634,
+        579,
+        879,
+        617
+      ],
+      "original_ocr_value": "488 sq. yards",
+      "correction_applied": true,
+      "evidence": [
+        "48@ SQ. YDS",
+        "PLOT AREA: 488.O SQ. YDS."
+      ]
+    },
+    "village": {
+      "field_name": "village",
+      "value": "Aushapur",
+      "status": "EXTRACTED",
+      "confidence": 0.9794,
+      "needs_review": false,
+      "candidates": [
+        "Aushapur",
+        "Aushapur",
+        "Aushapur",
+        "Aushapur"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 2,
+      "source_text": "Situated at Aushapur Village and Gram panohayat, Ghatkosar",
+      "bounding_box": [
+        199,
+        859,
+        838,
+        921
+      ],
+      "original_ocr_value": "Aushapur",
+      "correction_applied": false,
+      "evidence": [
+        "G AO: 15-32 GTS., SITUATED AT AUSHAPUR VILLAGE AND GRAM PANOHAYAT, GHATKOSAR",
+        "N1DHI ENCLAVE-11, S1TUATED AT AUSHAPUR VILLAGE, FREE FROM ENOUMBARANOES FOR ",
+        "Situated at",
+        "ENCLAVE-IIAUSHAPUR VILLAGE, GHATKESAR MANDAL, R.R. DIST."
+      ]
+    },
+    "mandal_tehsil": {
+      "field_name": "mandal",
+      "value": "Ghatkesar",
+      "status": "EXTRACTED",
+      "confidence": 0.78,
+      "needs_review": true,
+      "candidates": [
+        "Ghatkesar",
+        "Ghatkesar"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 2,
+      "source_text": "S. R. O. Ghatkesar.",
+      "bounding_box": [
+        204,
+        941,
+        375,
+        964
+      ],
+      "original_ocr_value": "Ghatkesar",
+      "correction_applied": true,
+      "evidence": [
+        "GHATKOSAR MANDAL",
+        "GHATKESAR MANDAL"
+      ]
+    },
+    "district": {
+      "field_name": "district",
+      "value": "R.R. District (Ranga Reddy District)",
+      "status": "EXTRACTED",
+      "confidence": 0.98,
+      "needs_review": false,
+      "candidates": [
+        "R.R. District (Ranga Reddy District)",
+        "R.R. District (Ranga Reddy District)",
+        "R.R. District (Ranga Reddy District)",
+        "R.R. District (Ranga Reddy District)",
+        "R.R. District (Ranga Reddy District)"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 2,
+      "source_text": "Mandal, Ranga Reddy District, having acquired by virtue of",
+      "bounding_box": [
+        200,
+        876,
+        839,
+        937
+      ],
+      "original_ocr_value": "R.R. District (Ranga Reddy District)",
+      "correction_applied": false,
+      "evidence": [
+        "R.R. DIST pattern",
+        ", GHATKOSAR MANDAL, RANGA REDDY DISTRICT, HAVING ACQUIRED BY",
+        "R.R. DIST pattern",
+        "R.R. DIST pattern",
+        "R.R. DIST pattern"
+      ]
+    },
+    "state": {
+      "field_name": "state",
+      "value": "Andhra Pradesh",
+      "status": "EXTRACTED",
+      "confidence": 0.7,
+      "needs_review": true,
+      "candidates": [
+        "Andhra Pradesh"
+      ],
+      "conflicting_candidates": [],
+      "page_number": null,
+      "source_text": "Page 6: State mention (A.P) on page 6",
+      "bounding_box": null,
+      "original_ocr_value": "Andhra Pradesh",
+      "correction_applied": false,
+      "evidence": [
+        "A.P. "
+      ]
+    },
+    "stamp_serial_number": {
+      "field_name": "stamp_serial_number",
+      "value": "12,104",
+      "status": "EXTRACTED",
+      "confidence": 0.962,
+      "needs_review": false,
+      "candidates": [
+        "12,104",
+        "10,610",
+        "10,510",
+        "2,005",
+        "19,623"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "12104",
+      "bounding_box": [
+        817,
+        41,
+        884,
+        68
+      ],
+      "original_ocr_value": "12,104",
+      "correction_applied": false,
+      "evidence": [
+        "Stamp Block Page 1: Serial No. 12,104"
+      ],
+      "stamp_serial_numbers": [
+        {
+          "page": 1,
+          "serial_number": "12,104",
+          "evidence": "Stamp Block Page 1: Serial No. 12,104"
+        },
+        {
+          "page": 2,
+          "serial_number": "10,610",
+          "evidence": "Stamp Block Page 2: Serial No. 10,610"
+        },
+        {
+          "page": 3,
+          "serial_number": "10,510",
+          "evidence": "Stamp Block Page 3: Serial No. 10,510"
+        },
+        {
+          "page": 4,
+          "serial_number": "2,005",
+          "evidence": "Stamp Block Page 4: Serial No. 2,005"
+        },
+        {
+          "page": 5,
+          "serial_number": "19,623",
+          "evidence": "Stamp Block Page 5: Serial No. 19,623"
+        }
+      ]
+    },
+    "stamp_value": {
+      "field_name": "stamp_value",
+      "value": "Rs. 100",
+      "status": "EXTRACTED",
+      "confidence": 0.98,
+      "needs_review": false,
+      "candidates": [
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100",
+        "Rs. 100"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "100Rs.",
+      "bounding_box": [
+        829,
+        70,
+        919,
+        102
+      ],
+      "original_ocr_value": "Rs. 100",
+      "correction_applied": false,
+      "evidence": [
+        "ONE HUNDRED RUPEES / 100 Rs",
+        "RS denomination",
+        "ONE HUNDRED RUPEES / 100 Rs",
+        "RS denomination",
+        "ONE HUNDRED RUPEES / 100 Rs",
+        "RS denomination",
+        "ONE HUNDRED RUPEES / 100 Rs",
+        "RS denomination",
+        "ONE HUNDRED RUPEES / 100 Rs",
+        "RS denomination"
+      ]
+    },
+    "stamp_sold_to": {
+      "field_name": "stamp_sold_to",
+      "value": "P. Srinivas Reddy",
+      "status": "EXTRACTED",
+      "confidence": 0.78,
+      "needs_review": true,
+      "candidates": [
+        "P. Skintvas Reddy",
+        "P. Srinivas Reddy"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 1,
+      "source_text": "P.SRINIVAS REDDY",
+      "bounding_box": [
+        411,
+        625,
+        555,
+        645
+      ],
+      "original_ocr_value": "P. Srinivas Reddy",
+      "correction_applied": false,
+      "evidence": [
+        "Ex.Officio Sramp Vondot P.SRINIVAS REDDY,3/O.VENNJ"
+      ]
+    },
+    "stamp_purchase_date": {
+      "field_name": "stamp_purchase_date",
+      "value": "09-10-2003",
+      "status": "EXTRACTED",
+      "confidence": 0.8826,
+      "needs_review": false,
+      "candidates": [
+        "09-10-2003",
+        "04-01-2003",
+        "09-10-2003"
+      ],
+      "conflicting_candidates": [],
+      "page_number": 4,
+      "source_text": "Dat-09-10-2003",
+      "bounding_box": [
+        58,
+        580,
+        212,
+        602
+      ],
+      "original_ocr_value": "09-10-2003",
+      "correction_applied": false,
+      "evidence": [
+        "DT9-102003",
+        "DAT-09-10-2003"
+      ],
+      "stamp_sheet_dates": [
+        {
+          "page": 1,
+          "date": "09-10-2003",
+          "evidence": "DT9-102003"
+        },
+        {
+          "page": 2,
+          "date": "04-01-2003",
+          "evidence": "D3TE:04-1-2003"
+        },
+        {
+          "page": 4,
+          "date": "09-10-2003",
+          "evidence": "DAT-09-10-2003"
+        }
+      ]
+    },
+    "document_date": {
+      "field_name": "document_date",
+      "value": null,
+      "status": "NOT_FOUND",
+      "confidence": 0.0,
+      "needs_review": true,
+      "candidates": [],
+      "conflicting_candidates": [],
+      "evidence": [],
+      "page_number": null,
+      "source_text": null,
+      "bounding_box": null,
+      "original_ocr_value": null,
+      "correction_applied": false
+    },
+    "execution_date": {
+      "field_name": "execution_date",
+      "value": null,
+      "status": "NOT_FOUND",
+      "confidence": 0.0,
+      "needs_review": true,
+      "candidates": [],
+      "conflicting_candidates": [],
+      "evidence": [],
+      "page_number": null,
+      "source_text": null,
+      "bounding_box": null,
+      "original_ocr_value": null,
+      "correction_applied": false
+    },
+    "registration_date": {
+      "field_name": "registration_date",
+      "value": null,
+      "status": "NOT_FOUND",
+      "confidence": 0.0,
+      "needs_review": true,
+      "candidates": [],
+      "conflicting_candidates": [],
+      "evidence": [],
+      "page_number": null,
+      "source_text": null,
+      "bounding_box": null,
+      "original_ocr_value": null,
+      "correction_applied": false
+    }
+  },
+  "missing_fields": [
+    "khasra_number",
+    "khata_number",
+    "patta_number",
+    "document_date",
+    "execution_date",
+    "registration_date"
+  ],
+  "conflicting_fields": [
+    "area"
+  ],
+  "needs_review_fields": [
+    "purchaser",
+    "city_survey_number",
+    "khasra_number",
+    "khata_number",
+    "patta_number",
+    "area",
+    "mandal_tehsil",
+    "state",
+    "stamp_sold_to",
+    "document_date",
+    "execution_date",
+    "registration_date"
+  ]
+}

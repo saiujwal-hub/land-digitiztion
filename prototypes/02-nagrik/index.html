@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nagrik — Land records, digitized with care</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">ना</span>
+      <span><b>Nagrik</b><small>Land Record Digitization</small></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#" aria-current="page">Home</a>
+      <a href="#how">How it works</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="#trust">Trust</a>
+    </nav>
+    <div class="head-actions">
+      <a class="btn btn-ghost" href="dashboard.html">Sign in</a>
+      <a class="btn btn-primary" href="#how">Start a batch</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="badge-line">Pilot live in 6 districts of Madhya Pradesh</span>
+        <h1>Every land record, <em>read</em>, checked, and <em>certified</em>.</h1>
+        <p class="lede">Nagrik turns scanned registers and legacy deeds into structured, verified land records — with a human reviewer for every uncertain field and a cryptographic seal on every certified record.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="dashboard.html">See the live dashboard</a>
+          <a class="btn btn-ghost" href="#how">How digitization works</a>
+        </div>
+        <p class="fineprint">Works with handwritten jamabandi, khasra registers, mutation entries, sale deeds and cadastral scans.</p>
+      </div>
+
+      <aside class="pipeline" aria-label="Live pipeline example">
+        <div class="pipeline-head"><h2>Batch MP-BPL-2611</h2><span>updated 2 min ago</span></div>
+        <div class="doc-chip">
+          <span class="thumb" aria-hidden="true"></span>
+          <span><b>Jamabandi 1998–99 · Bilakhedi</b><small>12 pages · scanned 400 dpi</small></span>
+          <span class="conf">99.2%</span>
+        </div>
+        <ol class="stages">
+          <li class="done"><span class="dot" aria-hidden="true">✓</span><span><b>Upload &amp; scan intake</b><small>12 pages accepted, quality-checked</small></span><span class="state ok">Done</span></li>
+          <li class="done"><span class="dot" aria-hidden="true">✓</span><span><b>OCR / NLP extraction</b><small>347 fields read across 12 pages</small></span><span class="state ok">Done</span></li>
+          <li class="done"><span class="dot" aria-hidden="true">✓</span><span><b>Document classification</b><small>Identified: Record-of-Rights</small></span><span class="state ok">Done</span></li>
+          <li class="active"><span class="dot" aria-hidden="true">4</span><span><b>Validation &amp; review</b><small>2 fields flagged for clerk review</small></span><span class="state now">In review</span></li>
+          <li><span class="dot" aria-hidden="true">5</span><span><b>Sealed &amp; archived</b><small>RSA-PSS signature + LRMS push</small></span><span class="state later">Pending</span></li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">How it works</span>
+        <h2 id="how-h">Five stages between a dusty register and a certified record.</h2>
+        <p>Nothing enters the record-of-rights without passing all five — and every stage leaves an entry in the audit trail.</p>
+      </div>
+      <div class="flow-grid" data-stagger>
+        <div class="flow-card"><span class="flow-num">1</span><b>Upload</b><p>Tehsil bundles of scans, legacy PDFs or photographs are intake-checked for quality.</p></div>
+        <div class="flow-card"><span class="flow-num">2</span><b>Extract</b><p>OCR and NLP read handwritten and printed text, field by field, with a confidence score each.</p></div>
+        <div class="flow-card"><span class="flow-num">3</span><b>Classify</b><p>Each document is typed — jamabandi, mutation, deed — and mapped to the record schema.</p></div>
+        <div class="flow-card"><span class="flow-num">4</span><b>Validate</b><p>Rules flag impossible dates, mismatched areas and low-confidence fields for human review.</p></div>
+        <div class="flow-card"><span class="flow-num">5</span><b>Certify</b><p>An officer approves; the record is signed and pushed to LRMS/GIS with a QR anyone can verify.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Programme in numbers">
+    <div class="wrap">
+      <div class="metrics">
+        <div class="wrap">
+          <div class="metric">
+            <div class="v" data-countup>4.82 L</div>
+            <div class="l">Documents digitized to date</div>
+            <svg width="120" height="26" viewBox="0 0 120 26" aria-hidden="true"><polyline class="chart-line" points="0,20 15,18 30,19 45,14 60,15 75,10 90,11 105,6 120,4" fill="none" stroke="#7fd0e3" stroke-width="2"/></svg>
+          </div>
+          <div class="metric">
+            <div class="v" data-countup>96.8%</div>
+            <div class="l">Field-level extraction accuracy</div>
+            <svg width="120" height="26" viewBox="0 0 120 26" aria-hidden="true"><polyline class="chart-line" points="0,22 15,21 30,18 45,17 60,14 75,12 90,10 105,8 120,7" fill="none" stroke="#7fd0e3" stroke-width="2"/></svg>
+          </div>
+          <div class="metric">
+            <div class="v" data-countup>3.91 L</div>
+            <div class="l">Records certified with digital seal</div>
+            <svg width="120" height="26" viewBox="0 0 120 26" aria-hidden="true"><polyline class="chart-line" points="0,21 15,19 30,16 45,15 60,12 75,11 90,9 105,7 120,5" fill="none" stroke="#7fd0e3" stroke-width="2"/></svg>
+          </div>
+          <div class="metric">
+            <div class="v" data-countup>41 sec</div>
+            <div class="l">Median processing time per page</div>
+            <svg width="120" height="26" viewBox="0 0 120 26" aria-hidden="true"><polyline class="chart-line" points="0,8 15,10 30,9 45,13 60,12 75,15 90,14 105,17 120,18" fill="none" stroke="#7fd0e3" stroke-width="2"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="trust" aria-labelledby="trust-h">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="kicker">Trust</span>
+        <h2 id="trust-h">Built for the accountability a land record demands.</h2>
+        <p>Land decisions outlive governments and software. Nagrik is designed so every value can be traced to its source, its reader, and its reviewer.</p>
+      </div>
+      <div class="card-grid" data-stagger>
+        <article class="card">
+          <div class="glyph" aria-hidden="true">✓</div>
+          <h3>A human for every doubt</h3>
+          <p>Fields below the confidence threshold never auto-approve. A clerk confirms each one against the scan, and the officer signs off — with names on every decision.</p>
+        </article>
+        <article class="card">
+          <div class="glyph" aria-hidden="true">✦</div>
+          <h3>Sealed against tampering</h3>
+          <p>Certified records carry an RSA-PSS 2048-bit signature over their canonical data. Any later edit breaks the seal — and the verification page says so.</p>
+        </article>
+        <article class="card">
+          <div class="glyph" aria-hidden="true">▣</div>
+          <h3>Verifiable at the counter</h3>
+          <p>The QR on a certified record resolves over the local network, so a tehsil counter can confirm authenticity even where internet is unreliable.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div>
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">ना</span>
+        <span><b>Nagrik</b><small>Land Record Digitization</small></span>
+      </a>
+      <p style="color:var(--muted); font-size:14px; max-width:38ch; margin-top:14px;">A digitization and validation console for state land records programmes, aligned with DILRMP integration standards.</p>
+    </div>
+    <div class="cols">
+      <div><h4>Product</h4><ul><li><a href="#how">How it works</a></li><li><a href="dashboard.html">Dashboard</a></li><li><a href="#trust">Trust &amp; audit</a></li></ul></div>
+      <div><h4>Programme</h4><ul><li><a href="#">District coverage</a></li><li><a href="#">Training material</a></li><li><a href="#">Grievances</a></li></ul></div>
+      <div><h4>Contact</h4><ul><li><a href="#">Helpdesk</a></li><li><a href="#">RTI</a></li><li><a href="#">Accessibility</a></li></ul></div>
+    </div>
+  </div>
+  <div class="foot-legal">
+    <div class="wrap">
+      <span>© 2026 Nagrik (demo). All figures illustrative.</span>
+      <span class="demo-tag">PROTOTYPE 02 · NAGRIK · MOCK DATA</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

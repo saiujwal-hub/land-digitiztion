@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>District Control — Prashasan Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to console</a>
+
+<header class="band">
+  <div class="wrap">
+    <div class="band-top">
+      <span class="sigil" aria-hidden="true">प्र</span>
+      <div class="wordmark"><b>Prashasan Live</b><small>District Control · Bhopal Division</small></div>
+      <div class="band-clock">
+        <span class="live-pill"><i aria-hidden="true"></i>LIVE</span>
+        <span>02 SEP 2026 · 14:32:07 IST</span>
+      </div>
+    </div>
+    <nav class="band-links" aria-label="Primary">
+      <a href="index.html">Operations</a>
+      <a href="#" aria-current="page">District Control</a>
+      <a href="#accuracy">Model Accuracy</a>
+      <a href="#funnel">Approval Funnel</a>
+      <a href="#matrix">Error Matrix</a>
+      <a href="#">Integrations</a>
+      <a href="#">Audit</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap mission">
+    <h1>Bhopal Division — control room.</h1>
+    <p>District-level view of scanning crews, model performance and the certification funnel. <span class="mono-ref">DIV/MP-BHOPAL · 3 districts · 14 tehsils</span></p>
+  </div>
+
+  <section class="wrap" aria-label="Division indicators">
+    <div class="kpi-strip">
+      <div class="kpi"><div class="v" data-countup>2,41,306</div><div class="l">Docs processed</div><div class="d up">▲ 3,102 / wk</div></div>
+      <div class="kpi"><div class="v" data-countup>97.2%</div><div class="l">Division accuracy</div><div class="d up">▲ 0.6 pts</div></div>
+      <div class="kpi"><div class="v" data-countup>612</div><div class="l">In review queue</div><div class="d down">▼ oldest 2d 6h</div></div>
+      <div class="kpi"><div class="v">9 / 14</div><div class="l">Tehsils live</div><div class="d up">▲ Sehore this week</div></div>
+      <div class="kpi"><div class="v" data-countup>99.4%</div><div class="l">Seal validity</div><div class="d up">0 failed verifications</div></div>
+      <div class="kpi"><div class="v" data-countup>7,905</div><div class="l">QR verifications</div><div class="d up">▲ 214 today</div></div>
+    </div>
+  </section>
+
+  <section class="wrap grid grid-main" id="accuracy" aria-labelledby="acc-h">
+    <div class="panel">
+      <div class="panel-head"><h2 id="acc-h">Model accuracy trend — rolling 30 days</h2><span class="meta">field-level · all document types</span></div>
+      <div class="panel-body">
+        <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Line chart of extraction accuracy improving from 94.1 percent to 97.2 percent over 30 days, with printed text consistently above handwritten">
+          <g stroke="#d7dee6"><line x1="50" y1="30" x2="620" y2="30"/><line x1="50" y1="80" x2="620" y2="80"/><line x1="50" y1="130" x2="620" y2="130"/><line x1="50" y1="180" x2="620" y2="180"/></g>
+          <g fill="#5a6b7a" font-size="10">
+            <text x="44" y="34" text-anchor="end">99</text><text x="44" y="84" text-anchor="end">97</text>
+            <text x="44" y="134" text-anchor="end">95</text><text x="44" y="184" text-anchor="end">93</text>
+            <text x="60" y="222">03 Aug</text><text x="330" y="222">17 Aug</text><text x="590" y="222">02 Sep</text>
+          </g>
+          <!-- overall: 94.1 -> 97.2 ; y = 180 - (v-93)*25 -->
+          <path class="chart-line" d="M60,152.5 L110,150 L160,147.5 L210,150 L260,142.5 L310,140 L360,132.5 L410,135 L460,127.5 L510,120 L560,112.5 L600,95"
+                fill="none" stroke="#1a56db" stroke-width="2.5"/>
+          <!-- printed: ~98.5 -->
+          <path class="chart-line" d="M60,57.5 L110,55 L160,57.5 L210,52.5 L260,55 L310,50 L360,47.5 L410,45 L460,42.5 L510,40 L560,37.5 L600,35"
+                fill="none" stroke="#0e8345" stroke-width="2" stroke-dasharray="6 4"/>
+          <g class="chart-dots" fill="#1a56db"><circle cx="600" cy="95" r="4"/></g>
+          <g font-size="10.5" fill="#16222e">
+            <text x="596" y="86" text-anchor="end" font-weight="600">97.2% overall</text>
+            <text x="596" y="26" text-anchor="end" fill="#0e8345">printed 98.9%</text>
+          </g>
+        </svg>
+        <div class="wall-caption">
+          <span><b style="color:#1a56db">—</b> all documents</span>
+          <span><b style="color:#0e8345">- -</b> printed registers</span>
+          <span>Handwritten 1960s bundles remain the long pole: <b>93.9%</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="funnel">
+      <div class="panel-head"><h2>Certification funnel</h2><span class="meta">this week</span></div>
+      <div class="panel-body">
+        <div class="brow"><div class="nm">Ingested<small>pages accepted</small></div><div class="track"><div class="fill" style="width:100%"></div></div><div class="pct">9,412</div></div>
+        <div class="brow"><div class="nm">Extracted<small>fields read</small></div><div class="track"><div class="fill" style="width:94%"></div></div><div class="pct">94%</div></div>
+        <div class="brow"><div class="nm">Auto-approved<small>high confidence</small></div><div class="track"><div class="fill" style="width:74%; background:#0e8345"></div></div><div class="pct">74%</div></div>
+        <div class="brow"><div class="nm">Clerk-corrected<small>human review</small></div><div class="track"><div class="fill" style="width:13%; background:#b45309"></div></div><div class="pct">13%</div></div>
+        <div class="brow"><div class="nm">Officer sealed<small>RSA-PSS</small></div><div class="track"><div class="fill" style="width:87%; background:#1449b8"></div></div><div class="pct">87%</div></div>
+        <div class="brow"><div class="nm">Rejected<small>returned to tehsil</small></div><div class="track"><div class="fill" style="width:1.5%; background:#c02929"></div></div><div class="pct">1%</div></div>
+        <p style="font-size:12px; color:var(--muted); margin:12px 0 0;">Funnel percentages are of ingested pages; sealed + in-review + rejected = 100%.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap grid grid-two" aria-labelledby="crew-h">
+    <div class="panel">
+      <div class="panel-head"><h2 id="crew-h">Scanner crews — SLA health</h2><span class="meta">tehsil bundles / day</span></div>
+      <div class="panel-body">
+        <div class="brow"><div class="nm">Huzur<small>crew A-11 · 400 dpi</small></div><div class="track"><div class="fill" style="width:92%; background:#0e8345"></div></div><div class="pct">OK</div></div>
+        <div class="brow"><div class="nm">Berasia<small>crew A-12 · 400 dpi</small></div><div class="track"><div class="fill" style="width:88%; background:#0e8345"></div></div><div class="pct">OK</div></div>
+        <div class="brow"><div class="nm">Sehore<small>crew B-07 · 300 dpi</small></div><div class="track"><div class="fill" style="width:71%; background:#b45309"></div></div><div class="pct">SLOW</div></div>
+        <div class="brow"><div class="nm">Shyampur<small>crew B-09 · 400 dpi</small></div><div class="track"><div class="fill" style="width:90%; background:#0e8345"></div></div><div class="pct">OK</div></div>
+        <div class="brow"><div class="nm">Ichhawar<small>crew B-02 · offline</small></div><div class="track"><div class="fill" style="width:4%; background:#c02929"></div></div><div class="pct">DOWN</div></div>
+        <p style="font-size:12px; color:var(--muted); margin:12px 0 0;">Crew B-02 down since 09:12 — power fault at tehsil record room; spare unit dispatched.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="matrix">
+      <div class="panel-head"><h2>Error matrix — by field × document type</h2><span class="meta">per 100 pages</span></div>
+      <div class="panel-body tight">
+        <table class="data">
+          <thead><tr><th scope="col">Field</th><th scope="col">Jamabandi</th><th scope="col">Khasra</th><th scope="col">Mutation</th><th scope="col">Deeds</th></tr></thead>
+          <tbody data-stagger>
+            <tr><td>Dates</td><td class="num"><span class="conf-lo">4.1</span></td><td class="num"><span class="conf-md">2.8</span></td><td class="num"><span class="conf-md">2.2</span></td><td class="num"><span class="conf-md">1.6</span></td></tr>
+            <tr><td>Owner names</td><td class="num"><span class="conf-md">2.3</span></td><td class="num"><span class="conf-md">1.7</span></td><td class="num"><span class="conf-lo">3.1</span></td><td class="num"><span class="conf-md">1.2</span></td></tr>
+            <tr><td>Survey nos.</td><td class="num"><span class="conf-md">1.4</span></td><td class="num"><span class="conf-md">1.6</span></td><td class="num"><span class="conf-hi">0.7</span></td><td class="num"><span class="conf-hi">0.4</span></td></tr>
+            <tr><td>Plot areas</td><td class="num"><span class="conf-hi">0.6</span></td><td class="num"><span class="conf-md">1.1</span></td><td class="num"><span class="conf-hi">0.5</span></td><td class="num"><span class="conf-hi">0.9</span></td></tr>
+            <tr><td>Village names</td><td class="num"><span class="conf-hi">0.5</span></td><td class="num"><span class="conf-hi">0.6</span></td><td class="num"><span class="conf-hi">0.7</span></td><td class="num"><span class="conf-hi">0.4</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap cta" aria-label="Queue action">
+    <div class="wrap">
+      <div>
+        <h2>612 records waiting in the division review queue.</h2>
+        <p>Oldest item is 2 days 6 hours old. Clerks clear an average of 180 records per day; two more verifier seats open after training completes Friday.</p>
+      </div>
+      <a class="btn-live" href="index.html">← Back to operations wall</a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Prashasan Live · Department of Land Resources (demo build) · All figures illustrative.</span>
+    <span class="demo-tag">PROTOTYPE 03 · PRASHASAN LIVE · MOCK DATA</span>
+  </div>
+</footer>
+
+</body>
+</html>

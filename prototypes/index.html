@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototypes — Land Record Digitization &amp; Validation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#101318; --panel:#181d24; --ink:#e8ecf1; --muted:#98a2ae; --line:#2a313b; --gold:#f0d998; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; background:var(--bg); color:var(--ink); line-height:1.6; font-size:15px; }
+  .wrap { max-width:1100px; margin:0 auto; padding:0 24px; }
+  header { padding:52px 0 8px; }
+  h1 { font-size:clamp(26px,3.4vw,38px); margin:0 0 10px; letter-spacing:-.02em; }
+  header p { color:var(--muted); max-width:72ch; margin:0 0 8px; }
+  header .hint { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--gold); }
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; padding:28px 0 60px; }
+  @media (max-width:820px){ .grid { grid-template-columns:1fr; } }
+  .proto { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px 24px; display:flex; flex-direction:column; gap:10px; }
+  .proto .num { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted); letter-spacing:.14em; }
+  .proto h2 { margin:0; font-size:20px; letter-spacing:-.01em; }
+  .proto h2 small { font-weight:400; color:var(--muted); font-size:13px; margin-left:8px; }
+  .proto .why { color:var(--muted); font-size:13.5px; margin:0; }
+  .swatches { display:flex; gap:6px; }
+  .swatches i { width:22px; height:14px; border-radius:3px; border:1px solid rgba(255,255,255,.14); }
+  .links { margin-top:auto; display:flex; gap:10px; padding-top:8px; }
+  .links a {
+    font-size:13.5px; font-weight:600; text-decoration:none; color:var(--gold);
+    border:1px solid var(--line); padding:8px 14px; border-radius:8px; transition:border-color .15s ease, background .15s ease;
+  }
+  .links a:hover { border-color:var(--gold); background:rgba(240,217,152,.08); }
+  footer { border-top:1px solid var(--line); padding:18px 0 34px; color:var(--muted); font-size:12.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  :focus-visible { outline:2px solid var(--gold); outline-offset:2px; }
+</style>
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="motion.js" defer></script>
+</head>
+<body>
+<header class="wrap">
+  <h1>Eight directions — land record digitization, considered seriously.</h1>
+  <p>Static HTML/CSS mockups for the landing page + operations dashboard of an AI-assisted land record digitization and validation platform (DILRMP-aligned). Each folder is a self-contained direction with its own type system, palette and information architecture — open two in side-by-side windows to compare.</p>
+  <p class="hint">ALL FIGURES ARE MOCK DATA · NO BACKEND · PRODUCTION BUILD FOLLOWS IN REACT + VITE ONCE A DIRECTION IS PICKED</p>
+</header>
+
+<main class="wrap grid" data-stagger>
+
+  <article class="proto" style="border-color:#a6193c66;">
+    <span class="num">SELECTED · THE WORKING FRONTEND</span>
+    <h2>OneBhoomi <small>stamp-red ledger · offline registry console</small></h2>
+    <p class="why">The chosen direction for the build: a ₹50 stamp-paper world — Fraunces + Courier Prime, perforated edges, punch holes, a slam-in rubber seal — with Sankalan's animated reading bench (scan-line sweep, flowing OCR → NLP → RULES arrow, cascading fields with confidence bars) ported into its extraction section.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#f6f0e1"></i><i style="background:#221d17"></i><i style="background:#a6193c"></i><i style="background:#c99aa8"></i></div>
+    <div class="links"><a href="01-onebhoomi.html">Landing</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">01 · FORMAL / INSTITUTIONAL</span>
+    <h2>Jamabandi <small>muted navy · off-white · dense portal</small></h2>
+    <p class="why">For department officials who want continuity with NIC-style government portals: a masthead, utility strip, tricolour hairline, and a live register-index table as the hero. IBM Plex Serif/Sans/Mono.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#1b2a41"></i><i style="background:#f3f5f4"></i><i style="background:#8a6a16"></i><i style="background:#d5dcd9"></i></div>
+    <div class="links"><a href="01-jamabandi/index.html">Landing</a><a href="01-jamabandi/dashboard.html">Dashboard</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">02 · MODERN CIVIC-TECH</span>
+    <h2>Nagrik <small>peacock teal · card-based · airy</small></h2>
+    <p class="why">For secretariat leadership demos and digital-first teams: generous whitespace, large Archivo type, and a pipeline card that walks a real batch through the five stages.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#0e7490"></i><i style="background:#faf9f6"></i><i style="background:#162321"></i><i style="background:#e5f2f5"></i></div>
+    <div class="links"><a href="02-nagrik/index.html">Landing</a><a href="02-nagrik/dashboard.html">Dashboard</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">03 · DATA-DASHBOARD-FORWARD</span>
+    <h2>Prashasan Live <small>the landing page IS the ops console</small></h2>
+    <p class="why">For daily operations staff: a dark command band, KPI strip, a 24-hour pipeline wall with a live "now" marker, a ticking event feed, and queues — marketing reduced to one line. Space Grotesk + JetBrains Mono.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#0c1b2e"></i><i style="background:#e9edf2"></i><i style="background:#1a56db"></i><i style="background:#55d18a"></i></div>
+    <div class="links"><a href="03-prashasan/index.html">Operations wall</a><a href="03-prashasan/dashboard.html">District control</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">04 · MAP / GIS-FORWARD</span>
+    <h2>Naksha <small>the district sheet as hero</small></h2>
+    <p class="why">For GIS/DILRMP stakeholders: a schematic district choropleth drawn like a cadastral map sheet — compass, scale bar, legend — with progress told geographically. Bitter slab + Source Sans.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#1e5b3e"></i><i style="background:#e8eae4"></i><i style="background:#2c6e8a"></i><i style="background:#94b49a"></i></div>
+    <div class="links"><a href="04-naksha/index.html">Atlas</a><a href="04-naksha/dashboard.html">Progress console</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">05 · DOCUMENT-CENTRIC</span>
+    <h2>Sankalan <small>scan → structured data as the hero</small></h2>
+    <p class="why">For technical evaluators: a simulated handwritten khasra register beside the exact fields extracted from it, every value carrying a confidence bar — the transformation itself is the pitch. Sora + Plex Mono.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#c2330f"></i><i style="background:#f6f7f8"></i><i style="background:#101c2c"></i><i style="background:#f9f4e8"></i></div>
+    <div class="links"><a href="05-sankalan/index.html">Reading bench</a><a href="05-sankalan/dashboard.html">Processing desk</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">06 · MULTILINGUAL-FIRST</span>
+    <h2>Bhasha <small>the chrome switches language, live</small></h2>
+    <p class="why">For state deployments where vernacular records dominate: a working EN / हिन्दी / తెలుగు switcher (CSS-only), bilingual labels throughout, and a twelve-script OCR grid. The Anek superfamily keeps weights identical across scripts.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#1f2440"></i><i style="background:#fbfaf6"></i><i style="background:#b96a14"></i><i style="background:#f2c078"></i></div>
+    <div class="links"><a href="06-bhasha/index.html">Landing</a><a href="06-bhasha/dashboard.html">Dashboard</a></div>
+  </article>
+
+  <article class="proto">
+    <span class="num">07 · MINIMALIST / HIGH-TRUST</span>
+    <h2>Praman <small>one accent · surveyor's scale · restraint</small></h2>
+    <p class="why">For court-facing and certification audiences: near-monochrome pages with a fixed surveyor's scale marking the margin, a chain-of-custody narrative, and an attestation ledger where the seal status is the interface. Schibsted Grotesk.</p>
+    <div class="swatches" aria-hidden="true"><i style="background:#175b33"></i><i style="background:#fbfbfa"></i><i style="background:#1b1b18"></i><i style="background:#e3e3de"></i></div>
+    <div class="links"><a href="07-praman/index.html">Principle</a><a href="07-praman/dashboard.html">Attestation ledger</a></div>
+  </article>
+
+</main>
+
+<footer class="wrap">
+  <span>Prototypes for the Intelligent Land Record Digitization &amp; Validation System · generated 02 Sep 2026</span>
+  <span>Open any page directly from disk — no server needed (webfonts load from Google Fonts when online; graceful fallbacks offline)</span>
+</footer>
+
+</body>
+</html>

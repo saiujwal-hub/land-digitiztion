@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Processing Desk — Sankalan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the desk</a>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="logotype" href="index.html"><b>sankalan</b><small>संकलन · PROCESSING DESK</small></a>
+    <nav class="topnav" aria-label="Primary">
+      <a href="index.html">Reading Bench</a>
+      <a href="#" aria-current="page">Processing Desk</a>
+      <a href="#queue">Queue</a>
+      <a href="#quality">Quality</a>
+    </nav>
+    <a class="btn btn-line" href="index.html">← Bench</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="wrap dash-head">
+    <h1>Processing desk — Huzur tehsil</h1>
+    <span class="meta">BATCH HZ-2026-09-02-B · 84 documents · 1,120 pages · started 13:58 IST</span>
+  </div>
+
+  <section class="wrap dash-grid" aria-label="Upload and batch status">
+
+    <div class="card">
+      <div class="card-head"><h2>Upload bundles</h2><span class="meta">scans · PDFs · photographs · max 2 GB/bundle</span></div>
+      <div class="card-body" data-stagger>
+        <div style="border:2px dashed var(--line); border-radius:10px; padding:34px 20px; text-align:center; color:var(--muted);">
+          <p style="margin:0 0 4px; font-family:var(--disp); font-weight:600; color:var(--ink);">Drop tehsil bundles here</p>
+          <p style="margin:0; font-size:13px;">or <a href="#">browse files</a> · scans of jamabandi, khasra, mutation &amp; deeds · 300–400 dpi recommended</p>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>BUNDLE HZ-B-2201.pdf</b><small>214 pages · jamabandi 1998–99 · 400 dpi</small></span>
+          <span class="pill pill-hi">Quality check 100%</span>
+          <span class="age">done</span>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>BUNDLE HZ-B-2202.pdf</b><small>96 pages · mutation register · 300 dpi</small></span>
+          <span class="pill pill-md">OCR 62%</span>
+          <span class="age">running</span>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>BUNDLE HZ-B-2203.zip</b><small>142 pages · sale deeds 2019–24</small></span>
+          <span class="pill pill-md">Queued</span>
+          <span class="age">waiting</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="quality">
+      <div class="card-head"><h2>Desk today</h2><span class="meta">auto-refresh 60 s</span></div>
+      <div class="card-body" data-stagger>
+        <div class="mstat">
+          <div class="box"><div class="v" data-countup>1,120</div><div class="l">Pages in batch</div></div>
+          <div class="box"><div class="v" data-countup>41 s</div><div class="l">Median per page</div></div>
+          <div class="box"><div class="v" data-countup>96.8%</div><div class="l">Field accuracy (7-day)</div></div>
+          <div class="box"><div class="v" data-countup>127</div><div class="l">Fields flagged today</div></div>
+        </div>
+        <p style="font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--muted); margin:18px 0 6px;">FLAGGED FIELDS BY TYPE — TODAY</p>
+        <div class="q-row"><span class="doc"><b>Dates</b><small>handwritten numerals</small></span><span class="pill pill-lo">58 flagged</span><span class="age">46%</span></div>
+        <div class="q-row"><span class="doc"><b>Owner names</b><small>transliteration</small></span><span class="pill pill-md">34 flagged</span><span class="age">27%</span></div>
+        <div class="q-row"><span class="doc"><b>Survey numbers</b><small>composite formats</small></span><span class="pill pill-md">21 flagged</span><span class="age">17%</span></div>
+        <div class="q-row"><span class="doc"><b>Areas &amp; khata</b><small>unit conversion</small></span><span class="pill pill-hi">14 flagged</span><span class="age">11%</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap dash-grid" id="queue" aria-label="Queue and current document">
+
+    <div class="card">
+      <div class="card-head"><h2>Review queue</h2><span class="meta">127 flagged fields · 38 documents</span></div>
+      <div class="card-body" data-stagger style="padding-top:4px;">
+        <div class="q-row">
+          <span class="doc"><b>MP/BPL/2026/08412</b><small>Khasra 214 · Bilakhedi · 2 flagged fields (classification, mutation)</small></span>
+          <span class="pill pill-lo">82% conf.</span><span class="age">18m</span>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>MP/BPL/2026/08413</b><small>Jamabandi p.9 · Nipaniya · 1 flagged field (execution date)</small></span>
+          <span class="pill pill-lo">79% conf.</span><span class="age">31m</span>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>MP/BPL/2026/08415</b><small>Mutation 1489 · Khajuri Kalan · 1 flagged field (owner name)</small></span>
+          <span class="pill pill-md">88% conf.</span><span class="age">44m</span>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>MP/BPL/2026/08416</b><small>Sale deed 4471/2023 · stamp value illegible</small></span>
+          <span class="pill pill-md">90% conf.</span><span class="age">52m</span>
+        </div>
+        <div class="q-row">
+          <span class="doc"><b>MP/BPL/2026/08418</b><small>Khasra 68 · Semra Kalan · 1 flagged field (khata share)</small></span>
+          <span class="pill pill-md">91% conf.</span><span class="age">1h</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Now reading</h2><span class="meta">MP/BPL/2026/08412 · page 4 of 12</span></div>
+      <div class="card-body" style="padding:0;">
+        <ul class="fields" style="border-radius:0;">
+          <li><span class="f-label">Landowner</span><span class="f-value">Smt. Kamala Devi w/o Ramlal</span><span class="f-conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="val">99%</span></span></li>
+          <li><span class="f-label">Khasra No.</span><span class="f-value">214</span><span class="f-conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="val">99%</span></span></li>
+          <li><span class="f-label">Khata No.</span><span class="f-value">45 · patta share 2</span><span class="f-conf c-md"><span class="bar"><i style="width:91%"></i></span><span class="val">91%</span></span></li>
+          <li><span class="f-label">Plot Area</span><span class="f-value">2.47 hectare</span><span class="f-conf c-hi"><span class="bar"><i style="width:97%"></i></span><span class="val">97%</span></span></li>
+          <li class="flagged"><span class="f-label">Land Classification</span><span class="f-value">Chahi (irrigated)</span><span class="f-conf c-lo"><span class="bar"><i style="width:78%"></i></span><span class="val">78%</span></span></li>
+          <li class="flagged"><span class="f-label">Mutation Records</span><span class="f-value">1489/2023-24 (partial)</span><span class="f-conf c-lo"><span class="bar"><i style="width:82%"></i></span><span class="val">82%</span></span></li>
+          <li><span class="f-label">Registration</span><span class="f-value">SRO Huzur · Doc 4471/2023</span><span class="f-conf c-hi"><span class="bar"><i style="width:96%"></i></span><span class="val">96%</span></span></li>
+        </ul>
+        <div style="padding:12px 18px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center;">
+          <a class="btn btn-stamp" style="padding:8px 16px; font-size:13px;" href="#">Open reviewer →</a>
+          <span style="font-size:12.5px; color:var(--muted);">2 fields held for human review</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap" style="margin:26px 0 8px;">
+    <a class="btn btn-line" href="index.html">← Back to the reading bench</a>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Sankalan · record engineering (demo) · Figures are illustrative.</span>
+    <span class="demo-tag">PROTOTYPE 05 · SANKALAN · MOCK DATA</span>
+  </div>
+</footer>
+
+</body>
+</html>

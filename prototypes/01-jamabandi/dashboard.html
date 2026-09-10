@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Records Console — Jamabandi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<div class="utility">
+  <div class="wrap-wide">
+    <div><a href="index.html">← Office Portal</a> · <a href="#">Screen Reader Access</a> · <a href="#">हिन्दी</a></div>
+    <div class="sizer"><span aria-hidden="true">A−</span><span aria-hidden="true">A</span><span aria-hidden="true">A+</span></div>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap-wide">
+    <div class="monogram" aria-hidden="true">भू</div>
+    <div>
+      <h1>Records Console</h1>
+      <p class="sub">Digitization Cell · Bhopal Division · Session: Officer (Verifying)</p>
+    </div>
+    <form class="search" role="search" aria-label="Search records">
+      <input type="search" placeholder="Reference, khasra, owner…">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+</header>
+<div class="tricolour" aria-hidden="true"></div>
+
+<nav class="nav" aria-label="Primary">
+  <div class="wrap-wide">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="#" aria-current="page">Console</a></li>
+      <li><a href="#queue">Verification Queue</a></li>
+      <li><a href="#districts">District Progress</a></li>
+      <li><a href="#errors">Error Statistics</a></li>
+      <li><a href="#">Audit Log</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+  <div class="wrap-wide" style="padding-top:28px; padding-bottom:8px;">
+    <p class="eyebrow">Reporting period: 01 Aug – 02 Sep 2026 · Data refreshed 14:32 IST</p>
+  </div>
+
+  <section class="wrap-wide" aria-label="Key indicators">
+    <div class="kpis">
+      <div class="kpi"><div class="v" data-countup>4,82,140</div><div class="l">Documents Processed</div><div class="d up">▲ 6,214 this week</div></div>
+      <div class="kpi"><div class="v" data-countup>96.8%</div><div class="l">Extraction Accuracy</div><div class="d up">▲ 0.4 pts vs Jul</div></div>
+      <div class="kpi"><div class="v" data-countup>87.4%</div><div class="l">Fields Auto-Approved</div><div class="d up">▲ 1.1 pts</div></div>
+      <div class="kpi"><div class="v" data-countup>1,273</div><div class="l">Pending Verification</div><div class="d down">▼ oldest item 2d 6h</div></div>
+    </div>
+  </section>
+
+  <section class="wrap-wide dash-grid" aria-labelledby="throughput-h">
+    <div class="panel">
+      <div class="panel-head"><h3 id="throughput-h">Daily Processing Throughput</h3><span class="aside">documents/day · 7 days</span></div>
+      <div class="panel-body">
+        <svg viewBox="0 0 640 240" width="100%" role="img" aria-label="Area chart of daily processed documents, peaking at 6,200 on 28 August">
+          <!-- gridlines -->
+          <g stroke="#d5dcd9" stroke-width="1">
+            <line x1="46" y1="20" x2="620" y2="20"/><line x1="46" y1="70" x2="620" y2="70"/>
+            <line x1="46" y1="120" x2="620" y2="120"/><line x1="46" y1="170" x2="620" y2="170"/>
+            <line x1="46" y1="200" x2="620" y2="200"/>
+          </g>
+          <g fill="#52606d" font-size="10">
+            <text x="40" y="24" text-anchor="end">6k</text><text x="40" y="74" text-anchor="end">4k</text>
+            <text x="40" y="124" text-anchor="end">2k</text><text x="40" y="204" text-anchor="end">0</text>
+            <text x="80" y="222">27</text><text x="163" y="222">28</text><text x="246" y="222">29</text>
+            <text x="330" y="222">30</text><text x="413" y="222">31</text><text x="496" y="222">01</text><text x="579" y="222">02</text>
+          </g>
+          <!-- area: values 4200 5100 4800 6200 5900 3400 2100 -> x 60..600 step 90, y = 200 - v/6000*180 -->
+          <path class="chart-area" d="M60,74 L150,47 L240,56 L330,14 L420,23 L510,98 L600,137 L600,200 L60,200 Z" fill="#1b2a41" opacity=".12"/>
+          <path class="chart-line" d="M60,74 L150,47 L240,56 L330,14 L420,23 L510,98 L600,137" fill="none" stroke="#1b2a41" stroke-width="2.5"/>
+          <g class="chart-dots" fill="#1b2a41">
+            <circle cx="60" cy="74" r="3.5"/><circle cx="150" cy="47" r="3.5"/><circle cx="240" cy="56" r="3.5"/>
+            <circle cx="330" cy="14" r="3.5"/><circle cx="420" cy="23" r="3.5"/><circle cx="510" cy="98" r="3.5"/>
+            <circle cx="600" cy="137" r="3.5" fill="#8a6a16"/>
+          </g>
+          <g font-size="10" fill="#52606d">
+            <text x="330" y="10" text-anchor="middle" font-weight="600">6,200</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>Validation Status</h3><span class="aside">4,82,140 docs</span></div>
+      <div class="panel-body">
+        <svg viewBox="0 0 260 236" width="100%" role="img" aria-label="Donut chart: auto-approved 74%, corrected 13%, flagged 9%, escalated 3%, rejected 1%">
+          <g transform="translate(130,92)">
+            <!-- donut via stroke-dasharray on circles, r=64, C=402.1 -->
+            <g class="chart-donut" fill="none" stroke-width="26">
+              <circle r="64" stroke="#1a7f37" stroke-dasharray="297.6 104.5" transform="rotate(-90)"/>
+              <circle r="64" stroke="#8a6a16" stroke-dasharray="52.3 349.8" transform="rotate(176.4)"/>
+              <circle r="64" stroke="#9a6700" stroke-dasharray="36.2 365.9" transform="rotate(223.2)"/>
+              <circle r="64" stroke="#0b5394" stroke-dasharray="12.1 390.0" transform="rotate(255.6)"/>
+              <circle r="64" stroke="#b3261e" stroke-dasharray="4.0 398.1" transform="rotate(266.4)"/>
+            </g>
+            <text y="-2" text-anchor="middle" font-size="21" font-weight="600" fill="#1b2a41">74%</text>
+            <text y="16" text-anchor="middle" font-size="9" fill="#52606d">AUTO-APPROVED</text>
+          </g>
+          <!-- legend: 3 rows clear of the donut so no label is clipped by the viewBox -->
+          <g font-size="10.5" fill="#1f2933">
+            <rect x="10" y="182" width="9" height="9" fill="#1a7f37"/><text x="24" y="190">Auto-approved 74%</text>
+            <rect x="140" y="182" width="9" height="9" fill="#8a6a16"/><text x="154" y="190">Corrected 13%</text>
+            <rect x="10" y="202" width="9" height="9" fill="#9a6700"/><text x="24" y="210">Flagged 9%</text>
+            <rect x="140" y="202" width="9" height="9" fill="#0b5394"/><text x="154" y="210">Escalated 3%</text>
+            <rect x="10" y="222" width="9" height="9" fill="#b3261e"/><text x="24" y="230">Rejected 1%</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap-wide dash-grid" id="districts" aria-labelledby="district-h">
+    <div class="panel">
+      <div class="panel-head"><h3 id="district-h">District-wise Digitization Progress</h3><span class="aside">pilot: 6 of 52 districts</span></div>
+      <div class="panel-body" data-stagger>
+        <div class="bar-row"><div class="name">Indore<small>11 tehsils · 2,814 villages</small></div><div class="bar-track"><div class="bar-fill done" style="width:86%"></div></div><div class="pct">86%</div></div>
+        <div class="bar-row"><div class="name">Bhopal<small>5 tehsils · 1,103 villages</small></div><div class="bar-track"><div class="bar-fill done" style="width:78%"></div></div><div class="pct">78%</div></div>
+        <div class="bar-row"><div class="name">Ujjain<small>7 tehsils · 1,688 villages</small></div><div class="bar-track"><div class="bar-fill" style="width:64%"></div></div><div class="pct">64%</div></div>
+        <div class="bar-row"><div class="name">Gwalior<small>6 tehsils · 1,331 villages</small></div><div class="bar-track"><div class="bar-fill" style="width:59%"></div></div><div class="pct">59%</div></div>
+        <div class="bar-row"><div class="name">Dhar<small>13 tehsils · 3,127 villages</small></div><div class="bar-track"><div class="bar-fill" style="width:47%"></div></div><div class="pct">47%</div></div>
+        <div class="bar-row"><div class="name">Ratlam<small>9 tehsils · 1,412 villages</small></div><div class="bar-track"><div class="bar-fill" style="width:38%"></div></div><div class="pct">38%</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="errors">
+      <div class="panel-head"><h3>Error Statistics by Field</h3><span class="aside">per 100 pages</span></div>
+      <div class="panel-body" data-stagger>
+        <div class="bar-row"><div class="name">Dates<small>execution / registration</small></div><div class="bar-track"><div class="bar-fill" style="width:64%; background:#b3261e"></div></div><div class="pct">3.2</div></div>
+        <div class="bar-row"><div class="name">Owner names<small>Devanagari translit.</small></div><div class="bar-track"><div class="bar-fill" style="width:38%; background:#9a6700"></div></div><div class="pct">1.9</div></div>
+        <div class="bar-row"><div class="name">Survey nos.<small>composite formats</small></div><div class="bar-track"><div class="bar-fill" style="width:22%; background:#9a6700"></div></div><div class="pct">1.1</div></div>
+        <div class="bar-row"><div class="name">Plot areas<small>unit conversion</small></div><div class="bar-track"><div class="bar-fill" style="width:16%; background:#1a7f37"></div></div><div class="pct">0.8</div></div>
+        <div class="bar-row"><div class="name">Village names<small>spelling variants</small></div><div class="bar-track"><div class="bar-fill" style="width:12%; background:#1a7f37"></div></div><div class="pct">0.6</div></div>
+        <p style="font-size:12px; color:var(--muted); margin:12px 0 0;">Dates remain the dominant failure mode in 1960s handwritten bundles; a dedicated numeral model is in validation.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap-wide" id="queue" style="margin-top:20px;" aria-labelledby="queue-h">
+    <div class="panel">
+      <div class="panel-head"><h3 id="queue-h">Verification Queue</h3><span class="aside">1,273 pending · sorted by age</span></div>
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="text-align:left;">
+            <th scope="col" style="padding:10px 14px; border-bottom:2px solid var(--navy); background:var(--navy-tint); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);">Reference</th>
+            <th scope="col" style="padding:10px 14px; border-bottom:2px solid var(--navy); background:var(--navy-tint); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);">Document</th>
+            <th scope="col" style="padding:10px 14px; border-bottom:2px solid var(--navy); background:var(--navy-tint); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);">District</th>
+            <th scope="col" style="padding:10px 14px; border-bottom:2px solid var(--navy); background:var(--navy-tint); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);">Flagged Fields</th>
+            <th scope="col" style="padding:10px 14px; border-bottom:2px solid var(--navy); background:var(--navy-tint); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);">Age</th>
+            <th scope="col" style="padding:10px 14px; border-bottom:2px solid var(--navy); background:var(--navy-tint); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);">Action</th>
+          </tr>
+        </thead>
+        <tbody data-stagger>
+          <tr style="border-bottom:1px solid var(--rule);">
+            <td class="doc-id" style="padding:10px 14px;">MP/DHR/2026/08399</td><td style="padding:10px 14px;">Jamabandi 1971–72</td><td style="padding:10px 14px;">Dhar</td>
+            <td style="padding:10px 14px;"><span class="conf conf-lo">3 low-conf.</span> — dates, owner name</td><td style="padding:10px 14px;">2d 6h</td>
+            <td style="padding:10px 14px;"><a href="#">Review →</a></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--rule);">
+            <td class="doc-id" style="padding:10px 14px;">MP/IND/2026/08396</td><td style="padding:10px 14px;">Khasra Register 1994</td><td style="padding:10px 14px;">Indore</td>
+            <td style="padding:10px 14px;"><span class="conf conf-md">1 medium</span> — plot area</td><td style="padding:10px 14px;">1d 9h</td>
+            <td style="padding:10px 14px;"><a href="#">Review →</a></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--rule);">
+            <td class="doc-id" style="padding:10px 14px;">MP/UJN/2026/08391</td><td style="padding:10px 14px;">Mutation Entry 1489</td><td style="padding:10px 14px;">Ujjain</td>
+            <td style="padding:10px 14px;"><span class="conf conf-lo">2 low-conf.</span> — survey no.</td><td style="padding:10px 14px;">11h 20m</td>
+            <td style="padding:10px 14px;"><a href="#">Review →</a></td>
+          </tr>
+          <tr>
+            <td class="doc-id" style="padding:10px 14px;">MP/GWL/2026/08387</td><td style="padding:10px 14px;">Sale Deed 2210/2019</td><td style="padding:10px 14px;">Gwalior</td>
+            <td style="padding:10px 14px;"><span class="conf conf-md">1 medium</span> — village name</td><td style="padding:10px 14px;">4h 02m</td>
+            <td style="padding:10px 14px;"><a href="#">Review →</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap-wide">
+    <div class="about">
+      <div class="monogram" aria-hidden="true">भू</div>
+      <p>Records Console — Land Record Digitization &amp; Validation System. Access to this console is role-based and fully audited.</p>
+    </div>
+    <div><h4>Console</h4><ul><li><a href="#queue">Verification Queue</a></li><li><a href="#districts">District Progress</a></li><li><a href="#errors">Error Statistics</a></li></ul></div>
+    <div><h4>Office</h4><ul><li><a href="index.html">Public Portal</a></li><li><a href="#">Audit Log</a></li><li><a href="#">Reports</a></li></ul></div>
+    <div><h4>Support</h4><ul><li><a href="#">Console Manual</a></li><li><a href="#">Helpdesk</a></li><li><a href="#">Report an Issue</a></li></ul></div>
+  </div>
+  <div class="footer-legal">
+    <div class="wrap-wide">
+      <span>© 2026 Department of Land Resources (demo). Content is illustrative.</span>
+      <span class="demo-tag">PROTOTYPE 01 · JAMABANDI · MOCK DATA</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

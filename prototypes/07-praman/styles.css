@@ -1,0 +1,242 @@
+/* ============================================================
+   07 · PRAMAN — Minimalist / high-trust, official document form
+   The interface is a certified paper document: an 820px sheet on
+   a desk-grey backdrop, letterhead + double rule, serif body set
+   justified, numbered clauses, signature block and seal.
+   Palette : Certificate Paper #FBFBFA · Graphite #1B1B18
+             Sealing Green #175B33 · Ash #6A6A62 · Hairline #E3E3DE
+             Desk backdrop #ECECEA
+   Type    : Schibsted Grotesk (headings, labels) · Source Serif 4
+             (body prose) · monospace (refs, IDs, running feet)
+   Signature: the surveyor's scale — a fixed ruler in the desk
+              backdrop, outside the sheet, marking the margin.
+   ============================================================ */
+
+:root {
+  --backdrop: #ececea;
+  --paper: #fbfbfa;
+  --ink: #1b1b18;
+  --ash: #6a6a62;
+  --green: #175b33;
+  --green-tint: #e9f1ec;
+  --hairline: #e3e3de;
+  --warn: #8a6d1d;
+  --fail: #9c3120;
+  --grot: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+body {
+  margin: 0; font-family: var(--grot); font-size: 15px; line-height: 1.6;
+  color: var(--ink); background: var(--backdrop); padding: 34px 0 90px;
+}
+a { color: var(--green); }
+a:hover { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 99; background: var(--ink); color: #fff; padding: 10px 16px; }
+.skip:focus { left: 8px; }
+
+/* ---------- The surveyor's scale (on the desk, never on the paper) ---------- */
+.scale {
+  position: fixed; top: 0; bottom: 0; left: clamp(16px, 3.4vw, 48px); width: 34px;
+  border-left: 1.5px solid var(--ink); z-index: 40; pointer-events: none;
+  background:
+    repeating-linear-gradient(180deg, var(--ink) 0 1px, transparent 1px 56px) 0 0 / 10px 100% no-repeat,
+    repeating-linear-gradient(180deg, var(--ink) 0 1px, transparent 1px 14px) 0 0 / 5px 100% no-repeat;
+}
+.scale::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg, var(--green) 0 78%, transparent 78%);
+}
+.scale::after {
+  content: "78% digitized · chain no. 4,82,140";
+  position: absolute; left: 12px; top: 78%; transform: translateY(-50%);
+  writing-mode: vertical-rl; font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  color: var(--green); white-space: nowrap;
+}
+@media (max-width: 1080px) { .scale { display: none; } }
+
+/* ---------- Chrome (on the desk, around the sheets) ---------- */
+.site-head {
+  width: min(820px, 100% - 40px); margin: 0 auto 26px;
+  display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+}
+.wordmark { text-decoration: none; color: var(--ink); font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+.wordmark i { font-style: normal; color: var(--green); }
+.wordmark small { display: block; font-weight: 400; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ash); margin-top: 2px; }
+.site-nav { margin-left: auto; display: flex; gap: 20px; flex-wrap: wrap; }
+.site-nav a { text-decoration: none; color: var(--ash); font-size: 13px; transition: color .15s ease; }
+.site-nav a:hover { color: var(--ink); }
+.site-nav a[aria-current="page"] { color: var(--green); font-weight: 600; }
+
+.site-foot {
+  width: min(820px, 100% - 40px); margin: 30px auto 0;
+  display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ash);
+}
+.site-foot .demo-tag { font-family: var(--mono); letter-spacing: .12em; color: var(--green); }
+
+/* ---------- The sheet ---------- */
+.sheet {
+  position: relative;
+  width: min(820px, 100% - 40px); margin: 0 auto;
+  background: var(--paper);
+  border: 1px solid #d8d8d1;
+  box-shadow: 0 1px 2px rgba(27, 27, 24, .07), 0 26px 48px -14px rgba(27, 27, 24, .22);
+  padding: 64px 56px 78px;
+}
+.sheet + .sheet { margin-top: 24px; }
+
+.running {
+  display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  margin: -30px 0 42px; padding-bottom: 8px; border-bottom: 1px solid var(--hairline);
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ash);
+}
+.sheet-foot {
+  position: absolute; left: 56px; right: 56px; bottom: 26px;
+  display: flex; justify-content: space-between; gap: 16px;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ash);
+}
+
+/* ---------- Letterhead ---------- */
+.letterhead { display: flex; gap: 22px; align-items: flex-start; }
+.lh-emblem { flex: none; width: 60px; height: 60px; }
+.lh-emblem svg { display: block; width: 100%; height: 100%; }
+.lh-id { flex: 1; min-width: 0; }
+.lh-gov { margin: 0 0 6px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--ash); }
+.lh-dept { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: .01em; line-height: 1.2; }
+.lh-directorate { margin: 4px 0 0; font-family: var(--serif); font-size: 13.5px; color: var(--ash); }
+.lh-ref { flex: none; text-align: right; font-family: var(--mono); font-size: 11px; line-height: 1.8; }
+.lh-ref .no { display: block; font-weight: 600; }
+.lh-ref .date { display: block; color: var(--ash); }
+.lh-rule { margin: 26px 0 40px; height: 6px; border-top: 3px solid var(--ink); border-bottom: 1px solid var(--ink); }
+
+/* ---------- Subject + preamble ---------- */
+.subject-kicker { margin: 0 0 10px; font-family: var(--mono); font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--green); }
+.doc-title {
+  font-size: clamp(23px, 3.2vw, 29px); font-weight: 600; letter-spacing: -.015em;
+  line-height: 1.22; margin: 0 0 18px; max-width: 28ch;
+}
+.doc-title em { font-style: normal; color: var(--green); }
+.preamble {
+  font-family: var(--serif); font-size: 16px; line-height: 1.75;
+  text-align: justify; hyphens: auto; margin: 0;
+}
+.preamble b { font-weight: 600; }
+
+.xref { margin: 22px 0 0; font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--ash); }
+.xref a { font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+/* ---------- Programme standing (summary strip) ---------- */
+.standing { margin-top: 34px; border-top: 1.5px solid var(--ink); border-bottom: 1.5px solid var(--ink); display: flex; flex-wrap: wrap; }
+.kpi-cell { flex: 1; min-width: 150px; padding: 16px 18px 14px; border-left: 1px solid var(--hairline); }
+.kpi-cell:first-child { border-left: 0; padding-left: 0; }
+.kpi-cell b { display: block; font-size: 23px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kpi-cell b i { font-style: normal; color: var(--green); }
+.kpi-cell span { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ash); }
+
+/* ---------- Numbered sections + clauses ---------- */
+.doc-sec { margin-top: 52px; }
+.doc-sec > h2 { font-size: 20px; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; margin: 0 0 10px; }
+.secno { color: var(--green); font-family: var(--mono); font-size: .8em; font-weight: 600; margin-right: 10px; }
+.doc-sub {
+  font-family: var(--serif); font-size: 15.5px; line-height: 1.7; color: var(--ash);
+  text-align: justify; hyphens: auto; margin: 0 0 24px;
+}
+
+.clauses { list-style: none; margin: 0; padding: 0; }
+.clauses li { padding: 18px 0 16px; border-bottom: 1px solid var(--hairline); }
+.clauses li:last-child { border-bottom: 0; }
+.clauses h3 { font-size: 15.5px; font-weight: 600; margin: 0 0 6px; }
+.clauses h3 .secno { font-size: 12px; }
+.clauses p { font-family: var(--serif); font-size: 15px; line-height: 1.7; text-align: justify; hyphens: auto; margin: 0; }
+.clauses .who { display: block; margin-top: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--green); }
+
+/* ---------- Epigraph (the pull quote) ---------- */
+.pull-quote { margin: 54px 34px 0; }
+.pull-quote p { font-family: var(--serif); font-style: italic; font-size: 20px; line-height: 1.55; margin: 0 0 12px; }
+.pull-quote p i { font-style: normal; color: var(--green); }
+.pull-quote cite { font-family: var(--mono); font-style: normal; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ash); }
+
+/* ---------- Signature block + seal ---------- */
+.sig-block { margin-top: 56px; padding-top: 26px; border-top: 1.5px solid var(--ink); display: flex; gap: 30px; align-items: flex-start; }
+.sig-grid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.sig { display: flex; flex-direction: column; }
+.sig .line { height: 36px; border-bottom: 1px solid var(--ink); margin-bottom: 8px; }
+.sig b { font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+.sig .name { font-family: var(--serif); font-size: 14px; margin-top: 2px; }
+.sig .role { font-size: 11px; color: var(--ash); }
+.sig .date { font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; color: var(--ash); margin-top: 4px; }
+.seal-box {
+  position: relative; flex: none; width: 100px; height: 100px;
+  border: 1.5px solid var(--green); border-radius: 8px; transform: rotate(-4deg);
+  display: grid; place-items: center; color: var(--green); opacity: .85;
+}
+.seal-box::before { content: ""; position: absolute; inset: 4px; border: 1px solid var(--green); border-radius: 5px; }
+.seal-box span { font-family: var(--mono); font-size: 9px; letter-spacing: .22em; text-transform: uppercase; text-align: center; line-height: 2; }
+
+/* ---------- Ledger (extract sheet) ---------- */
+.doc-sec .ledger { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 4px; }
+.ledger caption { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ash); padding: 0 0 12px; }
+.ledger th {
+  text-align: left; font-weight: 600; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ash); padding: 8px 8px 8px 0; border-bottom: 1.5px solid var(--ink); vertical-align: bottom;
+}
+.ledger td { padding: 12px 8px 12px 0; border-bottom: 1px solid var(--hairline); vertical-align: top; line-height: 1.5; }
+.ledger tr:last-child td { border-bottom: 1.5px solid var(--ink); }
+.ledger .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 11.5px; white-space: nowrap; }
+.ledger th.num { font-family: var(--grot); }
+.ref { font-family: var(--mono); font-size: 11.5px; white-space: nowrap; }
+.conf { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+.conf.hi { color: var(--green); } .conf.md { color: var(--warn); } .conf.lo { color: var(--fail); }
+
+.meter { display: block; width: 84px; height: 6px; background: var(--hairline); border-radius: 99px; overflow: hidden; margin: 5px 0 5px; }
+.meter i { display: block; height: 100%; background: var(--green); border-radius: 99px; }
+.meter.warn i { background: var(--warn); } .meter.fail i { background: var(--fail); }
+
+/* ---------- Programme standing meters ---------- */
+.meter-row { display: grid; grid-template-columns: 210px 1fr 52px; gap: 16px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--hairline); font-size: 14px; }
+.meter-row:last-child { border-bottom: 0; }
+.meter-row .track { height: 8px; background: var(--hairline); border-radius: 99px; overflow: hidden; }
+.meter-row .fill { height: 100%; background: var(--green); border-radius: 99px; }
+.meter-row .pct { text-align: right; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.meter-row .nm small { display: block; color: var(--ash); font-size: 11.5px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  body { padding-top: 22px; }
+  .sheet { padding: 40px 22px 66px; }
+  .running { margin-top: -18px; }
+  .sheet-foot { left: 22px; right: 22px; }
+  .letterhead { flex-wrap: wrap; }
+  .lh-ref { text-align: left; }
+  .pull-quote { margin: 44px 6px 0; }
+  .sig-block { flex-wrap: wrap; }
+  .sig-grid { grid-template-columns: 1fr; }
+  .kpi-cell { min-width: 46%; padding-left: 14px; }
+  .meter-row { grid-template-columns: 1fr 52px; }
+  .meter-row .track { display: none; }
+}
+
+/* ---------- Print: the document, nothing else ---------- */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { margin: 16mm 15mm; }
+  body { background: #fff; padding: 0; }
+  .scale, .site-head, .site-foot, .sheet-foot { display: none !important; }
+  .sheet {
+    width: auto; margin: 0; border: 0; box-shadow: none;
+    padding: 0 0 10mm; min-height: 0;
+  }
+  .sheet + .sheet { margin-top: 0; page-break-before: always; break-before: page; }
+  .running { margin: 0 0 8mm; }
+  .clauses li, .ledger tr, .sig-block, .meter-row { break-inside: avoid; }
+}

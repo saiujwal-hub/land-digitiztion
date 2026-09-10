@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sankalan — From scanned register to structured record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the reading bench</a>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="logotype" href="index.html"><b>sankalan</b><small>संकलन · RECORD ENGINEERING</small></a>
+    <nav class="topnav" aria-label="Primary">
+      <a href="#" aria-current="page">Reading Bench</a>
+      <a href="#pipeline">Pipeline</a>
+      <a href="dashboard.html">Processing Desk</a>
+      <a href="#accuracy">Accuracy</a>
+    </nav>
+    <a class="btn btn-stamp" href="dashboard.html">Open the desk</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="bench-section" aria-labelledby="bench-h">
+    <div class="wrap">
+      <div class="bench-intro">
+        <p class="kicker">The transformation, verbatim</p>
+        <h1 class="bench-title" id="bench-h">A 1971 register, read <span class="strike">twice</span> <em>once, correctly</em>.</h1>
+        <p>On the left is the source: a handwritten khasra entry from a tehsil bundle. On the right is exactly what Sankalan extracted — field by field, each with a confidence score. Anything the engine is unsure of is flagged, never guessed.</p>
+      </div>
+
+      <div class="bench" data-stagger>
+        <figure class="scan-doc" style="margin:0;" aria-label="Simulated scan of a handwritten khasra register entry">
+          <span class="stain" aria-hidden="true"></span>
+          <span class="holes" aria-hidden="true"><i></i><i></i></span>
+          <header><b>KHASRA REGISTER — VILLAGE BILAKHEDI</b><span>TEHSIL HUZUR · DIST. BHOPAL</span></header>
+          <span class="form-label">खसरा नंबर / Khasra No.</span>
+          <span class="hand">२१४ — पुराना खसरा ११२/2</span>
+          <span class="form-label">रकबा / Area</span>
+          <span class="hand">२ है० ४७ आर · 2 Ha 47 Ar</span>
+          <span class="form-label">भूदार / Landholder</span>
+          <span class="hand">श्रीमती कमला देवी पति श्री रामलाल</span>
+          <span class="hand ind">Smt. Kamala Devi w/o Ramlal</span>
+          <span class="form-label">भू-उपयोग / Classification</span>
+          <span class="hand">चाही सिंचित · Chahi (Irrigated)</span>
+          <span class="form-label">अन्तर्गत खाता / Khata</span>
+          <span class="hand">खाता ४५ — पट्टा हिस्सा 2</span>
+          <span class="scan-stamp">Tehsil Huzur · True Copy</span>
+        </figure>
+
+        <div class="bench-arrow" aria-hidden="true">
+          <div class="shaft"></div>
+          <span class="lbl">OCR → NLP → RULES</span>
+        </div>
+
+        <section class="extraction" aria-label="Extracted structured fields with confidence scores">
+          <header><b>EXTRACTED RECORD · <span class="doc-type">Khasra Entry</span></b></header>
+          <ul class="fields">
+            <li><span class="f-label">Landowner</span><span class="f-value">Smt. Kamala Devi w/o Ramlal</span><span class="f-conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="val">99%</span></span></li>
+            <li><span class="f-label">Survey No.</span><span class="f-value">112/2 (old) → 214 (new)</span><span class="f-conf c-hi"><span class="bar"><i style="width:98%"></i></span><span class="val">98%</span></span></li>
+            <li><span class="f-label">Khasra No.</span><span class="f-value">214</span><span class="f-conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="val">99%</span></span></li>
+            <li><span class="f-label">Khata No.</span><span class="f-value">45 · patta share 2</span><span class="f-conf c-md"><span class="bar"><i style="width:91%"></i></span><span class="val">91%</span></span></li>
+            <li><span class="f-label">Plot Area</span><span class="f-value">2.47 hectare (6.10 acre)</span><span class="f-conf c-hi"><span class="bar"><i style="width:97%"></i></span><span class="val">97%</span></span></li>
+            <li><span class="f-label">Village / Tehsil</span><span class="f-value">Bilakhedi · Huzur</span><span class="f-conf c-hi"><span class="bar"><i style="width:99%"></i></span><span class="val">99%</span></span></li>
+            <li><span class="f-label">District</span><span class="f-value">Bhopal</span><span class="f-conf c-hi"><span class="bar"><i style="width:100%"></i></span><span class="val">100%</span></span></li>
+            <li class="flagged"><span class="f-label">Land Classification</span><span class="f-value">Chahi (irrigated)</span><span class="f-conf c-lo"><span class="bar"><i style="width:78%"></i></span><span class="val">78%</span></span></li>
+            <li><span class="f-label">Ownership</span><span class="f-value">Bhumiswami (khatedar)</span><span class="f-conf c-hi"><span class="bar"><i style="width:96%"></i></span><span class="val">96%</span></span></li>
+            <li class="flagged"><span class="f-label">Mutation Records</span><span class="f-value">Mutation 1489/2023-24 (partial)</span><span class="f-conf c-lo"><span class="bar"><i style="width:82%"></i></span><span class="val">82%</span></span></li>
+            <li><span class="f-label">Registration</span><span class="f-value">SRO Huzur · Doc 4471/2023 · ₹86,400 stamp</span><span class="f-conf c-md"><span class="bar"><i style="width:93%"></i></span><span class="val">93%</span></span></li>
+          </ul>
+          <span class="seal" aria-hidden="true">SANKALAN<br>READ v3.2<br>· 02 SEP 26 ·</span>
+          <footer><span>2 fields below threshold — held for clerk review.</span><a href="dashboard.html">Open in review desk →</a></footer>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pipeline" aria-labelledby="pipe-h">
+    <div class="wrap">
+      <p class="kicker">How the reading works</p>
+      <h2 id="pipe-h">Four passes between ink and data.</h2>
+      <p class="sub">Sankalan reads a document the way a careful clerk would — but shows its work. Every value on the right-hand side of the bench can be traced back to the strokes it came from.</p>
+      <div class="read-grid" data-stagger>
+        <div class="read-card"><span class="stage">PASS 1</span><h3>Detect</h3><p>Page geometry, table lines and stamp impressions are found; handwriting zones separated from print.</p></div>
+        <div class="read-card"><span class="stage">PASS 2</span><h3>Read</h3><p>OCR reads Devanagari and Latin text, including handwritten numerals, with per-word confidence.</p></div>
+        <div class="read-card"><span class="stage">PASS 3</span><h3>Assemble</h3><p>NLP groups words into labelled fields — survey, khasra, khata, area, parties — using register layouts.</p></div>
+        <div class="read-card"><span class="stage">PASS 4</span><h3>Challenge</h3><p>Validation rules cross-check the fields against each other; contradictions and low confidence are flagged.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="accuracy" id="accuracy" aria-labelledby="acc-h">
+    <div class="wrap">
+      <p class="kicker" style="color:#f0b29a;">Measured on real bundles</p>
+      <h2 id="acc-h">Field-level accuracy, no rounding in our favour.</h2>
+      <p class="sub">Accuracy is measured per field against a clerk-verified gold set of 12,400 pages drawn from pilot tehsils. These are the numbers the programme reports.</p>
+      <div class="acc-row"><div class="nm"><b>Village &amp; tehsil names</b><small>printed + handwritten</small></div><div class="track"><div class="fill" style="width:99%"></div></div><div class="pct" data-countup>99.4%</div></div>
+      <div class="acc-row"><div class="nm"><b>Survey &amp; khasra numbers</b><small>composite formats</small></div><div class="track"><div class="fill" style="width:98%"></div></div><div class="pct" data-countup>98.2%</div></div>
+      <div class="acc-row"><div class="nm"><b>Landholder names</b><small>Devanagari transliteration</small></div><div class="track"><div class="fill" style="width:97%"></div></div><div class="pct" data-countup>97.0%</div></div>
+      <div class="acc-row"><div class="nm"><b>Plot areas</b><small>hectare / acre / gunta</small></div><div class="track"><div class="fill" style="width:96%"></div></div><div class="pct" data-countup>96.1%</div></div>
+      <div class="acc-row bad"><div class="nm"><b>Execution dates</b><small>handwritten numerals, 1960s bundles</small></div><div class="track"><div class="fill" style="width:93%"></div></div><div class="pct" data-countup>93.4%</div></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="cta-h" style="padding-top:44px;">
+    <div class="wrap" style="display:flex; gap:26px; align-items:center; flex-wrap:wrap;">
+      <div style="flex:1; min-width:280px;">
+        <h2 id="cta-h" style="margin-bottom:6px;">Put a bundle on the bench.</h2>
+        <p style="color:var(--muted); margin:0;">The processing desk accepts whole tehsil bundles — scans, legacy PDFs, photographs — and queues them through the same four passes you see above.</p>
+      </div>
+      <a class="btn btn-stamp" href="dashboard.html">Open the processing desk →</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Sankalan · record engineering (demo) · Scan, extraction and figures are illustrative.</span>
+    <span class="demo-tag">PROTOTYPE 05 · SANKALAN · MOCK DATA</span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 510">
+  <defs>
+    <pattern id="hatch" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <rect width="7" height="7" fill="#d3e0d4"/>
+      <line x1="0" y1="0" x2="0" y2="7" stroke="#94b49a" stroke-width="2.4"/>
+    </pattern>
+  </defs>
+  <g stroke="#c9d1c6" stroke-width="2.5">
+    <polygon points="70,45 200,25 175,150 55,165" fill="#1e5b3e"/>
+    <polygon points="175,150 355,160 345,315 180,330" fill="#1e5b3e"/>
+    <polygon points="200,25 350,35 355,160 175,150" fill="#4a8563"/>
+    <polygon points="350,35 495,30 505,145 355,160" fill="#4a8563"/>
+    <polygon points="355,160 505,145 510,325 345,315" fill="#4a8563"/>
+    <polygon points="180,330 345,315 345,445 185,455" fill="#4a8563"/>
+    <polygon points="495,30 625,50 635,180 505,145" fill="#94b49a"/>
+    <polygon points="505,145 635,180 625,315 510,325" fill="#94b49a"/>
+    <polygon points="55,165 175,150 180,330 50,320" fill="url(#hatch)"/>
+    <polygon points="50,320 180,330 185,455 60,440" fill="url(#hatch)"/>
+    <polygon points="510,325 625,315 630,430 500,455" fill="#94b49a"/>
+    <polygon points="345,315 510,325 500,455 345,445" fill="url(#hatch)"/>
+  </g>
+  <g font-family="Source Sans 3, Segoe UI, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle">
+    <g fill="#f2f6f1">
+      <text x="125" y="94">Gwalior<tspan x="125" dy="13" font-size="10" font-weight="400">86%</tspan></text>
+      <text x="264" y="237">Bhopal<tspan x="264" dy="13" font-size="10" font-weight="400">78%</tspan></text>
+      <text x="270" y="90">Guna<tspan x="270" dy="13" font-size="10" font-weight="400">71%</tspan></text>
+      <text x="426" y="90">Sagar<tspan x="426" dy="13" font-size="10" font-weight="400">64%</tspan></text>
+      <text x="429" y="234">Jabalpur<tspan x="429" dy="13" font-size="10" font-weight="400">68%</tspan></text>
+      <text x="264" y="384">Hoshangabad<tspan x="264" dy="13" font-size="10" font-weight="400">61%</tspan></text>
+    </g>
+    <g fill="#24352a">
+      <text x="565" y="99">Satna<tspan x="565" dy="13" font-size="10" font-weight="400">55%</tspan></text>
+      <text x="569" y="239">Rewa<tspan x="569" dy="13" font-size="10" font-weight="400">47%</tspan></text>
+      <text x="115" y="239">Ratlam<tspan x="115" dy="13" font-size="10" font-weight="400">38%</tspan></text>
+      <text x="119" y="384">Dhar<tspan x="119" dy="13" font-size="10" font-weight="400">42%</tspan></text>
+      <text x="566" y="379">Betul<tspan x="566" dy="13" font-size="10" font-weight="400">51%</tspan></text>
+      <text x="425" y="383">Chhindwara<tspan x="425" dy="13" font-size="10" font-weight="400">33%</tspan></text>
+    </g>
+  </g>
+  <g stroke="#1c2a22" stroke-width="1.5">
+    <rect x="55" y="474" width="40" height="6" fill="#1c2a22"/>
+    <rect x="95" y="474" width="40" height="6" fill="#f7f8f5"/>
+    <rect x="135" y="474" width="40" height="6" fill="#1c2a22"/>
+    <rect x="175" y="474" width="40" height="6" fill="#f7f8f5"/>
+    <rect x="55" y="474" width="160" height="6" fill="none"/>
+    <line x1="598" y1="484" x2="598" y2="462"/>
+    <polygon points="598,456 594,466 602,466" fill="#1c2a22"/>
+  </g>
+  <g fill="#5b6a5f" font-family="ui-monospace, monospace" font-size="9">
+    <text x="55" y="470">0</text><text x="131" y="470">25</text><text x="211" y="470">50 km</text>
+  </g>
+  <text x="606" y="466" font-family="ui-monospace, monospace" font-size="10" fill="#1c2a22">N</text>
+</svg>

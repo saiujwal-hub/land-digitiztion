@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bhasha — भाषा · భాష — Land records in every Indian language</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@400;500;600;700;800&family=Anek+Devanagari:wght@400;500;600;700;800&family=Anek+Telugu:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- CSS-only language state: pick a radio, the whole chrome follows -->
+<input class="lang-state" type="radio" name="lang" id="lang-en" checked>
+<input class="lang-state" type="radio" name="lang" id="lang-hi">
+<input class="lang-state" type="radio" name="lang" id="lang-te">
+
+<div class="page">
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="seed" aria-hidden="true">भ</span>
+      <span><b>Bhasha</b><small><span class="tr tr-en">Land Record Digitization</span><span class="tr tr-hi">भू-अभिलेख डिजिटलीकरण</span><span class="tr tr-te">భూమి రికార్డుల డిజిటైజేషన్</span></small></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#" aria-current="page"><span class="tr tr-en">Home</span><span class="tr tr-hi">होम</span><span class="tr tr-te">హోమ్</span></a>
+      <a href="#scripts"><span class="tr tr-en">Scripts</span><span class="tr tr-hi">लिपियाँ</span><span class="tr tr-te">లిపులు</span></a>
+      <a href="#how"><span class="tr tr-en">How it works</span><span class="tr tr-hi">कैसे काम करता है</span><span class="tr tr-te">ఎలా పనిచేస్తుంది</span></a>
+      <a href="dashboard.html"><span class="tr tr-en">Dashboard</span><span class="tr tr-hi">डैशबोर्ड</span><span class="tr tr-te">డాష్‌బోర్డ్</span></a>
+    </nav>
+    <div class="lang-switch" role="group" aria-label="Interface language">
+      <span class="lbl" aria-hidden="true">EN⇄</span>
+      <label for="lang-en">English</label>
+      <label for="lang-hi" class="hi" lang="hi">हिन्दी</label>
+      <label for="lang-te" class="te" lang="te">తెలుగు</label>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="kicker"><span class="tr tr-en">Try it now — switch the language above</span><span class="tr tr-hi">अभी आज़माएँ — ऊपर भाषा बदलें</span><span class="tr tr-te">ఇప్పుడే ప్రయత్నించండి — పైన భాష మార్చండి</span></span>
+        <h1>
+          <span class="tr tr-en-blk">Your land, your language, <em>your record</em>.</span>
+          <span class="tr tr-hi-blk">आपकी ज़मीन, आपकी भाषा, <em>आपका अभिलेख</em>।</span>
+          <span class="tr tr-te-blk">మీ భూమి, మీ భాష, <em>మీ రికార్డు</em>.</span>
+        </h1>
+        <p class="lede">
+          <span class="tr tr-en-blk">Legacy registers were written in the languages people actually speak — Hindi, Telugu, Marathi, Tamil and more. Bhasha reads them all natively, so a record from Nagpur and one from Warangal are digitized with the same care, in the same system.</span>
+          <span class="tr tr-hi-blk">पुराने अभिलेख उन भाषाओं में लिखे गए थे जिनमें लोग सच में बोलते हैं — हिन्दी, तेलुगु, मराठी, तमिल और अन्य। भाषा उन्हें स्थानीय रूप से पढ़ता है, ताकि नागपुर का अभिलेख और वारंगल का अभिलेख एक ही प्रणाली में समान श्रद्धा से डिजिटलीकृत हों।</span>
+          <span class="tr tr-te-blk">పాత రికార్డులు ప్రజలు నిజంగా మాట్లాడే భాషల్లో రాయబడ్డాయి — హిందీ, తెలుగు, మరాఠీ, తమిళం మరియు అనేకం. భాష వాటిని స్థానికంగా చదువుతుంది; నాగ్‌పూర్ రికార్డు మరియు వరంగల్ రికార్డు ఒకే వ్యవస్థలో సమాన శ్రద్ధతో డిజిటైజ్ అవుతాయి.</span>
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="dashboard.html"><span class="tr tr-en">View live dashboard</span><span class="tr tr-hi">लाइव डैशबोर्ड देखें</span><span class="tr tr-te">లైవ్ డాష్‌బోర్డ్ చూడండి</span></a>
+          <a class="btn btn-line" href="#scripts"><span class="tr tr-en">Twelve scripts supported</span><span class="tr tr-hi">बारह लिपियाँ समर्थित</span><span class="tr tr-te">పన్నెండు లిపులు సపోర్ట్</span></a>
+        </div>
+      </div>
+
+      <aside class="mirror" aria-label="One record, three languages">
+        <header><b>SAMPLE FIELD — LANDOWNER</b><span>एक ही अभिलेख</span></header>
+        <div class="m-line">
+          <span class="m-en">English (transliterated)</span>
+          <span class="m-native" style="font-family:var(--f-latin);">Smt. Komuravelli Rangamma</span>
+        </div>
+        <div class="m-line">
+          <span class="m-en">हिन्दी (Devanagari)</span>
+          <span class="m-native hi" lang="hi">श्रीमती कोमुरवेल्ली रंगम्मा</span>
+        </div>
+        <div class="m-line">
+          <span class="m-en">తెలుగు (original script)</span>
+          <span class="m-native te" lang="te">శ్రీమతి కోమూరవెల్లి రంగమ్మ</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="scripts" aria-labelledby="scripts-h">
+    <div class="wrap">
+      <span class="kicker"><span class="tr tr-en">Multilingual OCR</span><span class="tr tr-hi">बहुभाषी ओसीआर</span><span class="tr tr-te">బహుభాషా ఓసీఆర్</span></span>
+      <h2 id="scripts-h"><span class="tr tr-en">One engine, every script on a land record.</span><span class="tr tr-hi">एक इंजन, अभिलेख की हर लिपि।</span><span class="tr tr-te">ఒకే ఇంజన్, రికార్డులోని ప్రతి లిపి.</span></h2>
+      <p class="sub"><span class="tr tr-en">A single district bundle can carry three scripts on one page — printed Devanagari headers, handwritten Telugu entries, English survey codes. Bhasha's script detector routes every line to the right reader, per word.</span><span class="tr tr-hi">एक ही बंडल में एक पृष्ठ पर तीन लिपियाँ हो सकती हैं — छपे देवनागरी शीर्षक, हस्तलिखित तेलुगु प्रविष्टियाँ, अंग्रेज़ी सर्वे कोड। भाषा की स्क्रिप्ट-डिटेक्टर हर पंक्ति को सही रीडर तक पहुँचाती है।</span><span class="tr tr-te">ఒకే బండుల్ ఒక పేజీలో మూడు లిపులను మోస్తుంది — ముద్రిత దేవనాగరి శీర్షికలు, చేతిరాత తెలుగు ఎంట్రీలు, ఇంగ్లీష్ సర్వే కోడ్‌లు. భాష స్క్రిప్ట్-డిటెక్టర్ ప్రతి లైన్‌ను సరైన రీడర్‌కు పంపుతుంది.</span></p>
+      <div class="scripts" data-stagger>
+        <div class="script-card"><span class="glyph hi" lang="hi">अ</span><b>Devanagari</b><small>हिन्दी · मराठी</small></div>
+        <div class="script-card"><span class="glyph te" lang="te">అ</span><b>Telugu</b><small>తెలుగు</small></div>
+        <div class="script-card"><span class="glyph">அ</span><b>Tamil</b><small>தமிழ்</small></div>
+        <div class="script-card"><span class="glyph">ಅ</span><b>Kannada</b><small>ಕನ್ನಡ</small></div>
+        <div class="script-card"><span class="glyph">ਅ</span><b>Gurmukhi</b><small>ਪੰਜਾਬੀ</small></div>
+        <div class="script-card"><span class="glyph">অ</span><b>Bengali</b><small>বাংলা</small></div>
+        <div class="script-card"><span class="glyph">અ</span><b>Gujarati</b><small>ગુજરાતી</small></div>
+        <div class="script-card"><span class="glyph">ଅ</span><b>Odia</b><small>ଓଡ଼ିଆ</small></div>
+        <div class="script-card"><span class="glyph">അ</span><b>Malayalam</b><small>മലയാളം</small></div>
+        <div class="script-card"><span class="glyph">අ</span><b>Sinhala</b><small>සිංහල</small></div>
+        <div class="script-card"><span class="glyph" style="font-family:var(--f-latin)">Aa</span><b>Latin</b><small>English · Romanagari</small></div>
+        <div class="script-card"><span class="glyph" style="font-family:var(--f-latin)">٣</span><b>Urdu digits</b><small>اردو اعداد</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-label="Programme statistics">
+    <div class="wrap">
+      <div><div class="v" data-countup>4,82,140</div><div class="l"><span class="tr tr-en">Documents digitized</span><span class="tr tr-hi">दस्तावेज़ डिजिटलीकृत</span><span class="tr tr-te">డాక్యుమెంట్లు డిజిటైజ్</span></div></div>
+      <div><div class="v" data-countup>96.8%</div><div class="l"><span class="tr tr-en">Extraction accuracy</span><span class="tr tr-hi">निष्कर्षण सटीकता</span><span class="tr tr-te">సంగ్రహణ ఖచ్చితత్వం</span></div></div>
+      <div><div class="v" data-countup>3,91,206</div><div class="l"><span class="tr tr-en">Records certified</span><span class="tr tr-hi">प्रमाणित अभिलेख</span><span class="tr tr-te">ధృవీకరించిన రికార్డులు</span></div></div>
+      <div><div class="v" data-countup>12</div><div class="l"><span class="tr tr-en">Scripts read natively</span><span class="tr tr-hi">लिपियाँ मूल रूप से पढ़ी गईं</span><span class="tr tr-te">లిపులు స్థానికంగా చదువబడ్డాయి</span></div></div>
+    </div>
+  </section>
+
+  <section class="section" id="how" aria-labelledby="how-h">
+    <div class="wrap">
+      <span class="kicker"><span class="tr tr-en">How it works</span><span class="tr tr-hi">कैसे काम करता है</span><span class="tr tr-te">ఎలా పనిచేస్తుంది</span></span>
+      <h2 id="how-h"><span class="tr tr-en">The review is bilingual, so the record can be trusted.</span><span class="tr tr-hi">समीक्षा द्विभाषी है, इसलिए अभिलेख पर भरोसा किया जा सकता है।</span><span class="tr tr-te">రివ్యూ ద్విభాషా; అందుకే రికార్డును నమ్మవచ్చు.</span></h2>
+      <p class="sub"><span class="tr tr-en">Clerks review in the language the document was written — the extracted value and the scan are shown side by side, in the same script, with confidence in plain numbers.</span><span class="tr tr-hi">क्लर्क उसी भाषा में समीक्षा करते हैं जिसमें दस्तावेज़ लिखा गया था — निकाला गया मान और स्कैन साथ-साथ, उसी लिपि में दिखाए जाते हैं।</span><span class="tr tr-te">గుమస్తాలు డాక్యుమెంట్ రాసిన భాషలోనే రివ్యూ చేస్తారు — సంగ్రహించిన విలువ మరియు స్కాన్ ఒకే లిపిలో పక్కపక్కన కనిపిస్తాయి.</span></p>
+      <div class="steps-grid" data-stagger>
+        <div class="step-card"><span class="n">1</span><h3><span class="tr tr-en">Upload</span><span class="tr tr-hi">अपलोड</span><span class="tr tr-te">అప్‌లోడ్</span></h3><p><span class="tr tr-en">Bundles arrive from tehsil record rooms in any script mix.</span><span class="tr tr-hi">तहसील अभिलेखागार से किसी भी लिपि-मिश्रण में बंडल आते हैं।</span><span class="tr tr-te">తెహసీల్ రికార్డ్ రూమ్‌ల నుండి ఏ లిపి మిశ్రమంలోనైనా బండుల్స్ వస్తాయి.</span></p></div>
+        <div class="step-card"><span class="n">2</span><h3><span class="tr tr-en">Detect script</span><span class="tr tr-hi">लिपि पहचान</span><span class="tr tr-te">లిపి గుర్తింపు</span></h3><p><span class="tr tr-en">Every line is routed to its script's reader, per word.</span><span class="tr tr-hi">हर पंक्ति शब्द-दर-शब्द उसकी लिपि के रीडर तक जाती है।</span><span class="tr tr-te">ప్రతి లైన్ పదం పదానికి దాని లిపి రీడర్‌కు వెళ్తుంది.</span></p></div>
+        <div class="step-card"><span class="n">3</span><h3><span class="tr tr-en">Extract fields</span><span class="tr tr-hi">क्षेत्र निकालें</span><span class="tr tr-te">ఫీల్డ్‌లు సంగ్రహించు</span></h3><p><span class="tr tr-en">Owner, khasra, khata and area are read in the original script.</span><span class="tr tr-hi">भूदार, खसरा, खाता और रकबा मूल लिपि में पढ़े जाते हैं।</span><span class="tr tr-te">యజమాని, ఖస్రా, ఖాతా, విస్తీర్ణం అసలు లిపిలో చదవబడతాయి.</span></p></div>
+        <div class="step-card"><span class="n">4</span><h3><span class="tr tr-en">Bilingual review</span><span class="tr tr-hi">द्विभाषी समीक्षा</span><span class="tr tr-te">ద్విభాషా రివ్యూ</span></h3><p><span class="tr tr-en">Clerks verify against the scan in the document's own language.</span><span class="tr tr-hi">क्लर्क दस्तावेज़ की भाषा में ही स्कैन से मिलाकर जाँचते हैं।</span><span class="tr tr-te">గుమస్తాలు డాక్యుమెంట్ భాషలోనే స్కాన్‌తో సరిచూస్తారు.</span></p></div>
+        <div class="step-card"><span class="n">5</span><h3><span class="tr tr-en">Certify</span><span class="tr tr-hi">प्रमाणित करें</span><span class="tr tr-te">ధృవీకరించు</span></h3><p><span class="tr tr-en">The sealed record keeps every name in its original script.</span><span class="tr tr-hi">सील अभिलेख हर नाम को मूल लिपि में सुरक्षित रखता है।</span><span class="tr tr-te">సీల్ చేసిన రికార్డు పేర్లను అసలు లిపిలో భద్రపరుస్తుంది.</span></p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Bhasha (demo) · <span class="tr tr-en">All figures illustrative. Interface language is a working demo — switch it above.</span><span class="tr tr-hi">सभी आँकड़े उदाहरण हैं। इंटरफ़ेस भाषा एक चालू डेमो है।</span><span class="tr tr-te">అన్ని సంఖ్యలు ఉదాహరణలే. ఇంటర్‌ఫేస్ భాష పనిచేస్తున్న డెమో.</span></span>
+    <span class="demo-tag">PROTOTYPE 06 · BHASHA · MOCK DATA</span>
+  </div>
+</footer>
+</div>
+</body>
+</html>

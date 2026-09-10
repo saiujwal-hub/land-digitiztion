@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attestation Ledger — Praman</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to ledger</a>
+<div class="scale" aria-hidden="true"></div>
+
+<header class="site-head">
+  <a class="wordmark" href="index.html">Praman<i>.</i><small>Attestation Ledger</small></a>
+  <nav class="site-nav" aria-label="Primary">
+    <a href="index.html">Principle</a>
+    <a href="index.html#chain">The chain</a>
+    <a href="#" aria-current="page">Ledger</a>
+    <a href="#quality">Data quality</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <article class="sheet">
+    <header class="letterhead">
+      <div class="lh-emblem" aria-hidden="true">
+        <svg viewBox="0 0 64 64" focusable="false">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="#1b1b18" stroke-width="2"/>
+          <rect x="19" y="19" width="26" height="26" fill="none" stroke="#175b33" stroke-width="1.5" transform="rotate(45 32 32)"/>
+          <circle cx="32" cy="32" r="5" fill="#175b33"/>
+          <path d="M32 1v10M32 53v10M1 32h10M53 32h10" stroke="#1b1b18" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="lh-id">
+        <p class="lh-gov">Government of India · Ministry of Rural Development</p>
+        <p class="lh-dept">Department of Land Resources</p>
+        <p class="lh-directorate">Directorate of Land Record Digitization &amp; Validation — Attestation Ledger, certified extract</p>
+      </div>
+      <div class="lh-ref">
+        <span class="no">No. DLR/2026/ATT-07</span>
+        <span class="date">Dated: 02 September 2026</span>
+      </div>
+    </header>
+    <div class="lh-rule" aria-hidden="true"></div>
+
+    <p class="subject-kicker">Certified extract</p>
+    <h1 class="doc-title">The attestation ledger.</h1>
+    <p class="preamble">Every record in the pilot, its chain status, and its seal. Nothing is hidden: corrections, rejections and officer decisions are all in the open. Reporting period 01 Aug – 02 Sep 2026.</p>
+
+    <section class="doc-sec" aria-labelledby="chain-h">
+      <h2 id="chain-h"><span class="secno">1.</span>Recent records — chain status</h2>
+      <p class="doc-sub">Clerk verification progress is shown per record; the seal column states the standing of the cryptographic signature as at the date of this extract.</p>
+      <table class="ledger">
+        <caption>Recent records — chain status</caption>
+        <thead>
+          <tr>
+            <th scope="col">Reference</th>
+            <th scope="col">Record</th>
+            <th scope="col">Clerk verified</th>
+            <th scope="col">Officer decision</th>
+            <th scope="col" class="num">Seal</th>
+          </tr>
+        </thead>
+        <tbody data-stagger>
+          <tr>
+            <td class="ref">MP/BPL/2026/08412</td>
+            <td>Jamabandi 1998–99 · Bilakhedi</td>
+            <td><span class="meter hi"><i style="width:100%"></i></span>2 fields corrected</td>
+            <td>Approved · 02 Sep 14:22</td>
+            <td class="num conf hi">VALID</td>
+          </tr>
+          <tr>
+            <td class="ref">MP/IND/2026/08411</td>
+            <td>Khasra Register 1994 · Nipaniya</td>
+            <td><span class="meter warn"><i style="width:64%"></i></span>1 field open</td>
+            <td>Awaiting clerk</td>
+            <td class="num conf md">PENDING</td>
+          </tr>
+          <tr>
+            <td class="ref">MP/UJN/2026/08410</td>
+            <td>Mutation Entry 1489 · Ujjain Rural</td>
+            <td><span class="meter hi"><i style="width:100%"></i></span>1 field corrected</td>
+            <td>Awaiting officer</td>
+            <td class="num conf md">PENDING</td>
+          </tr>
+          <tr>
+            <td class="ref">MP/DHR/2026/08409</td>
+            <td>Jamabandi 1971–72 · Dhar Kalan</td>
+            <td><span class="meter fail"><i style="width:33%"></i></span>3 fields open</td>
+            <td>—</td>
+            <td class="num conf lo">UNSEALED</td>
+          </tr>
+          <tr>
+            <td class="ref">MP/GWL/2026/08408</td>
+            <td>Sale Deed 4471/2023 · Khajuri Kalan</td>
+            <td><span class="meter hi"><i style="width:100%"></i></span>no corrections</td>
+            <td>Approved · 02 Sep 11:04</td>
+            <td class="num conf hi">VALID</td>
+          </tr>
+          <tr>
+            <td class="ref">MP/RTL/2026/08407</td>
+            <td>Record-of-Rights · Ratlam City</td>
+            <td><span class="meter hi"><i style="width:100%"></i></span>1 field corrected</td>
+            <td><span style="color:var(--fail);">Rejected</span> · schedule page missing</td>
+            <td class="num conf lo">WITHHELD</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer class="sheet-foot"><span>No. DLR/2026/ATT-07</span><span>Page 1 of 2</span></footer>
+  </article>
+
+  <article class="sheet">
+    <div class="running" aria-hidden="true">
+      <span>Department of Land Resources · Praman</span>
+      <span>No. DLR/2026/ATT-07 (continued)</span>
+    </div>
+
+    <section class="doc-sec" id="quality" aria-labelledby="quality-h">
+      <h2 id="quality-h"><span class="secno">2.</span>Programme standing — pilot districts</h2>
+      <p class="doc-sub">Share of villages per district whose records have completed the full chain and carry a valid seal.</p>
+      <div class="meter-row"><div class="nm">Gwalior<small>2,814 villages · sealed</small></div><div class="track"><div class="fill" style="width:86%"></div></div><div class="pct" data-countup>86%</div></div>
+      <div class="meter-row"><div class="nm">Bhopal<small>1,103 villages · sealed</small></div><div class="track"><div class="fill" style="width:78%"></div></div><div class="pct" data-countup>78%</div></div>
+      <div class="meter-row"><div class="nm">Ujjain<small>1,688 villages</small></div><div class="track"><div class="fill" style="width:64%"></div></div><div class="pct" data-countup>64%</div></div>
+      <div class="meter-row"><div class="nm">Gwalior rural<small>in scanning</small></div><div class="track"><div class="fill" style="width:59%"></div></div><div class="pct" data-countup>59%</div></div>
+      <div class="meter-row"><div class="nm">Dhar<small>3,127 villages</small></div><div class="track"><div class="fill" style="width:47%"></div></div><div class="pct" data-countup>47%</div></div>
+      <div class="meter-row"><div class="nm">Ratlam<small>1,412 villages</small></div><div class="track"><div class="fill" style="width:38%"></div></div><div class="pct" data-countup>38%</div></div>
+    </section>
+
+    <section class="doc-sec" aria-label="Verification notice">
+      <h2><span class="secno">3.</span>Verification notice</h2>
+      <p class="doc-sub">The ledger above is the same view a citizen sees when scanning a certified record's QR code — only the names of staff are withheld from the public view. Verification itself runs offline against the published public key.</p>
+    </section>
+
+    <section class="sig-block" aria-label="Signatures">
+      <div class="sig-grid">
+        <div class="sig">
+          <span class="line" aria-hidden="true"></span>
+          <b>Prepared by</b>
+          <span class="name">R. Sharma</span>
+          <span class="role">Verification Assistant, DLR</span>
+          <span class="date">02.09.2026</span>
+        </div>
+        <div class="sig">
+          <span class="line" aria-hidden="true"></span>
+          <b>Verified by</b>
+          <span class="name">A. Khan</span>
+          <span class="role">Attestation Clerk</span>
+          <span class="date">02.09.2026</span>
+        </div>
+        <div class="sig">
+          <span class="line" aria-hidden="true"></span>
+          <b>Approved by</b>
+          <span class="name">S. Meena</span>
+          <span class="role">Tehsildar · Huzur</span>
+          <span class="date">02.09.2026</span>
+        </div>
+      </div>
+      <div class="seal-box" role="img" aria-label="Official seal placeholder">
+        <span>Official<br>Seal<br>DLR</span>
+      </div>
+    </section>
+
+    <footer class="sheet-foot"><span>No. DLR/2026/ATT-07</span><span>Page 2 of 2</span></footer>
+  </article>
+
+</main>
+
+<footer class="site-foot">
+  <span>Praman · land record attestation (demo). Figures are illustrative.</span>
+  <span class="demo-tag">PROTOTYPE 07 · PRAMAN · MOCK DATA</span>
+</footer>
+
+</body>
+</html>

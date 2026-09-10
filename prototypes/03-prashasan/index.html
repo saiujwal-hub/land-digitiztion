@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prashasan Live — National Land Records Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to console</a>
+
+<header class="band">
+  <div class="wrap">
+    <div class="band-top">
+      <span class="sigil" aria-hidden="true">प्र</span>
+      <div class="wordmark"><b>Prashasan Live</b><small>Land Records Operations · DILRMP</small></div>
+      <div class="band-clock">
+        <span class="live-pill"><i aria-hidden="true"></i>LIVE</span>
+        <span>02 SEP 2026 · 14:32:07 IST</span>
+      </div>
+    </div>
+    <nav class="band-links" aria-label="Primary">
+      <a href="#" aria-current="page">Operations</a>
+      <a href="#queue">Verification</a>
+      <a href="#districts">Districts</a>
+      <a href="#errors">Data Quality</a>
+      <a href="#">Integrations</a>
+      <a href="#">Audit</a>
+      <a href="#">Admin</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap mission">
+    <h1>National digitization floor — all districts, one console.</h1>
+    <p>Every scan read, every field validated, every record sealed — as it happens. <span class="mono-ref">FY 2026–27 · Q2 · 6 districts · 31 tehsils</span></p>
+  </div>
+
+  <section class="wrap" aria-label="Key indicators">
+    <div class="kpi-strip" data-stagger>
+      <div class="kpi"><div class="v" data-countup>4,82,140</div><div class="l">Docs processed</div><div class="d up">▲ 6,214 / wk</div></div>
+      <div class="kpi"><div class="v" data-countup>96.8%</div><div class="l">Extraction accuracy</div><div class="d up">▲ 0.4 pts</div></div>
+      <div class="kpi"><div class="v" data-countup>87.4%</div><div class="l">Fields auto-approved</div><div class="d up">▲ 1.1 pts</div></div>
+      <div class="kpi"><div class="v" data-countup>1,273</div><div class="l">In review queue</div><div class="d down">▼ oldest 2d 6h</div></div>
+      <div class="kpi"><div class="v" data-countup>41 s</div><div class="l">Median / page</div><div class="d up">▲ 4 s faster</div></div>
+      <div class="kpi"><div class="v" data-countup>18,422</div><div class="l">Villages online</div><div class="d up">▲ 96 / wk</div></div>
+    </div>
+  </section>
+
+  <section class="wrap grid grid-main" id="live" aria-labelledby="live-h">
+    <div class="panel">
+      <div class="panel-head"><h2 id="live-h">Pages through the pipeline — last 24 hours</h2><span class="meta">1-min buckets · auto-refresh 60s</span></div>
+      <div class="panel-body">
+        <div class="wall-hours" role="img" aria-label="Bar wall of pages processed per hour over 24 hours, tallest in the morning, currently processing now">
+          <span style="height:34%"></span><span style="height:22%"></span><span style="height:14%"></span><span style="height:10%"></span>
+          <span style="height:12%"></span><span style="height:18%"></span><span style="height:30%"></span><span style="height:48%"></span>
+          <span style="height:66%"></span><span style="height:82%"></span><span style="height:93%"></span><span style="height:88%"></span>
+          <span style="height:97%"></span><span style="height:100%"></span><span style="height:92%"></span><span style="height:86%"></span>
+          <span style="height:78%"></span><span style="height:71%"></span><span style="height:64%"></span><span style="height:58%"></span>
+          <span style="height:52%"></span><span style="height:46%"></span><span style="height:41%"></span><span style="height:36%" class="now"></span>
+        </div>
+        <div class="wall-axis"><span>−24h</span><span>−18h</span><span>−12h</span><span>−6h</span><span>NOW</span></div>
+        <div class="wall-caption">
+          <span><b>9,412</b> pages today</span>
+          <span><b>6,214</b> this week (▲)</span>
+          <span><b>41 s</b> median per page</span>
+          <span><b>0</b> incidents</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Event feed</h2><span class="meta">tail -f</span></div>
+      <ul class="feed" data-stagger>
+        <li><time>14:31</time><span class="txt"><span class="ref">MP/BPL/2611</span> batch <b>sealed &amp; pushed to LRMS</b> — 12 pages</span><span class="tag ok">Sealed</span></li>
+        <li><time>14:29</time><span class="txt"><span class="ref">MP/DHR/08399</span> clerk <b>corrected 3 fields</b> (dates, owner name)</span><span class="tag info">Corrected</span></li>
+        <li><time>14:27</time><span class="txt"><span class="ref">MP/IND/08396</span> flagged <b>plot area</b> mismatch — 2.47 vs 2.74 ha</span><span class="tag warn">Flagged</span></li>
+        <li><time>14:24</time><span class="txt"><span class="ref">MP/UJN/08391</span> mutation entry <b>extracted</b> — conf 91.4%</span><span class="tag info">Extracted</span></li>
+        <li><time>14:19</time><span class="txt"><span class="ref">MP/RTL/08385</span> officer <b>approved</b> Record-of-Rights — QR issued</span><span class="tag ok">Approved</span></li>
+        <li><time>14:15</time><span class="txt"><span class="ref">MP/GWL/08382</span> <b>rejected</b> — schedule page missing in source scan</span><span class="tag fail">Rejected</span></li>
+        <li><time>14:11</time><span class="txt">Scanner crew <b>B-2194 online</b> — Hoshangabad tehsil</span><span class="tag info">Scanner</span></li>
+        <li><time>14:06</time><span class="txt"><span class="ref">MP/BPL/2609</span> batch <b>sealed &amp; pushed to LRMS</b> — 9 pages</span><span class="tag ok">Sealed</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="wrap grid grid-two" id="districts" aria-labelledby="dist-h">
+    <div class="panel">
+      <div class="panel-head"><h2 id="dist-h">District digitization progress</h2><span class="meta">% of 13,473 pilot villages</span></div>
+      <div class="panel-body">
+        <div class="brow"><div class="nm">Indore<small>2,814 villages</small></div><div class="track"><div class="fill" style="width:86%"></div></div><div class="pct">86%</div></div>
+        <div class="brow"><div class="nm">Bhopal<small>1,103 villages</small></div><div class="track"><div class="fill" style="width:78%"></div></div><div class="pct">78%</div></div>
+        <div class="brow"><div class="nm">Ujjain<small>1,688 villages</small></div><div class="track"><div class="fill" style="width:64%"></div></div><div class="pct">64%</div></div>
+        <div class="brow"><div class="nm">Gwalior<small>1,331 villages</small></div><div class="track"><div class="fill" style="width:59%"></div></div><div class="pct">59%</div></div>
+        <div class="brow"><div class="nm">Dhar<small>3,127 villages</small></div><div class="track"><div class="fill" style="width:47%"></div></div><div class="pct">47%</div></div>
+        <div class="brow"><div class="nm">Ratlam<small>1,412 villages</small></div><div class="track"><div class="fill" style="width:38%"></div></div><div class="pct">38%</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="errors">
+      <div class="panel-head"><h2>Data quality — errors per 100 pages</h2><span class="meta">7-day window</span></div>
+      <div class="panel-body">
+        <div class="brow"><div class="nm">Dates<small>handwritten numerals</small></div><div class="track"><div class="fill" style="width:64%; background:#c02929"></div></div><div class="pct">3.2</div></div>
+        <div class="brow"><div class="nm">Owner names<small>transliteration</small></div><div class="track"><div class="fill" style="width:38%; background:#b45309"></div></div><div class="pct">1.9</div></div>
+        <div class="brow"><div class="nm">Survey nos.<small>composite formats</small></div><div class="track"><div class="fill" style="width:22%; background:#b45309"></div></div><div class="pct">1.1</div></div>
+        <div class="brow"><div class="nm">Plot areas<small>unit conversion</small></div><div class="track"><div class="fill" style="width:16%; background:#0e8345"></div></div><div class="pct">0.8</div></div>
+        <div class="brow"><div class="nm">Village names<small>spelling variants</small></div><div class="track"><div class="fill" style="width:12%; background:#0e8345"></div></div><div class="pct">0.6</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="queue" aria-labelledby="q-h" style="margin-bottom:6px;">
+    <div class="panel">
+      <div class="panel-head"><h2 id="q-h">Verification queue</h2><span class="meta">1,273 pending · oldest first</span></div>
+      <div class="panel-body tight">
+        <table class="data">
+          <thead><tr><th scope="col">Reference</th><th scope="col">Document</th><th scope="col">District</th><th scope="col">Status</th><th scope="col" style="text-align:right">Confidence</th><th scope="col">Age</th><th scope="col">Action</th></tr></thead>
+          <tbody data-stagger>
+            <tr><td class="mono">MP/DHR/2026/08399</td><td>Jamabandi 1971–72</td><td>Dhar</td><td><span class="status-chip sc-review">Clerk review</span></td><td class="num"><span class="conf-lo">82.6%</span></td><td>2d 6h</td><td><a href="#">Review →</a></td></tr>
+            <tr><td class="mono">MP/IND/2026/08396</td><td>Khasra Register 1994</td><td>Indore</td><td><span class="status-chip sc-review">Clerk review</span></td><td class="num"><span class="conf-md">91.4%</span></td><td>1d 9h</td><td><a href="#">Review →</a></td></tr>
+            <tr><td class="mono">MP/UJN/2026/08391</td><td>Mutation Entry 1489</td><td>Ujjain</td><td><span class="status-chip sc-review">Clerk review</span></td><td class="num"><span class="conf-lo">84.0%</span></td><td>11h</td><td><a href="#">Review →</a></td></tr>
+            <tr><td class="mono">MP/RTL/2026/08385</td><td>Record-of-Rights</td><td>Ratlam</td><td><span class="status-chip sc-extracted">Officer sign-off</span></td><td class="num"><span class="conf-hi">97.1%</span></td><td>6h</td><td><a href="#">Approve →</a></td></tr>
+            <tr><td class="mono">MP/GWL/2026/08387</td><td>Sale Deed 2210/2019</td><td>Gwalior</td><td><span class="status-chip sc-extracted">Officer sign-off</span></td><td class="num"><span class="conf-hi">98.3%</span></td><td>4h</td><td><a href="#">Approve →</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap cta" aria-label="About the programme">
+    <div class="wrap">
+      <div>
+        <h2>Prashasan Live is the operations face of the digitization programme.</h2>
+        <p>Built for district cell staff and state administrators: uploads land at the left, certified records leave at the right, and every event in between is on this screen — attributable, timestamped, and auditable.</p>
+      </div>
+      <a class="btn-live" href="dashboard.html"><i aria-hidden="true"></i>Open full console</a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Prashasan Live · Department of Land Resources (demo build) · All figures illustrative.</span>
+    <span class="demo-tag">PROTOTYPE 03 · PRASHASAN LIVE · MOCK DATA</span>
+  </div>
+</footer>
+
+</body>
+</html>

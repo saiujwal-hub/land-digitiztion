@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jamabandi — Land Record Digitization &amp; Validation System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<div class="utility">
+  <div class="wrap-wide">
+    <div><a href="#main">Skip to main content</a> · <a href="#">Screen Reader Access</a> · <a href="#">हिन्दी</a></div>
+    <div class="sizer" aria-label="Text size controls"><span aria-hidden="true">A−</span><span aria-hidden="true">A</span><span aria-hidden="true">A+</span><span style="opacity:.6">|</span><span>Contrast</span></div>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="wrap-wide">
+    <div class="monogram" aria-hidden="true">भू</div>
+    <div>
+      <h1>Land Record Digitization &amp; Validation System</h1>
+      <p class="sub">Department of Land Resources · DILRMP Compliant · Prototype</p>
+    </div>
+    <form class="search" role="search" aria-label="Search records">
+      <input type="search" placeholder="Search by survey no., khasra, owner…">
+      <button type="submit">Search</button>
+    </form>
+  </div>
+</header>
+<div class="tricolour" aria-hidden="true"></div>
+
+<nav class="nav" aria-label="Primary">
+  <div class="wrap-wide">
+    <ul>
+      <li><a href="#" aria-current="page">Home</a></li>
+      <li><a href="#workflow">Process</a></li>
+      <li><a href="dashboard.html">Records Console</a></li>
+      <li><a href="#register">Register Index</a></li>
+      <li><a href="#trust">Security &amp; Audit</a></li>
+      <li><a href="#">Statistics</a></li>
+      <li><a href="#">Acts &amp; Rules</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap-wide hero-grid">
+      <div>
+        <p class="eyebrow">Digitization Cell · Est. under DILRMP</p>
+        <h2>Legacy land registers, transcribed by machine, certified by officers.</h2>
+        <p class="lede">Scanned jamabandi, khasra and mutation registers are read by OCR, verified field-by-field against validation rules, and sealed with a cryptographic digital signature before entering the record-of-rights database.</p>
+        <div class="actions">
+          <a class="btn btn-primary" href="dashboard.html">Open Records Console</a>
+          <a class="btn btn-outline" href="#register">View Register Index</a>
+        </div>
+        <div class="notices">
+          <h3>Office Notices</h3>
+          <ul>
+            <li><time datetime="2026-08-29">29 Aug 2026</time> Hoshangabad tehsil bundle B-2194 (1961–74) queued for re-scan at 400 dpi.</li>
+            <li><time datetime="2026-08-27">27 Aug 2026</time> OCR model v3.2 deployed — Devanagari numeral accuracy improved to 99.1%.</li>
+            <li><time datetime="2026-08-21">21 Aug 2026</time> Verification drive: 1,273 records await clerk review across 6 districts.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="register" id="register">
+        <div class="register-head">
+          <h3>Register Index — Today's Processing</h3>
+          <span class="live"><span class="live-dot" aria-hidden="true"></span>LIVE · 14:32:07</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th scope="col">Reference</th><th scope="col">Register Type</th><th scope="col">Village / Tehsil</th><th scope="col">Status</th><th scope="col" style="text-align:right">Conf.</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="doc-id">MP/BPL/2026/08412</td><td>Jamabandi 1998–99</td><td>Bilakhedi, Huzur</td>
+              <td><span class="chip chip-approved">Approved</span></td><td class="conf conf-hi num">99.2%</td>
+            </tr>
+            <tr>
+              <td class="doc-id">MP/IND/2026/08411</td><td>Khasra Register</td><td>Nipaniya, Indore</td>
+              <td><span class="chip chip-review">Clerk Review</span></td><td class="conf conf-md num">91.4%</td>
+            </tr>
+            <tr>
+              <td class="doc-id">MP/UJN/2026/08410</td><td>Mutation Entry 1489</td><td>Ujjain Rural</td>
+              <td><span class="chip chip-extracted">Extracted</span></td><td class="conf conf-hi num">97.8%</td>
+            </tr>
+            <tr>
+              <td class="doc-id">MP/DHR/2026/08409</td><td>Jamabandi 1971–72</td><td>Dhar Kalan</td>
+              <td><span class="chip chip-review">Clerk Review</span></td><td class="conf conf-lo num">82.6%</td>
+            </tr>
+            <tr>
+              <td class="doc-id">MP/GWL/2026/08408</td><td>Sale Deed 4471/2023</td><td>Khajuri Kalan, Gwalior</td>
+              <td><span class="chip chip-approved">Approved</span></td><td class="conf conf-hi num">98.9%</td>
+            </tr>
+            <tr>
+              <td class="doc-id">MP/RTL/2026/08407</td><td>Record-of-Rights</td><td>Ratlam City</td>
+              <td><span class="chip chip-extracted">Extracted</span></td><td class="conf conf-md num">93.1%</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="5">1,273 records in queue · <a href="dashboard.html">Open console for full register →</a></td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="workflow" aria-labelledby="workflow-h">
+    <div class="wrap-wide">
+      <div class="section-head">
+        <h2 id="workflow-h">From Bundles to Sealed Records</h2>
+        <span class="ref">PROCEDURE / 2026 / REV-3</span>
+      </div>
+      <div class="steps" data-stagger>
+        <div class="step">
+          <div class="n" aria-hidden="true">1</div>
+          <h3>Upload &amp; Scan</h3>
+          <p>Tehsil bundles of scanned registers or legacy PDFs are uploaded with bundle-level metadata.</p>
+        </div>
+        <div class="step">
+          <div class="n" aria-hidden="true">2</div>
+          <h3>OCR / NLP Extraction</h3>
+          <p>Handwritten Devanagari and printed text are read; fields like survey, khasra and khata numbers are parsed.</p>
+        </div>
+        <div class="step">
+          <div class="n" aria-hidden="true">3</div>
+          <h3>Classification</h3>
+          <p>Documents are classified — jamabandi, khasra, mutation, sale deed — and mapped to the record schema.</p>
+        </div>
+        <div class="step">
+          <div class="n" aria-hidden="true">4</div>
+          <h3>Validation &amp; Review</h3>
+          <p>Automated checks flag low-confidence fields for clerk correction, then officer approval.</p>
+        </div>
+        <div class="step">
+          <div class="n" aria-hidden="true">5</div>
+          <h3>Sealed Record</h3>
+          <p>Certified records are signed (RSA-PSS) and pushed to LRMS / GIS with a permanent audit trail.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-band" aria-label="Programme statistics">
+    <div class="wrap-wide">
+      <div class="stat">
+        <div class="v" data-countup>4,82,140</div><div class="l">Documents Ingested</div>
+        <svg class="spark" width="150" height="26" viewBox="0 0 150 26" aria-hidden="true"><polyline class="chart-line" points="0,22 18,20 36,21 54,17 72,18 90,13 108,14 126,9 150,5" fill="none" stroke="#f0d998" stroke-width="2"/></svg>
+      </div>
+      <div class="stat">
+        <div class="v" data-countup>96.8%</div><div class="l">Extraction Accuracy</div>
+        <svg class="spark" width="150" height="26" viewBox="0 0 150 26" aria-hidden="true"><polyline class="chart-line" points="0,20 18,19 36,16 54,17 72,14 90,12 108,10 126,8 150,7" fill="none" stroke="#f0d998" stroke-width="2"/></svg>
+      </div>
+      <div class="stat">
+        <div class="v" data-countup>3,91,206</div><div class="l">Records Certified</div>
+        <svg class="spark" width="150" height="26" viewBox="0 0 150 26" aria-hidden="true"><polyline class="chart-line" points="0,23 18,21 36,18 54,17 72,15 90,13 108,10 126,8 150,4" fill="none" stroke="#f0d998" stroke-width="2"/></svg>
+      </div>
+      <div class="stat">
+        <div class="v" data-countup>18,422</div><div class="l">Villages Covered</div>
+        <svg class="spark" width="150" height="26" viewBox="0 0 150 26" aria-hidden="true"><polyline class="chart-line" points="0,24 18,22 36,20 54,19 72,16 90,15 108,12 126,11 150,8" fill="none" stroke="#f0d998" stroke-width="2"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="trust" aria-labelledby="trust-h">
+    <div class="wrap-wide">
+      <div class="section-head">
+        <h2 id="trust-h">Trust &amp; Auditability</h2>
+        <span class="ref">SEC-POL / 07</span>
+      </div>
+      <div class="trust-grid" data-stagger>
+        <div class="trust">
+          <h3>Cryptographic Sealing</h3>
+          <p>Every certified record is signed with <code>RSA-PSS 2048 / SHA-256</code>. Any later alteration invalidates the seal and is reported at verification.</p>
+        </div>
+        <div class="trust">
+          <h3>Human-in-the-Loop</h3>
+          <p>No field below the confidence threshold enters the record unreviewed. Clerk corrections and officer decisions are attributed and timestamped.</p>
+        </div>
+        <div class="trust">
+          <h3>Offline QR Verification</h3>
+          <p>Certified records carry a QR code verifiable over local network — no internet required at the tehsil counter.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap-wide">
+    <div class="about">
+      <div class="monogram" aria-hidden="true">भू</div>
+      <p>Land Record Digitization &amp; Validation System — a digitization cell application under the Digital India Land Records Modernization Programme (DILRMP). Built for verification desks, officers and records room staff.</p>
+    </div>
+    <div><h4>Records</h4><ul><li><a href="dashboard.html">Records Console</a></li><li><a href="#register">Register Index</a></li><li><a href="#">Verification Status</a></li><li><a href="#">Rejected Cases</a></li></ul></div>
+    <div><h4>Policy</h4><ul><li><a href="#trust">Security Policy</a></li><li><a href="#">Audit Guidelines</a></li><li><a href="#">Data Retention</a></li><li><a href="#">Accessibility</a></li></ul></div>
+    <div><h4>Office</h4><ul><li><a href="#">Tehsil Directory</a></li><li><a href="#">Grievance Redressal</a></li><li><a href="#">Helpdesk: 1800-XXX-XXXX</a></li><li><a href="#">RTI</a></li></ul></div>
+  </div>
+  <div class="footer-legal">
+    <div class="wrap-wide">
+      <span>© 2026 Department of Land Resources (demo). Content is illustrative.</span>
+      <span class="demo-tag">PROTOTYPE 01 · JAMABANDI · MOCK DATA</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

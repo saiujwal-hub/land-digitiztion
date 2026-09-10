@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progress Console — Naksha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=3">
+<script>
+(function () {
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    document.documentElement.classList.add("motion-ready");
+    setTimeout(function () {
+      if (!window.__motionReady) document.documentElement.classList.remove("motion-ready");
+    }, 1500);
+  }
+})();
+</script>
+<script src="../motion.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to console</a>
+
+<header class="sheet-head">
+  <div class="wrap">
+    <div class="cartouche">
+      <span class="mark" aria-hidden="true">न</span>
+      <span><b>Naksha</b><small>Progress Console · Pilot States</small></span>
+    </div>
+    <nav aria-label="Primary">
+      <a href="index.html">Atlas</a>
+      <a href="#" aria-current="page">Progress Console</a>
+      <a href="#queue">Review Queue</a>
+      <a href="#quality">Map Quality</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap" style="padding-top:32px;">
+    <p class="section-sub" style="margin-bottom:0;">Reporting period 01 Aug – 02 Sep 2026 · 12 districts · 18,422 villages digitized of 21,340 target · refreshed 14:32 IST.</p>
+  </div>
+
+  <section class="wrap dash-grid" aria-label="Atlas and district progress">
+    <figure class="map-sheet" style="margin:0;">
+      <figcaption class="sheet-title">
+        <b>Villages digitized</b>
+        <small>SHEET 1 : 2 · SCHEMATIC · SEP 2026</small>
+      </figcaption>
+      <img src="map.svg" alt="Schematic choropleth of twelve pilot districts shaded by percentage of villages digitized, from 33 percent in Chhindwara to 86 percent in Gwalior." style="width:100%; height:auto; display:block;">
+      <p class="map-note">HOVER ANYWHERE ON THE ATLAS PAGE FOR INTERACTIVE DISTRICT DETAIL</p>
+    </figure>
+
+    <div style="display:grid; gap:22px;">
+      <div class="panel">
+        <div class="panel-head"><h2>District progress</h2><span class="meta">% of villages digitized</span></div>
+        <div class="panel-body" data-stagger>
+          <div class="prow"><div class="nm">Gwalior</div><div class="track"><div class="fill" style="width:86%"></div></div><div class="pct">86%</div></div>
+          <div class="prow"><div class="nm">Bhopal</div><div class="track"><div class="fill" style="width:78%"></div></div><div class="pct">78%</div></div>
+          <div class="prow"><div class="nm">Guna</div><div class="track"><div class="fill" style="width:71%"></div></div><div class="pct">71%</div></div>
+          <div class="prow"><div class="nm">Jabalpur</div><div class="track"><div class="fill" style="width:68%"></div></div><div class="pct">68%</div></div>
+          <div class="prow"><div class="nm">Sagar</div><div class="track"><div class="fill" style="width:64%"></div></div><div class="pct">64%</div></div>
+          <div class="prow"><div class="nm">Hoshangabad</div><div class="track"><div class="fill" style="width:61%"></div></div><div class="pct">61%</div></div>
+          <div class="prow"><div class="nm">Satna</div><div class="track"><div class="fill" style="width:55%"></div></div><div class="pct">55%</div></div>
+          <div class="prow"><div class="nm">Betul</div><div class="track"><div class="fill" style="width:51%"></div></div><div class="pct">51%</div></div>
+          <div class="prow"><div class="nm">Rewa</div><div class="track"><div class="fill" style="width:47%"></div></div><div class="pct">47%</div></div>
+          <div class="prow"><div class="nm">Dhar</div><div class="track"><div class="fill" style="width:42%"></div></div><div class="pct">42%</div></div>
+          <div class="prow"><div class="nm">Ratlam</div><div class="track"><div class="fill" style="width:38%"></div></div><div class="pct">38%</div></div>
+          <div class="prow"><div class="nm">Chhindwara</div><div class="track"><div class="fill" style="width:33%"></div></div><div class="pct">33%</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Parcel-match status</h2><span class="meta">map ↔ register</span></div>
+        <div class="panel-body">
+          <div class="prow"><div class="nm">Matched</div><div class="track"><div class="fill" style="width:91%; background:#1e5b3e"></div></div><div class="pct">91%</div></div>
+          <div class="prow"><div class="nm">Mismatched</div><div class="track"><div class="fill" style="width:6%; background:#8a6d1d"></div></div><div class="pct">6%</div></div>
+          <div class="prow"><div class="nm">Unmatched</div><div class="track"><div class="fill" style="width:3%; background:#a83226"></div></div><div class="pct">3%</div></div>
+          <p style="font-size:12.5px; color:var(--muted); margin:10px 0 0;">Mismatched parcels await clerk review; unmatched parcels are typically missing schedule pages in the source bundle.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap dash-grid" id="quality" aria-label="Quality and queue">
+    <div class="panel">
+      <div class="panel-head"><h2>Georeferencing quality — residuals</h2><span class="meta">mean control-point error, metres</span></div>
+      <div class="panel-body">
+        <svg viewBox="0 0 560 200" width="100%" role="img" aria-label="Bar chart of mean georeferencing residual by district, all under 4 metres, with Hoshangabad lowest at 1.2">
+          <g stroke="#dde2d8"><line x1="40" y1="20" x2="544" y2="20"/><line x1="40" y1="70" x2="544" y2="70"/><line x1="40" y1="120" x2="544" y2="120"/><line x1="40" y1="160" x2="544" y2="160"/></g>
+          <g fill="#5b6a5f" font-size="10"><text x="34" y="24" text-anchor="end">4m</text><text x="34" y="74" text-anchor="end">2.7m</text><text x="34" y="124" text-anchor="end">1.3m</text><text x="34" y="164" text-anchor="end">0</text></g>
+          <!-- residual (m) scaled: h = m/4*140, base 160. Gwl 2.1->73.5, Bpl 1.8->63, Gna 2.9->101.5, Jab 2.4->84, Sgr 2.7->94.5, Hosh 1.2->42, Sat 3.1->108.5, Bet 2.6->91, Rew 3.4->119, Dhar 3.7->129.5, Rtl 3.3->115.5, Chh 3.9->136.5 -->
+          <g class="chart-bars" fill="#1e5b3e">
+            <rect x="52" y="86.5" width="30" height="73.5" fill="#4a8563"/>
+            <rect x="94" y="97" width="30" height="63"/>
+            <rect x="136" y="58.5" width="30" height="101.5" fill="#4a8563"/>
+            <rect x="178" y="76" width="30" height="84" fill="#4a8563"/>
+            <rect x="220" y="65.5" width="30" height="94.5" fill="#4a8563"/>
+            <rect x="262" y="118" width="30" height="42"/>
+            <rect x="304" y="51.5" width="30" height="108.5" fill="#94b49a"/>
+            <rect x="346" y="69" width="30" height="91" fill="#94b49a"/>
+            <rect x="388" y="41" width="30" height="119" fill="#94b49a"/>
+            <rect x="430" y="30.5" width="30" height="129.5" fill="#94b49a"/>
+            <rect x="472" y="44.5" width="30" height="115.5" fill="#94b49a"/>
+            <rect x="514" y="23.5" width="30" height="136.5" fill="#94b49a"/>
+          </g>
+          <g fill="#5b6a5f" font-size="9.5" text-anchor="middle">
+            <text x="67" y="176">Gwl</text><text x="109" y="176">Bpl</text><text x="151" y="176">Gna</text><text x="193" y="176">Jab</text>
+            <text x="235" y="176">Sgr</text><text x="277" y="176">Hosh</text><text x="319" y="176">Sat</text><text x="361" y="176">Bet</text>
+            <text x="403" y="176">Rew</text><text x="445" y="176">Dhar</text><text x="487" y="176">Rtl</text><text x="529" y="176">Chh</text>
+          </g>
+        </svg>
+        <p style="font-size:12.5px; color:var(--muted); margin:8px 0 0;">All districts under the 4 m publication threshold. Chhindwara residuals trace to warped 1962 cloth sheets awaiting re-scan.</p>
+      </div>
+    </div>
+
+    <div class="panel" id="queue">
+      <div class="panel-head"><h2>Parcel review queue</h2><span class="meta">318 parcels pending</span></div>
+      <div class="panel-body" style="padding:0;">
+        <table class="plain">
+          <thead><tr><th scope="col">Parcel</th><th scope="col">Village</th><th scope="col">Issue</th><th scope="col" style="text-align:right">Age</th></tr></thead>
+          <tbody data-stagger>
+            <tr><td class="mono">BPL/0841/112/2B</td><td>Bilakhedi</td><td><span class="chip chip-warn">Mismatch</span> area 2.47 vs 2.74 ha</td><td class="num">2d</td></tr>
+            <tr><td class="mono">IND/0447/89/1</td><td>Nipaniya</td><td><span class="chip chip-warn">Mismatch</span> survey no. split</td><td class="num">1d</td></tr>
+            <tr><td class="mono">DHR/2194/41/7</td><td>Dhar Kalan</td><td><span class="chip chip-info">Re-scan</span> warped sheet</td><td class="num">1d</td></tr>
+            <tr><td class="mono">GWL/1012/214/9</td><td>Khajuri Kalan</td><td><span class="chip chip-warn">Mismatch</span> owner vs RoR</td><td class="num">9h</td></tr>
+            <tr><td class="mono">UJN/0333/68/3</td><td>Ujjain Rural</td><td><span class="chip chip-ok">Ready</span> clerk-corrected, awaiting officer</td><td class="num">5h</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap" style="margin-top:26px;">
+    <a class="btn" href="index.html">← Back to the atlas</a>
+  </div>
+</main>
+
+<footer class="sheet-foot">
+  <div class="wrap">
+    <span>Naksha · Cadastral Digitization Atlas (demo) · Boundaries schematic, figures illustrative.</span>
+    <span class="demo-tag">PROTOTYPE 04 · NAKSHA · MOCK DATA</span>
+  </div>
+</footer>
+
+</body>
+</html>

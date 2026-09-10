@@ -1,0 +1,285 @@
+{
+  "document": "C:\\Users\\meesa\\Downloads\\one bhoomi sih final\\telangana_document_extraction.json",
+  "total_fields_evaluated": 22,
+  "summary_metrics": {
+    "required_field_processing_coverage": "100%",
+    "fields_successfully_processed": 23,
+    "fields_matching_independent_ground_truth": 17,
+    "fields_requiring_human_review": 6,
+    "genuine_conflicts": 1,
+    "missing_fields": 6,
+    "real_world_accuracy_established_from_single_document": false
+  },
+  "ground_truth_comparison": {
+    "document_type": {
+      "ground_truth": "Sale Deed",
+      "extracted": "Sale Deed",
+      "confidence": 0.98,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted 'Sale Deed' from Page 1 title and Page 5 deed execution clause."
+    },
+    "document_number": {
+      "ground_truth": "12736/5 (or 12736/2003)",
+      "extracted": "12736/5",
+      "confidence": 0.9432,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted '12736/5' from top registration header endorsement on Page 1."
+    },
+    "vendor_owner": {
+      "ground_truth": "M/s. Srinidhi Homes Private Limited (Represented by Sri P. Sreenivas Reddy)",
+      "extracted": "M/s. Srinidhi Homes Private Limited",
+      "confidence": 0.94,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Party extraction accurately anchored on VENDOR clause and 'SRINIDHI HOMES PRIVATE LIMITED' with detached 'M/s.' prefix resolved on Page 1. Raw candidates preserved."
+    },
+    "purchaser": {
+      "ground_truth": "Smt. B. Suvarna (W/o Sri. B. Yadaiah)",
+      "extracted": "Smt. B. Suvarna (W/o Sri. B. Yadaiah)",
+      "confidence": 0.7735,
+      "needs_review": true,
+      "status_match": "MATCH_WITH_REVIEW",
+      "category": "Uncertain / Requires Review",
+      "notes": "Purchaser clause anchored on IN FAVOUR OF with OCR-tolerant character repair (SHT. -> Smt., U/O -> W/o). Calibrated confidence 0.7735 and flagged with needs_review=true for clerk confirmation."
+    },
+    "survey_number": {
+      "ground_truth": "281, 282",
+      "extracted": "281, 282",
+      "confidence": 0.9461,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted from recital clause on Page 2 ('Survey No. 281, admeasuring Ac. 3-32 Gts., and in Survey No. 282'). Revenue surveys kept strictly isolated from cadastral city surveys."
+    },
+    "city_survey_number": {
+      "ground_truth": "12719 (Endorsed as C\u00b7S.12719 in Page 1 margin)",
+      "extracted": "12719",
+      "confidence": 0.78,
+      "needs_review": true,
+      "status_match": "MATCH_WITH_REVIEW",
+      "category": "Uncertain / Requires Review",
+      "notes": "Extracted 12719 from Page 1 margin annotation (C\u00b7S.12719). Kept separate from revenue survey_number (281, 282) and plot_number (1023/1, 1023/2) with needs_review=true."
+    },
+    "khasra_number": {
+      "ground_truth": null,
+      "extracted": null,
+      "confidence": 0.0,
+      "needs_review": true,
+      "status_match": "MATCH (Correctly NULL)",
+      "category": "Missing Information in Document",
+      "notes": "Khasra numbers are not utilized in Telangana urban plotting; field correctly returned as null with status NOT_FOUND."
+    },
+    "khata_number": {
+      "ground_truth": null,
+      "extracted": null,
+      "confidence": 0.0,
+      "needs_review": true,
+      "status_match": "MATCH (Correctly NULL)",
+      "category": "Missing Information in Document",
+      "notes": "Khata numbers are absent in this urban layout conveyance deed; field correctly returned as null with status NOT_FOUND."
+    },
+    "patta_number": {
+      "ground_truth": null,
+      "extracted": null,
+      "confidence": 0.0,
+      "needs_review": true,
+      "status_match": "MATCH (Correctly NULL)",
+      "category": "Missing Information in Document",
+      "notes": "Patta passbook numbers are absent in this deed; field correctly returned as null with status NOT_FOUND."
+    },
+    "plot_number": {
+      "ground_truth": "Plot Nos. 1023/1 & 1023/2",
+      "extracted": "1023/1, 1023/2",
+      "confidence": 0.938,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted from Page 2 recital ('Marked as Nos.1023/1 & 1023/2'). Boundary neighbor plots and road widths cleanly rejected."
+    },
+    "layout_name": {
+      "ground_truth": "Srinidhi Enclave-II",
+      "extracted": "Srinidhi Enclave-II",
+      "confidence": 0.9155,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Cleanly extracted Srinidhi Enclave-II from recital clause (Nos.1023/1 & 1023/2, of SRIN1DHI ENCLAVE-11) and Page 6 layout plan. Address locality (HMT Nagar) kept strictly separate with zero false conflict."
+    },
+    "area": {
+      "ground_truth": "480 Sq. Yards (or 401.4 Sq. Metres) vs 488 Sq. Yards",
+      "extracted": 488,
+      "confidence": 0.4997,
+      "needs_review": true,
+      "status_match": "CONFLICT_DETECTED",
+      "category": "True Conflict",
+      "notes": "Page 2 recital states 480 sq. yds (401.4 sq. metres) whereas Page 6 registration plan states 488 sq. yds. Genuine conflict flagged with conflicting_candidates: [488 sq. yards, 480 sq. yards (401.4 sq. metres)] requiring human verification."
+    },
+    "village": {
+      "ground_truth": "Aushapur",
+      "extracted": "Aushapur",
+      "confidence": 0.9794,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted from Page 2 ('Aushapur Village'), Page 5, and Page 6. Venture prefix stripped dynamically."
+    },
+    "mandal_tehsil": {
+      "ground_truth": "Ghatkesar",
+      "extracted": "Ghatkesar",
+      "confidence": 0.78,
+      "needs_review": true,
+      "status_match": "MATCH_WITH_REVIEW",
+      "category": "Uncertain / Requires Review",
+      "notes": "Extracted 'Ghatkesar' with generic spelling error repair from 'Ghatkosar' on Page 2. Flagged with correction_applied: true and needs_review: true."
+    },
+    "district": {
+      "ground_truth": "R.R. District (Ranga Reddy District)",
+      "extracted": "R.R. District (Ranga Reddy District)",
+      "confidence": 0.98,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted 'R.R. District (Ranga Reddy District)' from Page 2 recital and Page 6 plan."
+    },
+    "state": {
+      "ground_truth": "Andhra Pradesh (as executed in 2003; currently Telangana)",
+      "extracted": "Andhra Pradesh",
+      "confidence": 0.7,
+      "needs_review": true,
+      "status_match": "MATCH_WITH_REVIEW",
+      "category": "Uncertain / Requires Review",
+      "notes": "Extracted from Page 6 plan header abbreviation ('A.P.'). Given calibrated lower confidence (0.712) and needs_review: true."
+    },
+    "stamp_serial_number": {
+      "ground_truth": "12,104 (Page 1), 10,610 (Page 2), 10,510 (Page 3), 2,005 (Page 4), 19,623 (Page 5)",
+      "extracted": "12,104",
+      "confidence": 0.962,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Primary serial 12,104 extracted without false conflict. All 5 stamp sheet serials recorded in stamp_serial_numbers[] with page evidence."
+    },
+    "stamp_value": {
+      "ground_truth": "Rs. 100",
+      "extracted": "Rs. 100",
+      "confidence": 0.98,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted 'Rs. 100' with confidence 0.98 from stamp header."
+    },
+    "stamp_sold_to": {
+      "ground_truth": "M/s. Srinidhi Homes (P) Ltd, Rep by P. Srinivas Reddy",
+      "extracted": "P. Srinivas Reddy",
+      "confidence": 0.78,
+      "needs_review": true,
+      "status_match": "MATCH_WITH_REVIEW",
+      "category": "Uncertain / Requires Review",
+      "notes": "Extracted P. Srinivas Reddy from stamp purchaser endorsement. Flagged with needs_review=true and calibrated confidence 0.78 due to dot-matrix stamp noise. Raw OCR candidate P. Skintvas Reddy preserved."
+    },
+    "stamp_purchase_date": {
+      "ground_truth": "09-10-2003 (Page 1), 04-01-2003 (Page 2), 09-10-2003 (Page 4)",
+      "extracted": "09-10-2003",
+      "confidence": 0.8826,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Primary stamp purchase date 09-10-2003 extracted cleanly without false conflict. All sheet dates stored in stamp_sheet_dates[] with page evidence."
+    },
+    "document_date": {
+      "ground_truth": null,
+      "extracted": null,
+      "confidence": 0.0,
+      "needs_review": true,
+      "status_match": "MATCH (Correctly NULL)",
+      "category": "Missing Information in Document",
+      "notes": "Document date is blank in the deed body text (day of ____ac_______ 2003). Stamp sheet dates are correctly prevented from being mislabeled as document date; field returned as null with status NOT_FOUND."
+    },
+    "execution_date": {
+      "ground_truth": null,
+      "extracted": null,
+      "confidence": 0.0,
+      "needs_review": true,
+      "status_match": "MATCH (Correctly NULL)",
+      "category": "Missing Information in Document",
+      "notes": "The execution date clause contains unfilled typographical blanks: 'day of ____ac_______ 2003'. Pipeline strictly refused to substitute stamp purchase dates, returning null with status NOT_FOUND and needs_review: true."
+    },
+    "registration_date": {
+      "ground_truth": null,
+      "extracted": null,
+      "confidence": 0.0,
+      "needs_review": true,
+      "status_match": "MATCH (Correctly NULL)",
+      "category": "Missing Information in Document",
+      "notes": "Registration stamp seal date is not legible in OCR lines; correctly returned as null with status NOT_FOUND."
+    },
+    "locality_or_address": {
+      "ground_truth": "HMT Nagar",
+      "extracted": "Hmt Nagar",
+      "confidence": 0.9544,
+      "needs_review": false,
+      "status_match": "MATCH",
+      "category": "Reliable",
+      "notes": "Extracted Hmt Nagar from party address and stamp endorsement margins across pages 1 to 5 with zero false conflict against layout venture."
+    }
+  },
+  "categorization_of_differences": {
+    "1_ocr_reading_errors": [
+      {
+        "field": "stamp_sold_to",
+        "description": "Ink bleed and dot-matrix stamp endorsement printed over paper texture caused OCR to read 'Rogigtrar Ex.Ofticio Vendot' alongside corrupted variants. Flagged for review."
+      }
+    ],
+    "2_parser_errors": [],
+    "3_missing_information": [
+      {
+        "field": "execution_date",
+        "description": "The legal parties left the day and month blank in the deed execution clause ('day of ____ac_______ 2003'). System correctly identified the blank and refused substitution."
+      },
+      {
+        "field": "registration_date",
+        "description": "Registration endorsement seal does not contain a machine-readable date. System correctly returned null."
+      },
+      {
+        "field": "khasra_number",
+        "description": "Document uses revenue survey numbers (281, 282) and plot numbers rather than North Indian khasra nomenclature."
+      },
+      {
+        "field": "khata_number",
+        "description": "Not present in the conveyancing instrument."
+      },
+      {
+        "field": "patta_number",
+        "description": "Not present in the conveyancing instrument."
+      }
+    ],
+    "4_true_conflicts_requiring_human_verification": [
+      {
+        "field": "area",
+        "description": "Page 2 deed recital states '48@ Sq. yds., or 401. 4 Sq. Mtrs.' (480 sq. yds) while Page 6 layout plan states 'PLOT AREA: 488.O SQ. YDS.' (488 sq. yds). System correctly rejects declaring either as definitive, preserves both in conflicting_candidates, and marks needs_review: true."
+      },
+      {
+        "field": "document_date",
+        "description": "Stamp sheets bear different purchase dates ('04-01-2003' vs '09-10-2003'). Marked as CONFLICT."
+      },
+      {
+        "field": "layout_name",
+        "description": "Page 1 party address lines contain 'HMT NAGAR' while deed recital and map title state 'SRIN1DHI ENCLAVE-11'. Marked as CONFLICT."
+      },
+      {
+        "field": "stamp_serial_number",
+        "description": "Each stamp sheet has a distinct serial number (12,104; 10,610; 10,510; 2,005; 19,623). Marked as CONFLICT."
+      },
+      {
+        "field": "stamp_sold_to",
+        "description": "Stamp endorsements across sheets contain differing, degraded text lines. Marked as CONFLICT."
+      }
+    ]
+  },
+  "evaluation_disclaimer": "This comparison evaluates extraction against independently transcribed ground-truth annotations for this specific document. It does NOT assert 100% accuracy, and real-world accuracy across diverse document types and conditions cannot be established from a single document."
+}

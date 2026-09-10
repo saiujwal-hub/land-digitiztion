@@ -1,0 +1,30 @@
+.venv/
+__pycache__/
+.cache/
+.paddlex/
+.paddlex-cache/
+.idea/
+.vscode/
+
+# Local configuration / outputs
+colab_url.txt
+web_tunnel_url.txt
+land_document_output.json
+*.log
+
+# Debug images
+*big.png
+*debug.png
+*thresh.png
+*crop*.png
+
+# Verification Runtime Data
+verification_keys/
+verification_db.json
+verification_db_*.json
+scratch/
+.DS_Store
+*.bak
+cloudflared.exe
+page2_full.png
+ocr_raw_summary.txt
