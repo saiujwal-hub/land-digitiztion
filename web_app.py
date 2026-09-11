@@ -2696,7 +2696,6 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 return
 
         # Quick OCR URL update endpoint: /set_ocr_url?url=https://...
-
         if parsed.path == "/set_ocr_url":
             new_url = query_params.get("url", [None])[0]
             if new_url:
@@ -2715,6 +2714,26 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     self.send_error(HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
                     return
             self.send_error(HTTPStatus.BAD_REQUEST, "Missing url parameter")
+            return
+
+        # Adaptive OCR learning inspection APIs
+        if parsed.path == "/api/learning/stats":
+            import ocr_learning_service
+            stats = ocr_learning_service.get_learning_stats()
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(stats, indent=2).encode("utf-8"))
+            return
+
+        if parsed.path == "/api/learning/rules":
+            import ocr_learning_service
+            f_param = query_params.get("field", [None])[0]
+            rules = ocr_learning_service.get_learned_rules(field_name=f_param)
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(rules, indent=2).encode("utf-8"))
             return
 
         # Official Certificate Export with Lock: /export_pdf?verification_id=...&password=...&lock=...
@@ -2970,6 +2989,36 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 self.send_error(HTTPStatus.INTERNAL_SERVER_ERROR, f"Reset error: {exc}")
                 return
 
+        # Adaptive OCR learning feedback recording API
+        if self.path == "/api/learning/feedback":
+            length = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(length)
+            try:
+                import ocr_learning_service
+                req_data = json.loads(body.decode("utf-8"))
+                # SECURITY / SIH INTEGRITY: External HTTP requests can NEVER directly
+                # create verified feedback or auto_approve rules. auto_approve is always False.
+                item = ocr_learning_service.record_feedback(
+                    document_type=req_data.get("document_type", "Sale Deed"),
+                    field_name=req_data.get("field_name", ""),
+                    raw_ocr_value=req_data.get("raw_ocr_value"),
+                    corrected_value=req_data.get("corrected_value"),
+                    verification_id=req_data.get("verification_id", ""),
+                    page_number=req_data.get("page_number"),
+                    source_bbox=req_data.get("source_bbox"),
+                    language=req_data.get("language", "en"),
+                    ocr_confidence_before=float(req_data.get("ocr_confidence_before", 0.85)),
+                    auto_approve=False,  # Enforce pending_approval status strictly
+                )
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "feedback": item}).encode("utf-8"))
+                return
+            except Exception as e:
+                self.send_error(HTTPStatus.BAD_REQUEST, str(e))
+                return
+
         if self.path != "/extract":
             self.send_error(HTTPStatus.NOT_FOUND)
             return
@@ -3078,10 +3127,16 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         "%Y-%m-%dT%H:%M:%SZ"
                     )
                     verification_service.save_record(record)
+                    import ocr_learning_service
+                    ocr_learning_service.reject_feedback_for_verification(verification_id)
                     message = "Document was rejected by the officer."
 
             # 3. Clerk corrections or officer approval on a non-approved record
             elif action in ("approve", "correct"):
+                import copy
+                import ocr_learning_service
+
+                old_payload = copy.deepcopy(record.get("document_payload", {}))
                 payload = record.get("document_payload", {})
 
                 if "document_type" in form_fields:
@@ -3166,10 +3221,38 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                                 "%Y-%m-%dT%H:%M:%SZ"
                             )
                             verification_service.save_record(record)
+
+                            # Capture any direct modifications submitted with approve
+                            field_prov = record.get("field_provenance", {})
+                            ocr_learning_service.capture_changed_payload_fields(
+                                old_payload=old_payload,
+                                new_form_fields=form_fields,
+                                verification_id=verification_id,
+                                document_type=payload.get("document_type", "Sale Deed"),
+                                auto_approve=True,
+                                field_provenance=field_prov,
+                            )
+                            # Promote staged clerk feedback to verified status
+                            promoted = ocr_learning_service.approve_feedback_for_verification(verification_id)
                             message = "Document approved and sealed successfully."
+                            if promoted > 0:
+                                message += f" ({promoted} correction(s) verified for adaptive learning)"
                 elif action == "correct":
                     verification_service.save_record(record)
-                    message = "Clerk review corrections saved successfully."
+                    field_prov = record.get("field_provenance", {})
+                    changed_items = ocr_learning_service.capture_changed_payload_fields(
+                        old_payload=old_payload,
+                        new_form_fields=form_fields,
+                        verification_id=verification_id,
+                        document_type=payload.get("document_type", "Sale Deed"),
+                        auto_approve=False,
+                        field_provenance=field_prov,
+                    )
+                    if changed_items:
+                        changed_names = ", ".join(f["field_name"] for f in changed_items)
+                        message = f"Clerk review corrections saved for {len(changed_items)} field(s) ({changed_names}). Recorded for officer seal verification."
+                    else:
+                        message = "Clerk review corrections saved successfully."
 
             from semantic_extractor import clean_user_facing_schema
             payload_data = record.get("document_payload", {})

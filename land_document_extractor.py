@@ -2054,6 +2054,13 @@ def extract_land_document_from_lines(
     }
     output["field_provenance"] = semantic_provenance
     output["debug_candidates"] = debug_candidates
+    output["learning"] = semantic_result.get("learning", {
+        "rules_applied": 0,
+        "verified_feedback_count": 0,
+        "fields_improved": [],
+        "learned_corrections": [],
+        "learning_mode": "officer_verified_adaptive_feedback",
+    })
 
     pipeline_timings["json_object_build_ms"] = (perf_counter() - t0) * 1000
     pipeline_timings["core_pipeline_ms"] = (

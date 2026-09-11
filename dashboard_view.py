@@ -1103,6 +1103,99 @@ def _render_sidebar(active_item: str, desk_n: int, sealed_n: int, worker_label: 
     """
 
 
+def _render_learning_panel() -> str:
+    """Renders the Officer-Verified Adaptive OCR Normalization panel on the registry dashboard."""
+    import ocr_learning_service
+    stats = ocr_learning_service.get_learning_stats()
+    rules = ocr_learning_service.get_learned_rules()
+
+    pending_n = stats.get("pending_feedback_count", 0)
+    verified_n = stats.get("verified_feedback_count", 0)
+    rejected_n = stats.get("rejected_feedback_count", 0)
+    rules_n = stats.get("learned_rules_count", 0)
+    fields_imp = stats.get("fields_improved", [])
+    fields_txt = ", ".join(fields_imp) if fields_imp else "None yet (accruing approvals)"
+
+    rule_badges = []
+    for r in rules[:6]:
+        f_name = r.get("field_name", "")
+        doc_type = r.get("document_type", "Sale Deed")
+        lang = r.get("language", "en")
+        raw_p = r.get("raw_pattern", "")
+        rep_p = r.get("replacement", "")
+        conf = r.get("confidence", 0.0)
+        ev_c = r.get("evidence_count", 0)
+        rule_badges.append(
+            f'<div style="font-family:var(--type); font-size:11.5px; background:var(--paper-deep); padding:8px 12px; border:1px solid var(--rule); border-radius:3px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
+            f'<div>'
+            f'<span style="background:var(--ink); color:#fff; padding:1px 5px; border-radius:2px; font-size:10px; font-weight:700; margin-right:6px;">{html.escape(f_name)}</span>'
+            f'<span style="background:var(--border); color:var(--ink-soft); padding:1px 5px; border-radius:2px; font-size:10px; margin-right:8px;">{html.escape(doc_type)} &middot; {html.escape(lang)}</span>'
+            f'<span>Raw: <code style="color:var(--stamp);">{html.escape(raw_p)}</code> &rarr; Normalized: <code style="color:var(--green); font-weight:700;">{html.escape(rep_p)}</code></span>'
+            f'</div>'
+            f'<span style="font-size:11px; color:var(--ink-soft);">{ev_c} verified examples &middot; rule conf {conf:.2f}</span>'
+            f'</div>'
+        )
+    if not rule_badges:
+        rule_badges.append(
+            '<div style="font-family:var(--type); font-size:11.5px; color:var(--ink-soft); padding:10px; background:var(--paper); border:1px dashed var(--rule); border-radius:3px;">'
+            'No active learned rules compiled yet. Rules automatically activate once an officer approves &ge; 2 identical field corrections.'
+            '</div>'
+        )
+
+    return f"""
+    <section class="learning-panel" id="learningPanel" style="background:var(--card); border:1.5px solid var(--border); border-radius:2px; padding:20px; margin-bottom:26px; box-shadow:2px 2px 0 rgba(0,0,0,.025);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; border-bottom:1px solid var(--rule-soft); padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">🧠</span>
+            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">Officer-verified adaptive OCR normalization</span>
+            <span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--green); color:#fff; padding:2px 6px; border-radius:3px; letter-spacing:.06em;">OFFICER-VERIFIED</span>
+          </div>
+          <div class="chart-meta" style="margin-top:3px;">Human-in-the-loop feedback learning</div>
+        </div>
+        <div style="font-family:var(--type); font-size:11px; background:#FFF9E6; border:1px solid #F0C36D; padding:6px 12px; border-radius:3px; color:#5A4008; line-height:1.4;">
+          Human-in-the-loop adaptive OCR feedback learning.<br>
+          Only officer-approved corrections become learned rules.<br>
+          Neural OCR weights are not retrained.
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:16px;">
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Pending Corrections</div>
+          <div style="font-family:var(--serif); font-size:26px; font-weight:700; color:var(--amber); margin:4px 0;">{pending_n}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Clerk edits awaiting officer seal</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Verified Corrections</div>
+          <div style="font-family:var(--serif); font-size:26px; font-weight:700; color:var(--green); margin:4px 0;">{verified_n}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Officer-approved corrections</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Rejected Corrections</div>
+          <div style="font-family:var(--serif); font-size:26px; font-weight:700; color:var(--stamp); margin:4px 0;">{rejected_n}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Excluded from learning rules</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Active Learned Rules</div>
+          <div style="font-family:var(--serif); font-size:26px; font-weight:700; color:var(--ink); margin:4px 0;">{rules_n}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">&ge; 2 approved examples required</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Fields Improved</div>
+          <div style="font-family:var(--serif); font-size:16px; font-weight:700; color:var(--ink); margin:8px 0 4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{html.escape(fields_txt)}">{html.escape(fields_txt)}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Field, doc-type &amp; lang scoped</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--rule-soft); padding-top:12px;">
+        <div style="font-family:var(--type); font-size:11px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px;">Active Field Normalization Rules (Raw vs Normalized)</div>
+        {''.join(rule_badges)}
+      </div>
+    </section>
+    """
+
+
 def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> bytes:
     """Renders the executive operations dashboard with left side menu and statistical graphs."""
     data = get_dashboard_data()
@@ -1210,6 +1303,7 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
 
     donut_svg = _render_donut_svg(data["sale_count"], data["gpa_count"], data["other_count"], data["on_file"])
     velocity_svg = _render_velocity_svg(data["on_file"], data["sealed_n"])
+    learning_panel_markup = _render_learning_panel()
     fp_text = fp or "Keypair auto-generated on first seal"
 
     page_html = f"""<!doctype html>
@@ -1299,6 +1393,9 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
 
       <!-- Action Required Banner (if any pending) -->
       {notice_markup}
+
+      <!-- Adaptive Learning Feedback Layer -->
+      {learning_panel_markup}
 
       <!-- STATISTICAL ANALYTICS GRAPHS -->
       <section class="charts-grid" id="analyticsSection">

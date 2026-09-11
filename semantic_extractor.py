@@ -279,17 +279,23 @@ def extract_survey_number_candidates(lines) -> list[FieldCandidate]:
                 sched_body = m_sched.group(1) if m_sched else pg_text
 
             for m_sy in re.finditer(
-                r"(?:\b(?:SURVEY|SY|SV|SU|S\s*\.?\s*[YVUN]|S\s*\.?\s*NO|RS\s*\.?\s*NO)[\s._-]*(?:NOS?|NUMBERS?|NO\.?)?[\s.:-]*(\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?(?:\s*(?:,|&|\band\b|\+|-)\s*\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?)*))",
+                r"(?:\b(?:SURVEY|SY|SV|SU|S\s*\.?\s*[YVUN]|S\s*\.?\s*NO|RS\s*\.?\s*NO)[\s._-]*(?:NOS?|NUMBERS?|NO\.?)?[\s.:-]*(\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?(?:\s*(?:,|&|\band\b|\+|-|\|)\s*\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?)*))",
                 sched_body, re.IGNORECASE
             ):
-                raw = re.sub(r"([A-Za-z]+)(\d+)", r"\1 \2", m_sy.group(1))
-                raw = re.sub(r"(?<!/)(\d+)([A-Za-z]+)", r"\1 \2", raw)
-                raw = re.sub(r"\bAND\b", ",", raw, flags=re.IGNORECASE)
-                raw = re.sub(r"&", ",", raw)
-                nums = re.findall(r"\b\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?\b", raw)
+                raw_cap = m_sy.group(1).strip(" .,;-")
+                if "|" in raw_cap:
+                    val_str = raw_cap
+                    nums = [n.strip() for n in raw_cap.split("|")]
+                else:
+                    raw = re.sub(r"([A-Za-z]+)(\d+)", r"\1 \2", raw_cap)
+                    raw = re.sub(r"(?<!/)(\d+)([A-Za-z]+)", r"\1 \2", raw)
+                    raw = re.sub(r"\bAND\b", ",", raw, flags=re.IGNORECASE)
+                    raw = re.sub(r"&", ",", raw)
+                    nums = re.findall(r"\b\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?\b", raw)
                 valid_nums = [n.replace(" ", "") for n in nums if not (len(n) == 4 and n.isdigit() and (n.startswith("19") or n.startswith("20")))]
                 if valid_nums:
-                    val_str = ", ".join(sorted(set(valid_nums), key=lambda x: (len(x), x)))
+                    if "|" not in raw_cap:
+                        val_str = ", ".join(sorted(set(valid_nums), key=lambda x: (len(x), x)))
                     score = 1.05 if is_plan else (0.98 if len(valid_nums) >= 2 else 0.95)
                     candidates.append(FieldCandidate(
                         value=val_str,
@@ -301,19 +307,25 @@ def extract_survey_number_candidates(lines) -> list[FieldCandidate]:
 
         # 2. General survey number mentions across document (excluding City Survey C.S.)
         for m in re.finditer(
-            r"(?:\b(?:SURVEY|SY|SV|SU|S\s*\.?\s*[YVUN]|S\s*\.?\s*NO|RS\s*\.?\s*NO)[\s._-]*(?:NOS?|NUMBERS?|NO\.?)?[\s.:-]*(\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?(?:\s*(?:,|&|\band\b|\+|-)\s*\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?)*))",
+            r"(?:\b(?:SURVEY|SY|SV|SU|S\s*\.?\s*[YVUN]|S\s*\.?\s*NO|RS\s*\.?\s*NO)[\s._-]*(?:NOS?|NUMBERS?|NO\.?)?[\s.:-]*(\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?(?:\s*(?:,|&|\band\b|\+|-|\|)\s*\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?)*))",
             pg_text, re.IGNORECASE
         ):
-            raw = re.sub(r"([A-Za-z]+)(\d+)", r"\1 \2", m.group(1))
-            raw = re.sub(r"(?<!/)(\d+)([A-Za-z]+)", r"\1 \2", raw)
-            raw = re.sub(r"\bAND\b", ",", raw, flags=re.IGNORECASE)
-            raw = re.sub(r"&", ",", raw)
-            nums = re.findall(r"\b\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?\b", raw)
+            raw_cap = m.group(1).strip(" .,;-")
+            if "|" in raw_cap:
+                val_str = raw_cap
+                nums = [n.strip() for n in raw_cap.split("|")]
+            else:
+                raw = re.sub(r"([A-Za-z]+)(\d+)", r"\1 \2", raw_cap)
+                raw = re.sub(r"(?<!/)(\d+)([A-Za-z]+)", r"\1 \2", raw)
+                raw = re.sub(r"\bAND\b", ",", raw, flags=re.IGNORECASE)
+                raw = re.sub(r"&", ",", raw)
+                nums = re.findall(r"\b\d{1,4}(?:\s*/\s*[0-9A-Za-z]+)?\b", raw)
             valid_nums = [n.replace(" ", "") for n in nums if not (len(n) == 4 and n.isdigit() and (n.startswith("19") or n.startswith("20")))]
             if not valid_nums:
                 continue
 
-            val_str = ", ".join(sorted(set(valid_nums), key=lambda x: (len(x), x)))
+            if "|" not in raw_cap:
+                val_str = ", ".join(sorted(set(valid_nums), key=lambda x: (len(x), x)))
             score = 1.05 if is_plan else (0.98 if is_schedule else 0.75)
             candidates.append(FieldCandidate(
                 value=val_str,
@@ -418,17 +430,17 @@ def aggregate_survey_numbers(candidates: list[FieldCandidate]) -> ResolutionResu
     pool = plan_cands if plan_cands else accepted
 
     # Prioritize candidates that contain more survey numbers, then highest score, then earlier page
-    pool.sort(key=lambda c: (-len([n for n in c.value.split(",") if n.strip()]), -c.score, c.page))
+    pool.sort(key=lambda c: (-len([n for n in re.split(r"[,|]", c.value) if n.strip()]), -c.score, c.page))
     best = pool[0]
 
     # Collect distinct survey candidate sets to detect contradictions
     distinct_sets = {}
     for c in accepted:
-        items = tuple(sorted(set(n.strip() for n in c.value.split(",") if n.strip())))
+        items = tuple(sorted(set(n.strip() for n in re.split(r"[,|]", c.value) if n.strip())))
         if items and items not in distinct_sets:
             distinct_sets[items] = c
 
-    best_items = set(n.strip() for n in best.value.split(",") if n.strip())
+    best_items = set(n.strip() for n in re.split(r"[,|]", best.value) if n.strip())
     is_conflict = False
     conflicting_list = []
 
@@ -1962,41 +1974,95 @@ def build_debug_table(field_name: str, candidates: list[FieldCandidate], selecte
 # MASTER EXTRACTION FUNCTION
 # ---------------------------------------------------------------------------
 def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
+    import ocr_learning_service
     debug_table = []
+    applied_corrections = []
 
-    def _field_entry(res, candidates, default_context=None, extra=None):
-        val = res[0]
-        conf = res[1]
+    # Detect primary document language (Telugu or English) from lines
+    doc_lang = "en"
+    for l in (lines or []):
+        t = getattr(l, "text", "")
+        if any("\u0C00" <= ch <= "\u0C7F" for ch in t):
+            doc_lang = "te"
+            break
+
+    def _process_field(field_name: str, res, candidates: list, default_context=None, extra=None, doc_type=None):
+        raw_val = res[0]
+        ocr_conf = float(res[1]) if res[1] is not None else 0.85
         src = res[2]
-        status = getattr(res, "status", "EXTRACTED" if val is not None else "NOT_FOUND")
-        needs_rev = getattr(res, "needs_review", True if val is None else False)
-        if val is None or status == "NOT_FOUND":
-            val = None
+        orig_val = raw_val
+
+        # Timing: Post-selection field normalization
+        norm_val, raw_ocr_conf, norm_conf, final_conf, rule_info, norm_type = ocr_learning_service.apply_learned_normalization(
+            field_name=field_name,
+            raw_value=raw_val,
+            ocr_confidence=ocr_conf,
+            document_type=doc_type,
+            language=doc_lang,
+        )
+
+        status = getattr(res, "status", "EXTRACTED" if norm_val is not None else "NOT_FOUND")
+        needs_rev = getattr(res, "needs_review", True if norm_val is None else False)
+        if norm_val is None or status == "NOT_FOUND":
+            norm_val = None
             status = "NOT_FOUND"
-            conf = 0.0
+            final_conf = 0.0
+            raw_ocr_conf = 0.0
+            norm_conf = None
             needs_rev = True
         conflicts = getattr(res, "conflicting_candidates", [])
 
+        if rule_info:
+            applied_corrections.append(rule_info)
+            src = f"{src} [Learned Rule: {rule_info.get('rule_id')}]"
+        elif norm_type == "deterministic_normalization":
+            src = f"{src} [Deterministic Normalization]"
+
         evidence = []
-        correction_applied = False
-        orig_val = val
-        if val is not None:
-            for c in candidates:
-                if c.accepted and (c.value == val or (status == "CONFLICT" and c.value in conflicts)):
-                    evidence.append(c.context)
-                    if "repair" in c.reason.lower() or "normalized" in c.reason.lower() or "tolerant" in c.reason.lower():
-                        correction_applied = True
-            if not evidence and candidates:
-                evidence = [c.context for c in candidates if c.accepted][:3]
+        correction_applied = bool(rule_info or norm_type != "raw_ocr")
+        page_num = None
+        source_bbox = None
+
+        for c in (candidates or []):
+            if c.accepted and (c.value == norm_val or c.value == orig_val or (status == "CONFLICT" and c.value in conflicts)):
+                evidence.append(c.context)
+                if getattr(c, "page", None) is not None and page_num is None:
+                    try:
+                        page_num = int(c.page)
+                    except (ValueError, TypeError):
+                        pass
+                if getattr(c, "bbox", None) is not None and source_bbox is None:
+                    source_bbox = list(c.bbox) if isinstance(c.bbox, (list, tuple)) else None
+                elif getattr(c, "source_bbox", None) is not None and source_bbox is None:
+                    source_bbox = list(c.source_bbox) if isinstance(c.source_bbox, (list, tuple)) else None
+                if "repair" in c.reason.lower() or "normalized" in c.reason.lower() or "tolerant" in c.reason.lower():
+                    correction_applied = True
+
+        if not evidence and candidates:
+            evidence = [c.context for c in candidates if c.accepted][:3]
+            if candidates and getattr(candidates[0], "page", None) is not None and page_num is None:
+                try:
+                    page_num = int(candidates[0].page)
+                except (ValueError, TypeError):
+                    pass
 
         entry = {
-            "value": val,
-            "confidence": round(float(conf), 4),
+            "value": norm_val,
+            "confidence": round(float(final_conf), 4),
+            "ocr_confidence": round(float(raw_ocr_conf), 4),
+            "normalization_confidence": round(float(norm_conf), 4) if norm_conf is not None else None,
+            "final_confidence": round(float(final_conf), 4),
+            "normalization_type": norm_type,
             "source": src,
             "status": status,
             "needs_review": needs_rev,
             "evidence": evidence,
             "original_value": orig_val,
+            "raw_ocr_value": orig_val,
+            "page_number": page_num,
+            "source_bbox": source_bbox,
+            "language": doc_lang,
+            "document_type": doc_type,
             "correction_applied": correction_applied,
             "candidates": [c.value for c in candidates if c.accepted],
             "conflicting_candidates": conflicts,
@@ -2005,65 +2071,66 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
             entry["context"] = default_context
         if extra:
             entry.update(extra)
-        return entry
+
+        return norm_val, entry
 
     # 1. Document Type
     dt_cands = extract_document_type_candidates(lines)
     dt_res = select_best(dt_cands)
-    doc_type, dt_conf, dt_src = dt_res
+    doc_type, dt_entry = _process_field("document_type", dt_res, dt_cands)
     debug_table.extend(build_debug_table("document_type", dt_cands, doc_type))
 
     # 2. Document Number
     dn_cands = extract_document_number_candidates(lines)
     dn_res = select_best(dn_cands)
-    doc_num, dn_conf, dn_src = dn_res
+    doc_num, dn_entry = _process_field("document_number", dn_res, dn_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("document_number", dn_cands, doc_num))
 
     # 3. Revenue Survey Number (Strictly agricultural/revenue surveys)
     sn_cands = extract_survey_number_candidates(lines)
     sn_res = aggregate_survey_numbers(sn_cands)
-    survey_num, sn_conf, sn_src = sn_res
+    survey_num, sn_entry = _process_field("survey_number", sn_res, sn_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("survey_number", sn_cands, survey_num))
 
     # 3B. City Survey Number (Cadastral survey - C.S.12719)
     cs_cands = extract_city_survey_candidates(lines)
     cs_res = select_best(cs_cands)
-    city_survey, cs_conf, cs_src = cs_res
+    city_survey, cs_entry = _process_field("city_survey_number", cs_res, cs_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("city_survey_number", cs_cands, city_survey))
 
     # 3C. Khasra, Khata, Patta
     khasra_cands = extract_khasra_candidates(lines)
     khasra_res = select_best(khasra_cands)
-    khasra_num, khasra_conf, khasra_src = khasra_res
+    khasra_num, khasra_entry = _process_field("khasra_number", khasra_res, khasra_cands, doc_type=doc_type)
 
     khata_cands = extract_khata_candidates(lines)
     khata_res = select_best(khata_cands)
-    khata_num, khata_conf, khata_src = khata_res
+    khata_num, khata_entry = _process_field("khata_number", khata_res, khata_cands, doc_type=doc_type)
 
     patta_cands = extract_patta_candidates(lines)
     patta_res = select_best(patta_cands)
-    patta_num, patta_conf, patta_src = patta_res
+    patta_num, patta_entry = _process_field("patta_number", patta_res, patta_cands, doc_type=doc_type)
 
     # 4. Plot Number (Sub-Survey Number)
     ss_cands = extract_sub_survey_candidates(lines)
     ss_res = aggregate_sub_survey_numbers(ss_cands)
-    sub_survey, ss_conf, ss_src = ss_res
+    sub_survey, ss_entry = _process_field("sub_survey_number", ss_res, ss_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("sub_survey_number", ss_cands, sub_survey))
 
     # 4B. Layout Name & Locality / Address
     layout_cands, loc_cands = extract_layout_and_locality_candidates(lines)
     layout_res = select_best(layout_cands)
-    layout_val, layout_conf, layout_src = layout_res
+    layout_val, layout_entry = _process_field("layout_name", layout_res, layout_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("layout_name", layout_cands, layout_val))
 
     loc_res = select_best(loc_cands)
-    loc_val, loc_conf, loc_src = loc_res
+    loc_val, loc_entry = _process_field("locality_or_address", loc_res, loc_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("locality_or_address", loc_cands, loc_val))
 
     # 5. Property Area (Numeric square-yard value & full text)
     pa_cands = extract_property_area_candidates(lines)
     pa_res = select_best(pa_cands)
-    prop_area, pa_conf, pa_src = pa_res
+    prop_area, pa_entry = _process_field("property_area", pa_res, pa_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("property_area", pa_cands, prop_area))
     num_prop_area = None
     if isinstance(prop_area, (int, float)):
@@ -2077,19 +2144,19 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
     # 6. Village
     v_cands = extract_village_candidates(lines)
     v_res = select_best(v_cands)
-    village, v_conf, v_src = v_res
+    village, v_entry = _process_field("village", v_res, v_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("village", v_cands, village))
 
     # 7. Mandal
     m_cands = extract_mandal_candidates(lines)
     m_res = select_best(m_cands)
-    mandal, m_conf, m_src = m_res
+    mandal, m_entry = _process_field("mandal", m_res, m_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("mandal", m_cands, mandal))
 
     # 8. District
     d_cands = extract_district_candidates(lines)
     d_res = select_best(d_cands)
-    district, d_conf, d_src = d_res
+    district, d_entry = _process_field("district", d_res, d_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("district", d_cands, district))
 
     # 8B. State
@@ -2101,30 +2168,42 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
         st_pg, st_sc = _find_page_and_score(lines, matched_str, default_page=1)
         state_cands.append(FieldCandidate(value=st_clean, page=st_pg, context=m_st.group(0), score=min(0.95, st_sc), reason=f"State mention ({matched_str}) on page {st_pg}"))
     st_res = select_best(state_cands)
-    state_val, st_conf, st_src = st_res
+    state_val, st_entry = _process_field("state", st_res, state_cands, doc_type=doc_type)
 
     # 9. Stamp Serial Number & Detected Stamp Blocks
     ss_serial_cands, detected_stamp_blocks = extract_stamp_blocks_and_serials(lines)
     stamp_s_res, stamp_serial_numbers = aggregate_stamp_serials(ss_serial_cands, detected_stamp_blocks)
-    stamp_serial, stamp_s_conf, stamp_s_src = stamp_s_res
+    stamp_serial, ss_serial_entry = _process_field(
+        "stamp_serial_number",
+        stamp_s_res,
+        ss_serial_cands,
+        extra={"stamp_serial_numbers": stamp_serial_numbers},
+        doc_type=doc_type,
+    )
     debug_table.extend(build_debug_table("stamp_serial_number", ss_serial_cands, stamp_serial))
 
     # 10. Stamp Value
     sv_cands = extract_stamp_value_candidates(lines)
     sv_res = select_best(sv_cands)
-    stamp_val, sv_conf, sv_src = sv_res
+    stamp_val, sv_entry = _process_field("stamp_value", sv_res, sv_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("stamp_value", sv_cands, stamp_val))
 
     # 11. Stamp Sold To
     sst_cands = extract_stamp_sold_to_candidates(lines)
     sst_res = select_best(sst_cands)
-    stamp_sold, sst_conf, sst_src = sst_res
+    stamp_sold, sst_entry = _process_field("stamp_sold_to", sst_res, sst_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("stamp_sold_to", sst_cands, stamp_sold))
 
     # 11B. Stamp Purchase Date (Strictly from stamp sheets)
     spd_cands = extract_stamp_purchase_date_candidates(lines)
     spd_res, stamp_sheet_dates = aggregate_stamp_purchase_dates(spd_cands)
-    stamp_pur_date, spd_conf, spd_src = spd_res
+    stamp_pur_date, spd_entry = _process_field(
+        "stamp_purchase_date",
+        spd_res,
+        spd_cands,
+        extra={"stamp_sheet_dates": stamp_sheet_dates},
+        doc_type=doc_type,
+    )
 
     # 12. Parties
     parties_list = extract_party_candidates(lines)
@@ -2132,7 +2211,7 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
     # 13. Document Date (Only explicit document dates; stamp dates are NOT document dates)
     dd_cands = extract_document_date_candidates(lines)
     dd_res = select_best(dd_cands)
-    doc_date, dd_conf, dd_src = dd_res
+    doc_date, dd_entry = _process_field("document_date", dd_res, dd_cands, doc_type=doc_type)
     debug_table.extend(build_debug_table("document_date", dd_cands, doc_date))
 
     # 14. Execution Date (Never substituted with stamp purchase dates)
@@ -2150,7 +2229,14 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
             ed_res = select_best(ed_cands)
     else:
         ed_res = select_best(ed_cands)
-    exec_date, ed_conf, ed_src = ed_res
+    exec_date, ed_entry = _process_field(
+        "execution_date",
+        ed_res,
+        ed_cands,
+        default_context=f"Deed execution clause: {ed_res[0]}" if ed_res[0] else "Execution clause blank unfilled",
+        extra={"date_format": "written_date"} if ed_res[0] else None,
+        doc_type=doc_type,
+    )
     debug_table.extend(build_debug_table("execution_date", ed_cands, exec_date))
 
     # 15. Registration Date (Only genuine registration dates, never document reference numbers)
@@ -2169,7 +2255,9 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
             reason=f"Explicit registration date on page {rg_pg}"
         ))
     reg_res = select_best(reg_cands)
-    reg_date_val, reg_conf, reg_src = reg_res
+    reg_date_val, reg_entry = _process_field("registration_date", reg_res, reg_cands, doc_type=doc_type)
+
+    learning_stats = ocr_learning_service.get_learning_stats()
 
     result = {
         "document_type": doc_type,
@@ -2200,37 +2288,39 @@ def extract_fields_semantic(lines) -> tuple[dict, dict, list]:
         "execution_date": exec_date,
         "registration_date": reg_date_val,
         "detected_stamp_blocks": detected_stamp_blocks,
+        "learning": {
+            "rules_applied": len(applied_corrections),
+            "verified_feedback_count": learning_stats.get("verified_feedback_count", 0),
+            "fields_improved": sorted(list(set(c.get("field_name") or c.get("field", "") for c in applied_corrections if (c.get("field_name") or c.get("field"))))),
+            "learned_corrections": applied_corrections,
+            "learning_mode": "officer_verified_adaptive_feedback",
+        },
     }
 
     provenance = {
-        "document_type": _field_entry(dt_res, dt_cands),
-        "document_number": _field_entry(dn_res, dn_cands),
-        "survey_number": _field_entry(sn_res, sn_cands),
-        "city_survey_number": _field_entry(cs_res, cs_cands),
-        "khasra_number": _field_entry(khasra_res, khasra_cands),
-        "khata_number": _field_entry(khata_res, khata_cands),
-        "patta_number": _field_entry(patta_res, patta_cands),
-        "plot_number": _field_entry(ss_res, ss_cands),
-        "sub_survey_number": _field_entry(ss_res, ss_cands),
-        "layout_name": _field_entry(layout_res, layout_cands),
-        "locality_or_address": _field_entry(loc_res, loc_cands),
-        "property_area": _field_entry(pa_res, pa_cands),
-        "village": _field_entry(v_res, v_cands),
-        "mandal": _field_entry(m_res, m_cands),
-        "district": _field_entry(d_res, d_cands),
-        "state": _field_entry(st_res, state_cands),
-        "stamp_serial_number": _field_entry(stamp_s_res, ss_serial_cands, extra={"stamp_serial_numbers": stamp_serial_numbers}),
-        "stamp_value": _field_entry(sv_res, sv_cands),
-        "stamp_sold_to": _field_entry(sst_res, sst_cands),
-        "stamp_purchase_date": _field_entry(spd_res, spd_cands, extra={"stamp_sheet_dates": stamp_sheet_dates}),
-        "document_date": _field_entry(dd_res, dd_cands),
-        "execution_date": _field_entry(
-            ed_res,
-            ed_cands,
-            default_context=f"Deed execution clause: {exec_date}" if exec_date else "Execution clause blank unfilled",
-            extra={"date_format": "written_date"} if exec_date else None,
-        ),
-        "registration_date": _field_entry(reg_res, reg_cands),
+        "document_type": dt_entry,
+        "document_number": dn_entry,
+        "survey_number": sn_entry,
+        "city_survey_number": cs_entry,
+        "khasra_number": khasra_entry,
+        "khata_number": khata_entry,
+        "patta_number": patta_entry,
+        "plot_number": ss_entry,
+        "sub_survey_number": ss_entry,
+        "layout_name": layout_entry,
+        "locality_or_address": loc_entry,
+        "property_area": pa_entry,
+        "village": v_entry,
+        "mandal": m_entry,
+        "district": d_entry,
+        "state": st_entry,
+        "stamp_serial_number": ss_serial_entry,
+        "stamp_value": sv_entry,
+        "stamp_sold_to": sst_entry,
+        "stamp_purchase_date": spd_entry,
+        "document_date": dd_entry,
+        "execution_date": ed_entry,
+        "registration_date": reg_entry,
     }
 
     return result, provenance, debug_table
