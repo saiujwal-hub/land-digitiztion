@@ -3346,11 +3346,35 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         total_ocr_time_ms = 0.0
                         t_net_start = perf_counter()
 
+                        page_prep_metas = []
+
                         def _post_page(item: tuple[int, bytes, int, int]):
                             p_idx, img_bytes, pw, ph = item
+                            page_type = "deed_text"
+                            if p_idx == 1:
+                                page_type = "stamp_metadata"
+                            elif p_idx == 2:
+                                page_type = "property_schedule"
+                            elif p_idx == len(page_buffers):
+                                page_type = "registration_plan"
+
+                            import cv2, numpy as np, image_preprocessing
+                            dec_img = cv2.imdecode(np.frombuffer(img_bytes, np.uint8), cv2.IMREAD_COLOR)
+                            if dec_img is not None:
+                                proc_img, prep_meta = image_preprocessing.preprocess_for_ocr(
+                                    dec_img, page_number=p_idx, page_type=page_type
+                                )
+                                prep_scale = prep_meta.get("scale", 1.0)
+                                suc, enc = cv2.imencode(".jpg", proc_img, [cv2.IMWRITE_JPEG_QUALITY, 92])
+                                send_bytes = enc.tobytes() if suc else img_bytes
+                            else:
+                                send_bytes = img_bytes
+                                prep_scale = 1.0
+                                prep_meta = {"page_number": p_idx, "scale": 1.0, "operations": []}
+
                             resp = requests.post(
                                 ocr_url,
-                                files={"image": (f"page_{p_idx}.jpg", img_bytes, "image/jpeg")},
+                                files={"image": (f"page_{p_idx}.jpg", send_bytes, "image/jpeg")},
                                 data={"page_number": str(p_idx), "lang": "en"},
                                 timeout=60,
                             )
@@ -3362,7 +3386,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                                 raise ValueError(
                                     f"Cloud GPU OCR failed on Page {p_idx} with status {resp.status_code}: {err_msg}"
                                 )
-                            return p_idx, resp.json(), pw, ph
+                            return p_idx, resp.json(), pw, ph, prep_scale, prep_meta
 
                         # Upload & process pages in parallel via ThreadPoolExecutor
                         max_workers = min(4, max(1, len(page_buffers)))
@@ -3371,7 +3395,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
 
                         results.sort(key=lambda r: r[0])
 
-                        for page_idx, gpu_result, pw, ph in results:
+                        for page_idx, gpu_result, pw, ph, prep_scale, prep_meta in results:
+                            page_prep_metas.append(prep_meta)
                             total_ocr_time_ms += gpu_result.get("ocr_time_ms", 0.0)
                             gpu_name = gpu_result.get("gpu_name", gpu_name)
 
@@ -3384,11 +3409,16 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                                 cleaned = normalize_space(str(text))
                                 if not cleaned:
                                     continue
+                                mapped_pts = (
+                                    [[int(round(pt[0] / prep_scale)), int(round(pt[1] / prep_scale))] for pt in poly]
+                                    if prep_scale != 1.0
+                                    else [[int(pt[0]), int(pt[1])] for pt in poly]
+                                )
                                 p_words.append(
                                     OCRWord(
                                         text=cleaned,
                                         score=float(score),
-                                        points=[[int(pt[0]), int(pt[1])] for pt in poly],
+                                        points=mapped_pts,
                                     )
                                 )
 
@@ -3447,19 +3477,18 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         raw_text = "\n\n".join(all_raw_texts)
                 else:
                     t_net_start = perf_counter()
-                    # Optimize single image upload if massive
                     upload_files = None
+                    prep_meta = {}
+                    prep_scale = 1.0
                     try:
-                        import cv2
+                        import cv2, image_preprocessing
                         img_cv = cv2.imread(temp_path)
                         if img_cv is not None:
-                            max_dim = max(img_cv.shape[:2])
-                            if max_dim > 1800:
-                                scale_f = 1800.0 / max_dim
-                                img_cv = cv2.resize(img_cv, (0, 0), fx=scale_f, fy=scale_f, interpolation=cv2.INTER_AREA)
-                            success, enc_jpg = cv2.imencode(".jpg", img_cv, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                            proc_img, prep_meta = image_preprocessing.preprocess_for_ocr(img_cv, page_number=1)
+                            prep_scale = prep_meta.get("scale", 1.0)
+                            success, enc_jpg = cv2.imencode(".jpg", proc_img, [cv2.IMWRITE_JPEG_QUALITY, 90])
                             if success:
-                                upload_files = {"image": ("upload.jpg", enc_jpg.tobytes(), "image/jpeg")}
+                                upload_files = {"image": ("preprocessed.jpg", enc_jpg.tobytes(), "image/jpeg")}
                     except Exception:
                         upload_files = None
 
@@ -3495,11 +3524,16 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         cleaned = normalize_space(str(text))
                         if not cleaned:
                             continue
+                        mapped_pts = (
+                            [[int(round(pt[0] / prep_scale)), int(round(pt[1] / prep_scale))] for pt in poly]
+                            if prep_scale != 1.0
+                            else [[int(pt[0]), int(pt[1])] for pt in poly]
+                        )
                         words.append(
                             OCRWord(
                                 text=cleaned,
                                 score=float(score),
-                                points=[[int(pt[0]), int(pt[1])] for pt in poly],
+                                points=mapped_pts,
                             )
                         )
 
@@ -3523,6 +3557,11 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     "ocr_text_join_ms": 0.0,
                     "ocr_total_ms": ocr_time_ms,
                 }
+                if 'page_prep_metas' in locals() and page_prep_metas:
+                    gpu_ocr_timings["preprocessing"] = page_prep_metas[0]
+                    gpu_ocr_timings["all_pages_preprocessing"] = page_prep_metas
+                elif 'prep_meta' in locals() and prep_meta:
+                    gpu_ocr_timings["preprocessing"] = prep_meta
 
                 result = extract_land_document_from_lines(
                     lines, raw_text, temp_path, timings=gpu_ocr_timings

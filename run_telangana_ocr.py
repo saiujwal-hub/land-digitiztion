@@ -409,12 +409,32 @@ def process_document(
                     h, w = bgr.shape[:2]
                     render_ms = (time.perf_counter() - t_render_0) * 1000
 
+                    page_type = "deed_text"
+                    if page_num == 1:
+                        page_type = "stamp_metadata"
+                    elif page_num == 2:
+                        page_type = "property_schedule"
+                    elif page_num == total_pages:
+                        page_type = "registration_plan"
+
                     ocr_start = time.perf_counter()
                     if ocr_url:
                         pages_sent.append(page_num)
-                        lines, raw_text, timings = run_remote_ocr_page_image(
-                            bgr, page_num=page_num, lang=lang, ocr_url=ocr_url
-                        )
+                        target_remote = getattr(run_remote_ocr_page_image, "side_effect", None) or run_remote_ocr_page_image
+                        try:
+                            remote_sig = inspect.signature(target_remote)
+                            remote_accepts_ptype = "page_type" in remote_sig.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in remote_sig.parameters.values())
+                        except Exception:
+                            remote_accepts_ptype = True
+
+                        if remote_accepts_ptype:
+                            lines, raw_text, timings = run_remote_ocr_page_image(
+                                bgr, page_num=page_num, lang=lang, ocr_url=ocr_url, page_type=page_type
+                            )
+                        else:
+                            lines, raw_text, timings = run_remote_ocr_page_image(
+                                bgr, page_num=page_num, lang=lang, ocr_url=ocr_url
+                            )
                         model_status = timings.get("ocr_language_model_status") or timings.get("model_status")
                         if model_status == "UNAVAILABLE" or (not lines and timings.get("warnings")):
                             err_msg = "; ".join(timings.get("warnings", [f"Remote OCR failed with status {model_status}"]))
@@ -424,13 +444,18 @@ def process_document(
                         pages_received.append(page_num)
                     else:
                         target_fn = getattr(run_paddle_ocr_page_image, "side_effect", None) or run_paddle_ocr_page_image
+
                         try:
                             sig = inspect.signature(target_fn)
                             accepts_lang = "lang" in sig.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
+                            accepts_ptype = "page_type" in sig.parameters or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
                         except Exception:
                             accepts_lang = True
+                            accepts_ptype = False
 
-                        if accepts_lang:
+                        if accepts_lang and accepts_ptype:
+                            lines, raw_text, timings = run_paddle_ocr_page_image(bgr, page_num=page_num, lang=lang, page_type=page_type)
+                        elif accepts_lang:
                             lines, raw_text, timings = run_paddle_ocr_page_image(bgr, page_num=page_num, lang=lang)
                         else:
                             lines, raw_text, timings = run_paddle_ocr_page_image(bgr, page_num=page_num)
@@ -476,6 +501,7 @@ def process_document(
                         "language_detection_method": page_lang_meta["language_detection_method"],
                         "ocr_language_model": page_lang_meta["ocr_language_model"],
                         "ocr_elements": page_elements,
+                        "preprocessing": timings.get("preprocessing"),
                     }
                     if timings.get("needs_review"):
                         page_record["needs_review"] = True

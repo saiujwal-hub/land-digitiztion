@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from time import perf_counter
-from typing import Any
+from typing import Any, Optional
 
 import cv2
 import numpy as np
@@ -1420,6 +1420,8 @@ def run_paddle_ocr_page_image(
     image: np.ndarray,
     page_num: int = 1,
     lang: str = "auto",
+    page_type: Optional[str] = None,
+    use_preprocessing: bool = True,
 ) -> tuple[list[OCRLine], str, dict[str, Any]]:
     timings: dict[str, Any] = {}
     lang_req = (lang or "auto").lower()
@@ -1462,28 +1464,47 @@ def run_paddle_ocr_page_image(
 
     h, w = image.shape[:2]
 
-    # Preprocess image contrast with CLAHE for dark/noisy scanned backgrounds
-    if len(image.shape) == 3:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Quality-aware adaptive image preprocessing pipeline
+    if use_preprocessing:
+        import image_preprocessing
+        t_prep_start = perf_counter()
+        proc_img, prep_meta = image_preprocessing.preprocess_for_ocr(
+            image,
+            page_number=page_num,
+            page_type=page_type,
+        )
+        timings["preprocessing_ms"] = (perf_counter() - t_prep_start) * 1000
+        timings["preprocessing"] = prep_meta
+        prep_scale = prep_meta.get("scale", 1.0)
     else:
-        gray = image.copy()
-
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced_gray = clahe.apply(gray)
-    enhanced_img = cv2.cvtColor(enhanced_gray, cv2.COLOR_GRAY2BGR)
+        proc_img = image
+        prep_scale = 1.0
+        timings["preprocessing_ms"] = 0.0
+        timings["preprocessing"] = None
 
     with _PADDLE_OCR_PREDICT_LOCK:
         t0 = perf_counter()
-        result = ocr.predict(enhanced_img)[0]
+        result = ocr.predict(proc_img)[0]
         timings["ocr_inference_ms"] = (perf_counter() - t0) * 1000
 
     words = build_words_from_paddle(result)
+
+    # Coordinate mapping: Map OCR bounding boxes back to original page coordinates
+    if prep_scale != 1.0:
+        for word in words:
+            word.points = [[int(round(pt[0] / prep_scale)), int(round(pt[1] / prep_scale))] for pt in word.points]
+
     lines = group_words_into_lines(words)
 
     for line in lines:
         line.page_num = page_num
         line.page_height = h
         line.page_width = w
+        if prep_scale != 1.0:
+            line.x_min = int(round(line.x_min / prep_scale))
+            line.y_min = int(round(line.y_min / prep_scale))
+            line.x_max = int(round(line.x_max / prep_scale))
+            line.y_max = int(round(line.y_max / prep_scale))
         # Line-level script and language classification
         l_script, l_lang = detect_script_and_language(
             line.text,
@@ -1532,17 +1553,38 @@ def run_remote_ocr_page_image(
     lang: str = "auto",
     ocr_url: str = "",
     timeout: int = 60,
+    page_type: Optional[str] = None,
+    use_preprocessing: bool = True,
 ) -> tuple[list[OCRLine], str, dict[str, Any]]:
     """
-    Send a page image to the remote GPU OCR server with page_number and lang parameters.
+    Send a page image (preprocessed if use_preprocessing=True) to remote GPU OCR server.
+    Preserves original coordinates and records preprocessing metadata.
     Returns (lines, raw_text, timings) conforming to standard pipeline format.
     """
     import requests
-    h, w = image.shape[:2]
+    import image_preprocessing
+
+    orig_h, orig_w = image.shape[:2]
     endpoint = f"{ocr_url.rstrip('/')}/ocr"
 
+    # Quality-aware adaptive image preprocessing pipeline for remote GPU OCR
+    if use_preprocessing:
+        t_prep_start = perf_counter()
+        proc_img, prep_meta = image_preprocessing.preprocess_for_ocr(
+            image,
+            page_number=page_num,
+            page_type=page_type,
+        )
+        prep_ms = (perf_counter() - t_prep_start) * 1000
+        prep_scale = prep_meta.get("scale", 1.0)
+    else:
+        proc_img = image
+        prep_scale = 1.0
+        prep_ms = 0.0
+        prep_meta = None
+
     # Encode image as JPEG
-    success, enc = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 95])
+    success, enc = cv2.imencode(".jpg", proc_img, [cv2.IMWRITE_JPEG_QUALITY, 95])
     if not success:
         raise ValueError(f"Failed to encode page {page_num} image to JPEG")
 
@@ -1566,6 +1608,8 @@ def run_remote_ocr_page_image(
             "warnings": [f"Remote OCR connection error: {e}"],
             "remote_server": ocr_url,
             "network_time_ms": net_ms,
+            "preprocessing_ms": prep_ms,
+            "preprocessing": prep_meta,
         }
         return [], "", timings
 
@@ -1584,12 +1628,14 @@ def run_remote_ocr_page_image(
             "warnings": [err_data.get("error", f"HTTP {resp.status_code}")],
             "remote_server": ocr_url,
             "network_time_ms": net_ms,
+            "preprocessing_ms": prep_ms,
+            "preprocessing": prep_meta,
         }
         return [], "", timings
 
     resp_json = resp.json()
 
-    # Parse lines from structured 'lines' or legacy 'rec_texts'
+    # Parse lines and restore bounding boxes back to original page coordinates
     lines: list[OCRLine] = []
     if "lines" in resp_json and resp_json["lines"]:
         for line_data in resp_json["lines"]:
@@ -1599,16 +1645,25 @@ def run_remote_ocr_page_image(
             bbox = line_data.get("bbox", [0, 0, 0, 0])
             score = float(line_data.get("confidence", 0.95))
             l_script, l_lang = detect_script_and_language(text, context_lang=active_lang)
+
+            if prep_scale != 1.0:
+                x_min = int(round(bbox[0] / prep_scale))
+                y_min = int(round(bbox[1] / prep_scale))
+                x_max = int(round(bbox[2] / prep_scale))
+                y_max = int(round(bbox[3] / prep_scale))
+            else:
+                x_min, y_min, x_max, y_max = int(bbox[0]), int(bbox[1]), int(bbox[2]), int(bbox[3])
+
             line = OCRLine(
                 text=text,
                 score=score,
-                x_min=bbox[0],
-                y_min=bbox[1],
-                x_max=bbox[2],
-                y_max=bbox[3],
+                x_min=x_min,
+                y_min=y_min,
+                x_max=x_max,
+                y_max=y_max,
                 page_num=page_num,
-                page_height=h,
-                page_width=w,
+                page_height=orig_h,
+                page_width=orig_w,
                 language=l_lang,
                 script=l_script,
             )
@@ -1622,10 +1677,19 @@ def run_remote_ocr_page_image(
             if not text_str:
                 continue
             pts = poly if isinstance(poly, list) else poly.tolist()
-            x_min = int(min(p[0] for p in pts))
-            y_min = int(min(p[1] for p in pts))
-            x_max = int(max(p[0] for p in pts))
-            y_max = int(max(p[1] for p in pts))
+            raw_x_min = min(p[0] for p in pts)
+            raw_y_min = min(p[1] for p in pts)
+            raw_x_max = max(p[0] for p in pts)
+            raw_y_max = max(p[1] for p in pts)
+
+            if prep_scale != 1.0:
+                x_min = int(round(raw_x_min / prep_scale))
+                y_min = int(round(raw_y_min / prep_scale))
+                x_max = int(round(raw_x_max / prep_scale))
+                y_max = int(round(raw_y_max / prep_scale))
+            else:
+                x_min, y_min, x_max, y_max = int(raw_x_min), int(raw_y_min), int(raw_x_max), int(raw_y_max)
+
             l_script, l_lang = detect_script_and_language(text_str, context_lang=active_lang)
             line = OCRLine(
                 text=text_str,
@@ -1635,8 +1699,8 @@ def run_remote_ocr_page_image(
                 x_max=x_max,
                 y_max=y_max,
                 page_num=page_num,
-                page_height=h,
-                page_width=w,
+                page_height=orig_h,
+                page_width=orig_w,
                 language=l_lang,
                 script=l_script,
             )
@@ -1656,6 +1720,8 @@ def run_remote_ocr_page_image(
         "network_time_ms": net_ms,
         "remote_server": ocr_url,
         "gpu_name": resp_json.get("gpu_name", "Remote GPU"),
+        "preprocessing_ms": prep_ms,
+        "preprocessing": prep_meta,
     }
     return lines, raw_text, timings
 
@@ -2096,6 +2162,7 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
         all_raw_texts = []
         total_ocr_ms = 0.0
 
+        page_prep_summaries = []
         for page_idx, page in enumerate(pdf, start=1):
             pil_img = page.render(scale=3).to_pil()
             img_np = np.array(pil_img)
@@ -2104,14 +2171,24 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
             else:
                 img_bgr = cv2.cvtColor(img_np, cv2.COLOR_GRAY2BGR)
 
-            p_lines, p_raw, p_timings = run_paddle_ocr_page_image(img_bgr, page_num=page_idx)
+            p_type = "deed_text"
+            if page_idx == 1:
+                p_type = "stamp_metadata"
+            elif page_idx == 2:
+                p_type = "property_schedule"
+            elif page_idx == len(pdf):
+                p_type = "registration_plan"
+
+            p_lines, p_raw, p_timings = run_paddle_ocr_page_image(img_bgr, page_num=page_idx, page_type=p_type)
+            if "preprocessing" in p_timings:
+                page_prep_summaries.append(p_timings["preprocessing"])
 
             # If last page (e.g. Registration Plan), crop the header strip to bypass bounding frame box
             if page_idx == len(pdf):
                 try:
                     h, w = img_bgr.shape[:2]
                     header_crop = img_bgr[int(h * 0.052) : int(h * 0.125), int(w * 0.03) : int(w * 0.58)]
-                    c_lines, c_raw, _ = run_paddle_ocr_page_image(header_crop, page_num=page_idx)
+                    c_lines, c_raw, _ = run_paddle_ocr_page_image(header_crop, page_num=page_idx, page_type="registration_plan")
                     p_lines.extend(c_lines)
                     p_raw = p_raw + "\n" + c_raw
                 except Exception:
@@ -2124,12 +2201,14 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
         full_raw_text = "\n\n".join(all_raw_texts)
         ocr_timings = {"ocr_total_ms": total_ocr_ms}
         result = extract_land_document_from_lines(all_lines, full_raw_text, file_path, timings=ocr_timings)
+        result["preprocessing"] = page_prep_summaries
         result.setdefault("profiling_ms", {})
         result["profiling_ms"]["pipeline_total_ms"] = round((perf_counter() - t0) * 1000, 3)
         return result
     else:
         lines, raw_text, ocr_timings = run_paddle_ocr(file_path)
         result = extract_land_document_from_lines(lines, raw_text, file_path, timings=ocr_timings)
+        result["preprocessing"] = [ocr_timings["preprocessing"]] if "preprocessing" in ocr_timings else []
         result.setdefault("profiling_ms", {})
         result["profiling_ms"]["pipeline_total_ms"] = round((perf_counter() - t0) * 1000, 3)
         return result

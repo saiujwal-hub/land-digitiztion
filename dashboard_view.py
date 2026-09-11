@@ -895,6 +895,22 @@ def get_dashboard_data() -> dict:
     seal_rate = f"{(len(sealed)/len(recs)*100):.0f}%" if recs else "0%"
     gis_rate = f"{(gis_matched/len(recs)*100):.0f}%" if recs else "0%"
 
+    latest_prep = None
+    for r in recs:
+        p_data = r.get("document_payload") or {}
+        if p_data.get("preprocessing"):
+            latest_prep = p_data.get("preprocessing")
+            break
+        if r.get("preprocessing"):
+            latest_prep = r.get("preprocessing")
+            break
+    if not latest_prep:
+        try:
+            import image_preprocessing
+            latest_prep = image_preprocessing.get_latest_runtime_preprocessing()
+        except Exception:
+            latest_prep = None
+
     return {
         "rows": rows,
         "on_file": len(recs),
@@ -907,6 +923,7 @@ def get_dashboard_data() -> dict:
         "sale_count": sale_count,
         "gpa_count": gpa_count,
         "other_count": other_count,
+        "latest_preprocessing": latest_prep,
     }
 
 
@@ -1196,6 +1213,118 @@ def _render_learning_panel() -> str:
     """
 
 
+def _render_preprocessing_panel(runtime_meta: Optional[dict] = None) -> str:
+    """Renders the Adaptive Image Preprocessing & Scan Quality section on the registry dashboard."""
+    if runtime_meta is None:
+        try:
+            import image_preprocessing
+            runtime_meta = image_preprocessing.get_latest_runtime_preprocessing()
+        except Exception:
+            runtime_meta = None
+
+    if runtime_meta and isinstance(runtime_meta, dict):
+        pg = runtime_meta.get("page_number", 1)
+        ptype = str(runtime_meta.get("page_type", "scanned_page")).replace("_", " ").title()
+        variant = runtime_meta.get("selected_variant", "original_grayscale")
+        scale = float(runtime_meta.get("scale", 1.0))
+        ops = runtime_meta.get("operations") or []
+        deskew = bool(runtime_meta.get("deskew_applied", False))
+        skew_angle = float(runtime_meta.get("skew_angle_degrees", 0.0))
+        reason = runtime_meta.get("selection_reason", "best contrast/blur balance")
+
+        qb = runtime_meta.get("quality_before") or {}
+        qa = runtime_meta.get("quality_after") or {}
+
+        score_b = float(qb.get("quality_score", 0.0))
+        score_a = float(qa.get("quality_score", 0.0))
+        contrast_b = float(qb.get("contrast", 0.0))
+        contrast_a = float(qa.get("contrast", 0.0))
+        blur_b = float(qb.get("blur_score", 0.0))
+        blur_a = float(qa.get("blur_score", 0.0))
+        flags = qb.get("quality_flags") or []
+
+        badge_html = """<span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--green); color:#fff; padding:2px 7px; border-radius:3px; letter-spacing:.06em;">LIVE RUNTIME METRICS</span>"""
+        tagline = f"Live telemetry from processed page (Page {pg}: {html.escape(str(reason))})"
+
+        cards_html = f"""
+        <div style="background:var(--paper); border:1.5px solid var(--green); padding:12px 14px; border-radius:3px; box-shadow:1px 1px 0 rgba(0,0,0,.03);">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Active Page &amp; Role</div>
+          <div style="font-family:var(--serif); font-size:20px; font-weight:700; color:var(--ink); margin:4px 0;">Page {pg}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">{html.escape(ptype)} · Scale: {scale:.1f}x</div>
+        </div>
+        <div style="background:var(--paper); border:1.5px solid var(--green); padding:12px 14px; border-radius:3px; box-shadow:1px 1px 0 rgba(0,0,0,.03);">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Selected OCR Variant</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--green); margin:6px 0 4px;">{html.escape(variant)}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Ops: {html.escape(', '.join(ops) if ops else 'none')}</div>
+        </div>
+        <div style="background:var(--paper); border:1.5px solid var(--green); padding:12px 14px; border-radius:3px; box-shadow:1px 1px 0 rgba(0,0,0,.03);">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Quality Score &amp; Contrast</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--green); margin:6px 0 4px;">{score_b:.0%} &rarr; {score_a:.0%}</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Contrast: {contrast_b:.1f} &rarr; {contrast_a:.1f}</div>
+        </div>
+        <div style="background:var(--paper); border:1.5px solid var(--green); padding:12px 14px; border-radius:3px; box-shadow:1px 1px 0 rgba(0,0,0,.03);">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Geometric Alignment</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--ink); margin:6px 0 4px;">{skew_angle:+.2f}&deg; ({'Deskew Applied' if deskew else 'Not needed'})</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Laplacian: {blur_b:.0f} &rarr; {blur_a:.0f}</div>
+        </div>
+        """
+    else:
+        badge_html = """<span style="font-family:var(--type); font-size:10px; font-weight:700; background:#5A5142; color:#fff; padding:2px 7px; border-radius:3px; letter-spacing:.06em;">REFERENCE PROFILE (TELANGANA DEED BASELINE)</span>"""
+        tagline = "[Reference Baseline Profile] Initial calibration profile for the 6-page Telangana deed. Document uploads update this panel with live runtime telemetry."
+
+        cards_html = """
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">[Baseline] Document Structure</div>
+          <div style="font-family:var(--serif); font-size:20px; font-weight:700; color:var(--ink); margin:4px 0;">6 Pages</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Reference Telangana Sale Deed</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">[Baseline] Page 1: Stamp Paper</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--green); margin:6px 0 4px;">CLAHE Denoised</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Dark stamp area protected (Threshold avoided)</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">[Baseline] Page 2: Schedule</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--green); margin:6px 0 4px;">Deskewed + CLAHE</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Faint typewriter enhanced (Target: 81%)</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">[Baseline] Page 6: Plan Map</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--green); margin:6px 0 4px;">Safe Grayscale</div>
+          <div style="font-family:var(--type); font-size:11px; color:var(--ink-soft);">CAD line vectors preserved (No erosion)</div>
+        </div>
+        """
+
+    return f"""
+    <section class="preprocessing-panel" id="preprocessingPanel" style="background:var(--card); border:1.5px solid var(--border); border-radius:2px; padding:20px; margin-bottom:26px; box-shadow:2px 2px 0 rgba(0,0,0,.025);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; border-bottom:1px solid var(--rule-soft); padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">📷</span>
+            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">Adaptive Image Preprocessing &amp; Scan Quality</span>
+            {badge_html}
+          </div>
+          <div class="chart-meta" style="margin-top:3px;">{tagline}</div>
+        </div>
+        <div style="font-family:var(--type); font-size:11px; background:#EBF3FB; border:1px solid #B8D5F5; padding:6px 12px; border-radius:3px; color:#1C497B; line-height:1.4;">
+          The system performs quality-aware image preprocessing for scanned land records,<br>
+          selects a suitable OCR variant, preserves original document evidence,<br>
+          and records preprocessing metadata for explainable review.
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+        {cards_html}
+      </div>
+
+      <div style="font-family:var(--type); font-size:11px; color:var(--ink-soft); line-height:1.5; background:var(--paper-deep); padding:8px 12px; border:1px solid var(--rule); border-radius:3px;">
+        🛡️ <b>Evidence Preservation &amp; Coordinate Mapping:</b> Original document pixels and source coordinates are permanently retained.
+        When upscaling is applied, bounding box coordinates are mapped back to original page coordinates. Preprocessing metadata is attached to extraction output.
+      </div>
+    </section>
+    """
+
+
 def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> bytes:
     """Renders the executive operations dashboard with left side menu and statistical graphs."""
     data = get_dashboard_data()
@@ -1304,6 +1433,7 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
     donut_svg = _render_donut_svg(data["sale_count"], data["gpa_count"], data["other_count"], data["on_file"])
     velocity_svg = _render_velocity_svg(data["on_file"], data["sealed_n"])
     learning_panel_markup = _render_learning_panel()
+    preprocessing_panel_markup = _render_preprocessing_panel(data.get("latest_preprocessing"))
     fp_text = fp or "Keypair auto-generated on first seal"
 
     page_html = f"""<!doctype html>
@@ -1396,6 +1526,9 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
 
       <!-- Adaptive Learning Feedback Layer -->
       {learning_panel_markup}
+
+      <!-- Adaptive Preprocessing & Scan Quality Layer -->
+      {preprocessing_panel_markup}
 
       <!-- STATISTICAL ANALYTICS GRAPHS -->
       <section class="charts-grid" id="analyticsSection">
