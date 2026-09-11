@@ -2138,7 +2138,16 @@ def extract_land_document_from_lines(
         + pipeline_timings.get("feature_detection_ms", 0.0)
         + pipeline_timings.get("json_object_build_ms", 0.0)
     )
-    output["profiling_ms"] = {key: round(value, 3) for key, value in pipeline_timings.items()}
+    if "preprocessing" in pipeline_timings:
+        output["preprocessing"] = pipeline_timings.pop("preprocessing")
+    if "all_pages_preprocessing" in pipeline_timings:
+        output["all_pages_preprocessing"] = pipeline_timings.pop("all_pages_preprocessing")
+
+    output["profiling_ms"] = {
+        key: round(value, 3) if isinstance(value, (int, float)) else value
+        for key, value in pipeline_timings.items()
+        if not key.endswith("_preprocessing") and key != "preprocessing"
+    }
 
     return output
 

@@ -2837,6 +2837,14 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         p.unlink(missing_ok=True)
                     except Exception:
                         pass
+                try:
+                    import image_preprocessing
+                    image_preprocessing._LAST_RUNTIME_PREPROCESSING = None
+                    image_preprocessing._RUNTIME_PAGE_PREPROCESSING.clear()
+                    if image_preprocessing.RUNTIME_TELEMETRY_PATH.exists():
+                        image_preprocessing.RUNTIME_TELEMETRY_PATH.unlink(missing_ok=True)
+                except Exception:
+                    pass
             except Exception as exc:
                 print(f"[RESET] Error resetting registry: {exc}")
             self.send_response(HTTPStatus.SEE_OTHER)
@@ -2980,6 +2988,14 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         p.unlink(missing_ok=True)
                     except Exception:
                         pass
+                try:
+                    import image_preprocessing
+                    image_preprocessing._LAST_RUNTIME_PREPROCESSING = None
+                    image_preprocessing._RUNTIME_PAGE_PREPROCESSING.clear()
+                    if image_preprocessing.RUNTIME_TELEMETRY_PATH.exists():
+                        image_preprocessing.RUNTIME_TELEMETRY_PATH.unlink(missing_ok=True)
+                except Exception:
+                    pass
                 self.send_response(HTTPStatus.OK)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
@@ -3019,7 +3035,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 self.send_error(HTTPStatus.BAD_REQUEST, str(e))
                 return
 
-        if self.path != "/extract":
+        if self.path not in {"/extract", "/"}:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
 
@@ -3057,14 +3073,14 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             val = val_blob.rsplit(b"\r\n", 1)[0]
             header_str = header_blob.decode("utf-8", errors="ignore")
 
-            if 'name="document_image"' in header_str:
+            if 'name="document_image"' in header_str or 'name="scan_file"' in header_str:
                 if not val:
                     continue
                 match = re.search(r'filename="([^"]+)"', header_str)
                 if match:
                     filename = Path(match.group(1)).name
                 uploaded = val
-            elif 'name="processing_mode"' in header_str:
+            elif 'name="processing_mode"' in header_str or 'name="ocr_mode"' in header_str:
                 mode_str = val.decode("utf-8", errors="ignore").strip()
                 if mode_str:
                     processing_mode = mode_str
@@ -3557,15 +3573,14 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     "ocr_text_join_ms": 0.0,
                     "ocr_total_ms": ocr_time_ms,
                 }
-                if 'page_prep_metas' in locals() and page_prep_metas:
-                    gpu_ocr_timings["preprocessing"] = page_prep_metas[0]
-                    gpu_ocr_timings["all_pages_preprocessing"] = page_prep_metas
-                elif 'prep_meta' in locals() and prep_meta:
-                    gpu_ocr_timings["preprocessing"] = prep_meta
-
                 result = extract_land_document_from_lines(
                     lines, raw_text, temp_path, timings=gpu_ocr_timings
                 )
+                if 'page_prep_metas' in locals() and page_prep_metas:
+                    result["preprocessing"] = page_prep_metas[0]
+                    result["all_pages_preprocessing"] = page_prep_metas
+                elif 'prep_meta' in locals() and prep_meta:
+                    result["preprocessing"] = prep_meta
 
                 total_time_ms = (perf_counter() - t_total_start) * 1000
                 result.setdefault("profiling_ms", {})
@@ -3717,20 +3732,22 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
-    print("Pre-loading PaddleOCR models (this may take a moment)...")
-    try:
-        get_paddle_ocr_model()
-        print("PaddleOCR models pre-loaded successfully!")
-    except Exception as exc:
-        print(
-            f"Warning: local PaddleOCR preload failed, starting server anyway: {exc}"
-        )
+    import threading
     port = int(os.environ.get("PORT", 8001))
     server = ThreadingHTTPServer(("0.0.0.0", port), LandExtractorHandler)
     lan_ip = get_lan_ip()
     print(f"Land extractor web app running locally at http://localhost:{port}")
     print(f"Accessible on your local network/LAN at http://{lan_ip}:{port}")
-    import threading
+
+    def _preload():
+        print("Pre-loading PaddleOCR models in background...")
+        try:
+            get_paddle_ocr_model()
+            print("PaddleOCR models pre-loaded successfully!")
+        except Exception as exc:
+            print(f"Warning: local PaddleOCR preload failed: {exc}")
+
+    threading.Thread(target=_preload, daemon=True).start()
     threading.Thread(target=start_public_tunnel, args=(port,), daemon=True).start()
     while True:
         try:

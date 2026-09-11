@@ -896,20 +896,21 @@ def get_dashboard_data() -> dict:
     gis_rate = f"{(gis_matched/len(recs)*100):.0f}%" if recs else "0%"
 
     latest_prep = None
-    for r in recs:
-        p_data = r.get("document_payload") or {}
-        if p_data.get("preprocessing"):
-            latest_prep = p_data.get("preprocessing")
-            break
-        if r.get("preprocessing"):
-            latest_prep = r.get("preprocessing")
-            break
-    if not latest_prep:
-        try:
-            import image_preprocessing
-            latest_prep = image_preprocessing.get_latest_runtime_preprocessing()
-        except Exception:
-            latest_prep = None
+    if recs:
+        for r in recs:
+            p_data = r.get("document_payload") or {}
+            if p_data.get("preprocessing"):
+                latest_prep = p_data.get("preprocessing")
+                break
+            if r.get("preprocessing"):
+                latest_prep = r.get("preprocessing")
+                break
+        if not latest_prep:
+            try:
+                import image_preprocessing
+                latest_prep = image_preprocessing.get_latest_runtime_preprocessing()
+            except Exception:
+                latest_prep = None
 
     return {
         "rows": rows,
@@ -1213,8 +1214,63 @@ def _render_learning_panel() -> str:
     """
 
 
-def _render_preprocessing_panel(runtime_meta: Optional[dict] = None) -> str:
+def _render_preprocessing_panel(runtime_meta: Optional[dict] = None, total_on_file: Optional[int] = None) -> str:
     """Renders the Adaptive Image Preprocessing & Scan Quality section on the registry dashboard."""
+    if total_on_file == 0:
+        badge_html = """<span style="font-family:var(--type); font-size:10px; font-weight:700; background:#5A5142; color:#fff; padding:2px 7px; border-radius:3px; letter-spacing:.06em;">STANDBY &middot; ZERO DOCUMENTS PROCESSED</span>"""
+        tagline = "Image preprocessing pipeline is active and standing by for document upload (0 pages processed)."
+
+        cards_html = """
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Document Pages</div>
+          <div style="font-family:var(--serif); font-size:20px; font-weight:700; color:var(--ink); margin:4px 0;">0 Pages</div>
+          <div style="font-size:11px; color:var(--ink-soft);">No documents in intake queue</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Adaptive OCR Variants</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:6px 0 4px;">0 Active (Standby)</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Greyscale / CLAHE / Threshold engine ready</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Quality Score &amp; Contrast</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:6px 0 4px;">0% Quality Score</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Contrast &amp; blur variance analysis ready</div>
+        </div>
+        <div style="background:var(--paper); border:1px solid var(--border); padding:12px 14px; border-radius:3px;">
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.1em;">Geometric Alignment</div>
+          <div style="font-family:var(--type); font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:6px 0 4px;">0.00&deg; Skew (Ready)</div>
+          <div style="font-size:11px; color:var(--ink-soft);">Hough transform deskew ready</div>
+        </div>
+        """
+        return f"""
+    <section class="preprocessing-panel" id="preprocessingPanel" style="background:var(--card); border:1.5px solid var(--border); border-radius:2px; padding:20px; margin-bottom:26px; box-shadow:2px 2px 0 rgba(0,0,0,.025);">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; border-bottom:1px solid var(--rule-soft); padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">📷</span>
+            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">Adaptive Image Preprocessing &amp; Scan Quality</span>
+            {badge_html}
+          </div>
+          <div class="chart-meta" style="margin-top:3px;">{tagline}</div>
+        </div>
+        <div style="font-family:var(--type); font-size:11px; background:#EBF3FB; border:1px solid #B8D5F5; padding:6px 12px; border-radius:3px; color:#1C497B; line-height:1.4;">
+          The system performs quality-aware image preprocessing for scanned land records,<br>
+          selects a suitable OCR variant, preserves original document evidence,<br>
+          and records preprocessing metadata for explainable review.
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+        {cards_html}
+      </div>
+
+      <div style="font-family:var(--type); font-size:11px; color:var(--ink-soft); line-height:1.5; background:var(--paper-deep); padding:8px 12px; border:1px solid var(--rule); border-radius:3px;">
+        🛡️ <b>Evidence Preservation &amp; Coordinate Mapping:</b> Original document pixels and source coordinates are permanently retained.
+        When upscaling is applied, bounding box coordinates are mapped back to original page coordinates. Preprocessing metadata is attached to extraction output.
+      </div>
+    </section>
+    """
+
     if runtime_meta is None:
         try:
             import image_preprocessing
@@ -1433,7 +1489,9 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
     donut_svg = _render_donut_svg(data["sale_count"], data["gpa_count"], data["other_count"], data["on_file"])
     velocity_svg = _render_velocity_svg(data["on_file"], data["sealed_n"])
     learning_panel_markup = _render_learning_panel()
-    preprocessing_panel_markup = _render_preprocessing_panel(data.get("latest_preprocessing"))
+    preprocessing_panel_markup = _render_preprocessing_panel(
+        data.get("latest_preprocessing"), total_on_file=data["on_file"]
+    )
     fp_text = fp or "Keypair auto-generated on first seal"
 
     page_html = f"""<!doctype html>
