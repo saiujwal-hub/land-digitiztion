@@ -20,6 +20,7 @@ from string import Template
 from time import perf_counter
 from urllib.parse import parse_qs, urlparse
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 import requests
 from land_document_extractor import (
@@ -30,6 +31,9 @@ from land_document_extractor import (
     get_paddle_ocr_model,
     group_words_into_lines,
     normalize_space,
+    serialize_ocr_line,
+    build_raw_ocr_payload,
+    detect_script_and_language,
 )
 import verification_service
 import gis_service
@@ -797,6 +801,353 @@ HTML_PAGE = Template("""<!doctype html>
     .gis .metric .disclaimer{font-family:var(--type);font-size:11px;color:var(--amber);background:rgba(169,106,31,.1);border:1px solid rgba(169,106,31,.3);padding:8px;margin-top:8px;font-style:italic}
     .gis .metric .quiet{font-family:var(--type);font-size:11px;color:var(--ink-soft);background:var(--paper);border:1px solid var(--rule-soft);padding:8px;font-style:italic;margin-top:8px}
 
+    /* ---------- Field Provenance & Empty Status Hints ---------- */
+    .field-status-hint {
+      margin-top: 5px;
+      font-size: 11px;
+      line-height: 1.4;
+      border-radius: 3px;
+      padding: 5px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .field-status-hint.not-extracted {
+      background: #fff9ed;
+      border: 1px dashed #d4a359;
+      color: #7c5512;
+      font-family: var(--type);
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+    }
+    .field-status-hint.not-extracted .hint-icon {
+      font-size: 13px;
+      line-height: 1;
+      color: var(--amber);
+    }
+    .field-status-hint.extracted {
+      background: #f4f8f4;
+      border: 1px solid #b8dac0;
+      color: var(--ink);
+    }
+    .field-status-hint .prov-values {
+      font-family: var(--sans);
+      font-size: 11px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .field-status-hint .prov-raw {
+      color: var(--ink-soft);
+    }
+    .field-status-hint .prov-norm {
+      color: var(--green-deep);
+      font-weight: 600;
+    }
+    .field-status-hint .prov-meta {
+      font-family: var(--type);
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .btn-source-region {
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      padding: 1px 7px;
+      font-size: 10.5px;
+      font-family: var(--sans);
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-source-region:hover {
+      background: var(--stamp);
+      color: #fff;
+      border-color: var(--stamp);
+    }
+
+    /* ---------- RAW OCR OUTPUT Panel ---------- */
+    .raw-ocr-panel {
+      margin-top: 36px;
+      border: 1.5px solid var(--rule);
+      background: var(--card);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .raw-ocr-panel .panel-head {
+      background: var(--paper-deep);
+      border-bottom: 1.5px solid var(--rule);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .raw-ocr-panel .panel-head h2 {
+      font-family: var(--serif);
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .raw-ocr-panel .panel-head h2 .badge-untouched {
+      font-family: var(--type);
+      font-size: 10.5px;
+      background: var(--stamp);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.05em;
+    }
+    .raw-ocr-panel .disclaimer-sub {
+      margin: 4px 0 0 0;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      font-family: var(--sans);
+    }
+    .raw-ocr-meta-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 10px 20px;
+      background: #faf6ec;
+      border-bottom: 1px solid var(--rule-soft);
+      font-family: var(--type);
+      font-size: 11.5px;
+      color: var(--ink-soft);
+    }
+    .raw-ocr-meta-strip .meta-pill {
+      background: var(--card);
+      border: 1px solid var(--rule);
+      padding: 2px 8px;
+      border-radius: 3px;
+      color: var(--ink);
+    }
+    .raw-ocr-meta-strip .meta-pill b {
+      color: var(--stamp);
+    }
+    .raw-ocr-toolbar {
+      padding: 14px 20px;
+      background: var(--card);
+      border-bottom: 1px solid var(--rule-soft);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .raw-ocr-search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 320px;
+      flex-wrap: wrap;
+    }
+    .raw-ocr-search-input {
+      flex: 1;
+      min-width: 220px;
+      padding: 7px 12px;
+      font-family: var(--type);
+      font-size: 12px;
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      background: #fff;
+      color: var(--ink);
+    }
+    .raw-ocr-search-input:focus {
+      outline: none;
+      border-color: var(--stamp);
+      box-shadow: 0 0 0 2px rgba(166,25,60,0.12);
+    }
+    .quick-terms {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .term-pill {
+      font-family: var(--sans);
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 7px;
+      background: var(--paper-deep);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .term-pill:hover {
+      background: var(--stamp);
+      color: #fff;
+      border-color: var(--stamp);
+    }
+    .raw-ocr-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-ocr-action {
+      font-family: var(--sans);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .btn-ocr-action:hover {
+      background: var(--paper-deep);
+      border-color: var(--ink);
+    }
+    .raw-ocr-tabs {
+      display: flex;
+      align-items: center;
+      background: var(--paper-deep);
+      border-bottom: 1.5px solid var(--rule);
+      padding: 0 20px;
+      overflow-x: auto;
+      gap: 4px;
+    }
+    .ocr-tab-btn {
+      font-family: var(--type);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--ink-soft);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .ocr-tab-btn:hover {
+      color: var(--ink);
+      background: rgba(255,255,255,0.4);
+    }
+    .ocr-tab-btn.active {
+      color: var(--stamp);
+      border-bottom-color: var(--stamp);
+      background: var(--card);
+    }
+    .ocr-tab-btn .tab-badge {
+      font-size: 10px;
+      font-weight: 500;
+      background: rgba(0,0,0,0.06);
+      padding: 1px 6px;
+      border-radius: 10px;
+      color: var(--ink-soft);
+    }
+    .ocr-tab-btn.active .tab-badge {
+      background: rgba(166,25,60,0.12);
+      color: var(--stamp);
+    }
+    .ocr-page-pane {
+      display: none;
+      padding: 20px;
+    }
+    .ocr-page-pane.active {
+      display: block;
+    }
+    .ocr-lines-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--type);
+      font-size: 12px;
+    }
+    .ocr-lines-table th {
+      text-align: left;
+      padding: 8px 12px;
+      background: var(--paper-deep);
+      border-bottom: 1.5px solid var(--rule);
+      font-weight: 700;
+      color: var(--ink-soft);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 10.5px;
+    }
+    .ocr-lines-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--rule-soft);
+      vertical-align: top;
+    }
+    .ocr-lines-table tr:hover td {
+      background: rgba(166,25,60,0.03);
+    }
+    .ocr-lines-table tr.highlight-match td {
+      background: #fff2c4 !important;
+    }
+    .ocr-line-no {
+      color: var(--ink-soft);
+      font-weight: 700;
+      width: 44px;
+    }
+    .ocr-conf-pill {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .ocr-conf-high {
+      background: #e6f4ea;
+      color: var(--green-deep);
+    }
+    .ocr-conf-med {
+      background: #fef7e0;
+      color: var(--amber);
+    }
+    .ocr-conf-low {
+      background: #fce8e6;
+      color: var(--stamp-deep);
+    }
+    .ocr-bbox-tag {
+      color: var(--ink-soft);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .ocr-lang-tag {
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+    .ocr-text-cell {
+      font-family: var(--type);
+      color: var(--ink);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
     /* ---------- footer ---------- */
     footer{border-top:3px double var(--rule);padding:40px 0;margin-top:72px;background:rgba(255,255,255,.3)}
     .foot-note{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-family:var(--type);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
@@ -1460,6 +1811,106 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+  /* ---------- Raw OCR Interactive Logic ---------- */
+  var CURRENT_OCR_PAGE = 1;
+
+  function switchOCRPage(pageNum) {
+    CURRENT_OCR_PAGE = pageNum;
+    document.querySelectorAll('.ocr-tab-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.getAttribute('data-page') == pageNum);
+    });
+    document.querySelectorAll('.ocr-page-pane').forEach(function(pane) {
+      pane.classList.toggle('active', pane.getAttribute('data-page') == pageNum);
+    });
+  }
+
+  function filterRawOCR(query) {
+    var q = (query || '').toLowerCase().trim();
+    document.querySelectorAll('.ocr-lines-table tbody tr').forEach(function(row) {
+      if (!q) {
+        row.style.display = '';
+        row.classList.remove('highlight-match');
+        return;
+      }
+      var txt = (row.getAttribute('data-text') || '').toLowerCase();
+      if (txt.indexOf(q) !== -1) {
+        row.style.display = '';
+        row.classList.add('highlight-match');
+      } else {
+        row.style.display = 'none';
+        row.classList.remove('highlight-match');
+      }
+    });
+  }
+
+  function searchRawOCR(term) {
+    var inp = document.getElementById('raw_ocr_search');
+    if (inp) {
+      inp.value = term;
+      filterRawOCR(term);
+    }
+  }
+
+  function showSourceRegion(pageNum, term) {
+    if (pageNum) {
+      switchOCRPage(pageNum);
+    }
+    var el = document.getElementById('raw_ocr_section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (term) {
+      searchRawOCR(term);
+    }
+  }
+
+  function copyRawOCRPage() {
+    var pane = document.querySelector('.ocr-page-pane.active');
+    if (!pane) return;
+    var fullTxt = pane.getAttribute('data-raw-text') || '';
+    if (!fullTxt) {
+      var lines = [];
+      pane.querySelectorAll('.ocr-text-cell').forEach(function(c) {
+        lines.push(c.textContent);
+      });
+      fullTxt = lines.join('\\n');
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(fullTxt).then(function() {
+        alert('Raw OCR text for Page ' + CURRENT_OCR_PAGE + ' copied to clipboard.');
+      }).catch(function() {
+        prompt('Copy raw OCR text:', fullTxt);
+      });
+    } else {
+      prompt('Copy raw OCR text:', fullTxt);
+    }
+  }
+
+  function downloadRawOCRJSON(recId) {
+    if (!recId) return;
+    window.open('/api/raw_ocr?verification_id=' + encodeURIComponent(recId), '_blank');
+  }
+
+  function downloadRawOCRTXT(recId) {
+    var pane = document.querySelector('.ocr-page-pane.active');
+    var txt = pane ? (pane.getAttribute('data-raw-text') || '') : '';
+    if (!txt) {
+      var allPanes = document.querySelectorAll('.ocr-page-pane');
+      var full = [];
+      allPanes.forEach(function(p) {
+        full.push('=== PAGE ' + p.getAttribute('data-page') + ' ===\\n' + (p.getAttribute('data-raw-text') || ''));
+      });
+      txt = full.join('\\n\\n');
+    }
+    var blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    var u = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = u;
+    a.download = 'raw_ocr_record_' + (recId ? recId.substring(0,8) : 'doc') + '.txt';
+    a.click();
+    URL.revokeObjectURL(u);
+  }
 </script>
 </body>
 </html>
@@ -1470,6 +1921,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 def render_gis_section(ocr_payload: dict) -> str:
     if not isinstance(ocr_payload, dict) or not ocr_payload:
+        return ""
+
+    prop = ocr_payload.get("property") if isinstance(ocr_payload.get("property"), dict) else {}
+    has_geo = any(
+        bool(str(val).strip())
+        for val in (
+            prop.get("village"),
+            prop.get("district"),
+            prop.get("mandal"),
+            prop.get("survey_number"),
+            ocr_payload.get("village"),
+            ocr_payload.get("district"),
+            ocr_payload.get("mandal"),
+            ocr_payload.get("survey_number"),
+        )
+        if val is not None
+    )
+    if not has_geo:
         return ""
 
     try:
@@ -1633,6 +2102,7 @@ BADGE_LABELS = {
     "REJECTED": "Rejected",
     "FAIL": "Checks failed",
     "DUPLICATE": "Duplicate Detected",
+    "NOT_A_LAND_DOCUMENT": "Not a Land Document",
 }
 
 
@@ -1803,6 +2273,207 @@ def _exhibit_panel(preview: str, caption: str) -> str:
     """
 
 
+def _field_provenance_hint(field_name: str, field_val: Any, field_prov: dict) -> str:
+    prov_entry = field_prov.get(field_name, {}) if isinstance(field_prov, dict) else {}
+    val_str = str(field_val).strip() if field_val is not None else ""
+
+    if not val_str:
+        return (
+            '<div class="field-status-hint not-extracted">'
+            '<span class="hint-icon">ℹ️</span>'
+            '<span>Field not extracted. Check Raw OCR Output for source evidence.</span>'
+            '</div>'
+        )
+
+    raw_ocr_val = prov_entry.get("raw_ocr_value") or prov_entry.get("original_value")
+    page_num = prov_entry.get("page_number") or prov_entry.get("page")
+    bbox = prov_entry.get("source_bbox") or prov_entry.get("bounding_box") or prov_entry.get("bbox")
+    conf = prov_entry.get("ocr_confidence") or prov_entry.get("confidence")
+
+    parts = []
+    if raw_ocr_val and str(raw_ocr_val).strip() != val_str:
+        parts.append(f'<span class="prov-raw">Raw OCR: "<b>{html.escape(str(raw_ocr_val))}</b>"</span>')
+        parts.append(f'<span class="prov-norm">&rarr; Normalized: "<b>{html.escape(val_str)}</b>"</span>')
+    elif raw_ocr_val:
+        parts.append(f'<span class="prov-raw">Raw OCR: "<b>{html.escape(str(raw_ocr_val))}</b>"</span>')
+
+    meta_parts = []
+    if page_num:
+        meta_parts.append(f"Page {html.escape(str(page_num))}")
+    if conf:
+        try:
+            meta_parts.append(f"Conf: {float(conf):.2f}")
+        except Exception:
+            pass
+    if bbox and isinstance(bbox, (list, tuple)) and len(bbox) == 4:
+        meta_parts.append(f"BBox: [{bbox[0]}, {bbox[1]}, {bbox[2]}, {bbox[3]}]")
+
+    meta_str = " &middot; ".join(meta_parts)
+    action_btn = ""
+    if page_num:
+        search_target = html.escape(str(raw_ocr_val or val_str or "").strip(), quote=True)
+        action_btn = f'<button type="button" class="btn-source-region" onclick="showSourceRegion({page_num}, \'{search_target}\')">🔍 Show source region</button>'
+
+    return f"""
+    <div class="field-status-hint extracted">
+      <div class="prov-values">{' '.join(parts) if parts else f'<span>Value: "<b>{html.escape(val_str)}</b>"</span>'}</div>
+      <div class="prov-meta">
+        {f'<span>{meta_str}</span>' if meta_str else ''}
+        {action_btn}
+      </div>
+    </div>
+    """
+
+
+def _raw_ocr_panel(record: dict) -> str:
+    raw_ocr = record.get("raw_ocr")
+    if not raw_ocr and isinstance(record.get("document_payload"), dict):
+        raw_ocr = record["document_payload"].get("raw_ocr")
+    if not raw_ocr and isinstance(record.get("ocr_debug"), dict):
+        raw_ocr = record["ocr_debug"].get("raw_ocr")
+
+    rec_id = record.get("verification_id", "")
+    if not raw_ocr or not isinstance(raw_ocr, dict):
+        return f"""
+        <section class="panel raw-ocr-panel rv in" id="raw_ocr_section">
+          <div class="panel-head">
+            <div>
+              <h2>RAW OCR OUTPUT &mdash; <span class="badge-untouched">untouched model output</span></h2>
+              <p class="disclaimer-sub">This section is not affected by semantic extraction, learned normalization, or clerk corrections.</p>
+            </div>
+          </div>
+          <div style="padding: 24px; text-align: center; color: var(--ink-soft); font-family: var(--type);">
+            No raw OCR data stored for this record.
+          </div>
+        </section>
+        """
+
+    backend = raw_ocr.get("backend") or "unknown"
+    model = raw_ocr.get("model") or "unknown"
+    gpu_hw = raw_ocr.get("gpu_hardware", "")
+    pages = raw_ocr.get("pages", [])
+    total_pages = raw_ocr.get("total_pages", len(pages))
+
+    tab_btns = []
+    page_panes = []
+
+    for idx, p in enumerate(pages, start=1):
+        p_num = p.get("page_number", idx)
+        lines = p.get("lines", [])
+        line_count = p.get("line_count", len(lines))
+        avg_conf = p.get("avg_confidence", 0.0)
+        raw_text = p.get("raw_text", "")
+        prep = p.get("preprocessing") or {}
+        prep_variant = prep.get("selected_variant") or "original"
+        prep_ops = ", ".join(prep.get("operations", [])) if prep.get("operations") else "none"
+
+        is_active = (idx == 1)
+        active_cls = "active" if is_active else ""
+
+        tab_btns.append(
+            f'<button type="button" class="ocr-tab-btn {active_cls}" data-page="{p_num}" onclick="switchOCRPage({p_num})">'
+            f'Page {p_num} <span class="tab-badge">{line_count} lines &middot; {int(avg_conf*100)}%</span>'
+            f'</button>'
+        )
+
+        row_htmls = []
+        for l in lines:
+            l_no = l.get("line_number", "")
+            l_txt = l.get("text", "")
+            l_conf = float(l.get("confidence", 0.0))
+            l_bbox = l.get("bbox") or [0, 0, 0, 0]
+            l_lang = l.get("language", "English")
+            l_script = l.get("script", "Latin")
+
+            conf_cls = "ocr-conf-high" if l_conf >= 0.88 else ("ocr-conf-med" if l_conf >= 0.75 else "ocr-conf-low")
+            bbox_str = f"[{l_bbox[0]}, {l_bbox[1]}, {l_bbox[2]}, {l_bbox[3]}]" if len(l_bbox) == 4 else str(l_bbox)
+
+            row_htmls.append(
+                f'<tr data-text="{html.escape(l_txt.lower(), quote=True)}" data-line="{l_no}">'
+                f'<td class="ocr-line-no">#{l_no}</td>'
+                f'<td><span class="ocr-conf-pill {conf_cls}">{l_conf:.2f}</span></td>'
+                f'<td class="ocr-bbox-tag"><code>{html.escape(bbox_str)}</code></td>'
+                f'<td class="ocr-lang-tag">{html.escape(l_lang)} &middot; {html.escape(l_script)}</td>'
+                f'<td class="ocr-text-cell">{html.escape(l_txt)}</td>'
+                f'</tr>'
+            )
+
+        escaped_raw_text = html.escape(raw_text, quote=True)
+        pane_html = f"""
+        <div class="ocr-page-pane {active_cls}" data-page="{p_num}" data-raw-text="{escaped_raw_text}">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-family:var(--type); font-size:11.5px; color:var(--ink-soft); flex-wrap:wrap; gap:8px;">
+            <div>
+              <b>PAGE {p_num} OF {total_pages}</b> &middot; <b>{line_count}</b> recognized lines &middot; Avg Confidence: <b>{avg_conf:.2f}</b>
+            </div>
+            <div>
+              Preprocessing: <code>{html.escape(str(prep_variant))}</code> (ops: {html.escape(str(prep_ops))})
+            </div>
+          </div>
+          <div style="max-height: 520px; overflow-y: auto; border: 1px solid var(--rule); background: #fff;">
+            <table class="ocr-lines-table">
+              <thead>
+                <tr>
+                  <th style="width:50px;">Line</th>
+                  <th style="width:70px;">Conf</th>
+                  <th style="width:170px;">Bounding Box</th>
+                  <th style="width:130px;">Lang / Script</th>
+                  <th>Raw OCR Text</th>
+                </tr>
+              </thead>
+              <tbody>
+                {''.join(row_htmls) if row_htmls else '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ink-soft);">No lines recognized on this page.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        """
+        page_panes.append(pane_html)
+
+    quick_pills = ["Sale Deed", "Survey", "Sy. No.", "Plot", "Village", "Mandal", "District", "Date", "Registration"]
+    quick_pills_html = "".join(
+        f'<button type="button" class="term-pill" onclick="searchRawOCR(\'{p}\')">{p}</button>'
+        for p in quick_pills
+    )
+
+    hw_badge = f'<span class="meta-pill">Hardware: <b>{html.escape(gpu_hw)}</b></span>' if gpu_hw else ""
+
+    return f"""
+    <section class="panel raw-ocr-panel rv in" id="raw_ocr_section">
+      <div class="panel-head">
+        <div>
+          <h2>RAW OCR OUTPUT &mdash; <span class="badge-untouched">untouched model output</span></h2>
+          <p class="disclaimer-sub">This section is not affected by semantic extraction, learned normalization, or clerk corrections.</p>
+        </div>
+      </div>
+      <div class="raw-ocr-meta-strip">
+        <span class="meta-pill">Backend: <b>{html.escape(backend)}</b></span>
+        <span class="meta-pill">Model: <b>{html.escape(model)}</b></span>
+        {hw_badge}
+        <span class="meta-pill">Total Pages: <b>{total_pages}</b></span>
+      </div>
+      <div class="raw-ocr-toolbar">
+        <div class="raw-ocr-search-wrap">
+          <input type="text" id="raw_ocr_search" class="raw-ocr-search-input" placeholder="Search OCR text across lines (e.g. Sale Deed, Survey, Plot)..." oninput="filterRawOCR(this.value)">
+          <div class="quick-terms">
+            {quick_pills_html}
+          </div>
+        </div>
+        <div class="raw-ocr-actions">
+          <button type="button" class="btn-ocr-action" onclick="copyRawOCRPage()">📋 Copy Page Text</button>
+          <button type="button" class="btn-ocr-action" onclick="downloadRawOCRJSON('{html.escape(rec_id)}')">⬇ Download JSON</button>
+          <button type="button" class="btn-ocr-action" onclick="downloadRawOCRTXT('{html.escape(rec_id)}')">⬇ Download TXT</button>
+        </div>
+      </div>
+      <div class="raw-ocr-tabs">
+        {''.join(tab_btns)}
+      </div>
+      <div class="raw-ocr-body">
+        {''.join(page_panes)}
+      </div>
+    </section>
+    """
+
+
 def _clerk_panel(record: dict, message: str) -> str:
     rec_id = record["verification_id"]
     payload_data = record["document_payload"]
@@ -1811,6 +2482,7 @@ def _clerk_panel(record: dict, message: str) -> str:
     stamp = payload_data.get("stamp_information", {}) or {}
     parties = payload_data.get("parties", []) or []
     parties_json_str = json.dumps(parties, ensure_ascii=False)
+    field_prov = record.get("field_provenance", {}) or {}
 
     current_status = record.get("status")
     is_approved = current_status == "APPROVED"
@@ -1819,11 +2491,17 @@ def _clerk_panel(record: dict, message: str) -> str:
     is_duplicate = current_status == "DUPLICATE" or bool(dup_info)
     readonly_attr = "readonly" if (is_approved or is_duplicate) else ""
 
+    is_land_doc, populated_fields = verification_service.check_is_land_document(payload_data, record)
+    is_not_land_doc = not is_land_doc
+
     has_critical_fail = any(
         c.get("status") == "FAIL" and c.get("severity") == "critical" for c in checks
     )
     if is_duplicate:
         warn = '<p class="warnbox stop">Officer approval is blocked: duplicate registration attempt detected.</p>'
+        approve_disabled = "disabled"
+    elif is_not_land_doc:
+        warn = '<p class="warnbox stop">Officer approval is blocked: this is not a recognized land document.</p>'
         approve_disabled = "disabled"
     elif has_critical_fail:
         warn = (
@@ -1905,6 +2583,18 @@ def _clerk_panel(record: dict, message: str) -> str:
         """
 
     blocked = ""
+    if is_not_land_doc:
+        blocked = f"""
+        <div class="warnbox stop not-land-doc-alert" style="margin-bottom: 20px; border-left: 4px solid var(--stamp); background: rgba(166,25,60,0.08); padding: 14px 18px; border-radius: 3px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 20px;">⛔</span>
+            <strong style="font-family: var(--serif); font-size: 15px; color: var(--stamp); text-transform: uppercase; letter-spacing: 0.05em;">Error: This is not a land document</strong>
+          </div>
+          <p style="margin: 6px 0 0 0; font-size: 13.5px; color: var(--ink); line-height: 1.45;">
+            All of the land registry fields are empty. No title deed, survey number, plot boundaries, parties, or stamp details were identified.
+          </p>
+        </div>
+        """
 
     return f"""
     <section class="panel clerk rv">
@@ -1918,54 +2608,67 @@ def _clerk_panel(record: dict, message: str) -> str:
             <div class="editor-field">
               <label for="f_doc_type" data-i18n="f_doc_type">Document Type</label>
               <input type="text" id="f_doc_type" name="document_type" value="{html.escape(str(payload_data.get('document_type') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('document_type', payload_data.get('document_type'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_doc_no" data-i18n="f_doc_no">Document Number</label>
               <input type="text" id="f_doc_no" name="document_number" value="{html.escape(str(payload_data.get('document_number') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('document_number', payload_data.get('document_number'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_survey" data-i18n="f_survey">Survey Number</label>
               <input type="text" id="f_survey" name="survey_number" value="{html.escape(str(prop.get('survey_number') or ''))}" {readonly_attr} autocomplete="off">
+              {_field_provenance_hint('survey_number', prop.get('survey_number'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_subsurvey" data-i18n="f_subsurvey">Sub-Survey Number</label>
               <input type="text" id="f_subsurvey" name="sub_survey_number" value="{html.escape(str(prop.get('sub_survey_number') or ''))}" {readonly_attr} autocomplete="off">
+              {_field_provenance_hint('sub_survey_number', prop.get('sub_survey_number'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_area" data-i18n="f_area">Property Area</label>
               <input type="text" id="f_area" name="area" value="{html.escape(str(prop.get('area') if prop.get('area') is not None else ''))}" {readonly_attr}>
+              {_field_provenance_hint('property_area', prop.get('area'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_village" data-i18n="f_village">Village</label>
               <input type="text" id="f_village" name="village" value="{html.escape(str(prop.get('village') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('village', prop.get('village'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_mandal" data-i18n="f_mandal">Mandal</label>
               <input type="text" id="f_mandal" name="mandal" value="{html.escape(str(prop.get('mandal') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('mandal', prop.get('mandal'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_district" data-i18n="f_district">District</label>
               <input type="text" id="f_district" name="district" value="{html.escape(str(prop.get('district') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('district', prop.get('district'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_stamp_no" data-i18n="f_stamp_no">Stamp Serial Number</label>
               <input type="text" id="f_stamp_no" name="stamp_number" value="{html.escape(str(stamp.get('stamp_number') or payload_data.get('stamp_number') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('stamp_number', stamp.get('stamp_number') or payload_data.get('stamp_number'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_stamp_val" data-i18n="f_stamp_val">Stamp Value</label>
               <input type="text" id="f_stamp_val" name="stamp_value" value="{html.escape(str(stamp.get('stamp_value') if stamp.get('stamp_value') is not None else (payload_data.get('stamp_value') if payload_data.get('stamp_value') is not None else '')))}" {readonly_attr}>
+              {_field_provenance_hint('stamp_value', stamp.get('stamp_value') if stamp.get('stamp_value') is not None else payload_data.get('stamp_value'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_sold_to" data-i18n="f_sold_to">Stamp Sold To</label>
               <input type="text" id="f_sold_to" name="sold_to" value="{html.escape(str(stamp.get('sold_to') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('stamp_sold_to', stamp.get('sold_to'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_doc_date" data-i18n="f_doc_date">Document Date</label>
               <input type="text" id="f_doc_date" name="document_date" value="{html.escape(str(payload_data.get('document_date') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('document_date', payload_data.get('document_date'), field_prov)}
             </div>
             <div class="editor-field">
               <label for="f_exec_date" data-i18n="f_exec_date">Execution Date</label>
               <input type="text" id="f_exec_date" name="execution_date" value="{html.escape(str(payload_data.get('execution_date') or ''))}" {readonly_attr}>
+              {_field_provenance_hint('execution_date', payload_data.get('execution_date'), field_prov)}
             </div>
             <div class="editor-field efull">
               <label for="f_parties" data-i18n="f_parties">Parties (JSON)</label>
@@ -2273,6 +2976,38 @@ def render_page(
             </div>
             """
 
+        is_land_doc, _ = verification_service.check_is_land_document(
+            active_record.get("document_payload", {}), active_record
+        )
+        is_not_land_doc = not is_land_doc
+
+        not_land_doc_banner = ""
+        if is_not_land_doc:
+            not_land_doc_banner = f"""
+            <div class="not-land-doc-alert-box rv in" style="margin-top: 18px; margin-bottom: 20px; border: 2px solid var(--stamp); background: #fff5f5; border-radius: 4px; padding: 18px 22px; box-shadow: 0 4px 14px rgba(166,25,60,0.12); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: flex-start; gap: 14px; max-width: 820px;">
+                <span style="font-size: 32px; line-height: 1; flex-shrink: 0;">⛔</span>
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <span style="font-family: var(--serif); font-size: 17px; font-weight: 800; color: var(--stamp); letter-spacing: 0.08em; text-transform: uppercase;">ERROR: THIS IS NOT A LAND DOCUMENT</span>
+                    <span style="font-family: var(--type); font-size: 11px; font-weight: 700; background: var(--stamp); color: #fff; padding: 2px 8px; border-radius: 3px; letter-spacing: 0.06em; text-transform: uppercase;">INVALID DOCUMENT</span>
+                  </div>
+                  <p style="margin: 6px 0 0 0; font-size: 14.5px; color: var(--ink); line-height: 1.45; font-weight: 600;">
+                    This is not a land document. All of the required land registry fields are empty.
+                  </p>
+                  <p style="margin: 4px 0 0 0; font-size: 12.5px; color: var(--ink-soft); font-family: var(--sans);">
+                    No title deed, survey number, plot boundaries, parties, or stamp details were identified. Please verify and upload an official land record.
+                  </p>
+                </div>
+              </div>
+              <div>
+                <a href="/new" class="btn btn-outline-red" style="padding: 10px 18px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none;">
+                  <span>Upload Another Document</span> &rarr;
+                </a>
+              </div>
+            </div>
+            """
+
         head = f"""
         <div class="console-top">
           <div class="console-head rv">
@@ -2282,7 +3017,8 @@ def render_page(
           <p class="sub rv"><span data-i18n="lbl_record">Record</span> {html.escape(rec_id)}</p>
           {_stepper_markup(status)}
           {dup_banner}
-          {_banner_markup(message, blocked=("Approval refused" in (message or "") or "DUPLICATE" in (message or "")))}
+          {not_land_doc_banner}
+          {_banner_markup(message, blocked=("Approval refused" in (message or "") or "DUPLICATE" in (message or "") or "not a land document" in (message or "").lower()))}
           {timing_info}
         </div>
         """
@@ -2327,15 +3063,19 @@ def render_page(
             else:
                 body_parts.append(_clerk_panel(active_record, message or ""))
 
-        # 3. SEPARATE SECTION BELOW: GIS Property Location & Map
-        ocr_payload = active_record.get("document_payload") or {}
-        gis_markup = render_gis_section(ocr_payload) if ocr_payload else ""
-        if gis_markup:
-            body_parts.append(
-                '<div class="gis-separate-section" style="margin-top: 36px; padding-top: 24px; border-top: 2px double var(--rule);">'
-                + gis_markup
-                + '</div>'
-            )
+            # Schedule C / Evidence: Raw OCR Output Panel
+            body_parts.append(_raw_ocr_panel(active_record))
+
+        # 3. SEPARATE SECTION BELOW: GIS Property Location & Map (only for recognized land documents)
+        if not is_not_land_doc:
+            ocr_payload = active_record.get("document_payload") or {}
+            gis_markup = render_gis_section(ocr_payload) if ocr_payload else ""
+            if gis_markup:
+                body_parts.append(
+                    '<div class="gis-separate-section" style="margin-top: 36px; padding-top: 24px; border-top: 2px double var(--rule);">'
+                    + gis_markup
+                    + '</div>'
+                )
 
         if payload and payload.strip() not in ("", "{}"):
             body_parts.append(
@@ -2736,6 +3476,57 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(rules, indent=2).encode("utf-8"))
             return
 
+        # Raw OCR Inspection API: /api/raw_ocr?verification_id=...
+        if parsed.path == "/api/raw_ocr":
+            rec_id = query_params.get("verification_id", [None])[0] or query_params.get("id", [None])[0]
+            if not rec_id:
+                self.send_response(HTTPStatus.BAD_REQUEST)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Missing verification_id parameter"}, indent=2).encode("utf-8"))
+                return
+
+            record = verification_service.get_record(rec_id)
+            if not record:
+                self.send_response(HTTPStatus.NOT_FOUND)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": f"Verification record '{rec_id}' not found"}, indent=2).encode("utf-8"))
+                return
+
+            raw_ocr = record.get("raw_ocr")
+            if not raw_ocr and isinstance(record.get("document_payload"), dict):
+                raw_ocr = record["document_payload"].get("raw_ocr")
+            if not raw_ocr and isinstance(record.get("ocr_debug"), dict):
+                raw_ocr = record["ocr_debug"].get("raw_ocr")
+
+            if not raw_ocr:
+                raw_ocr = {
+                    "backend": "unknown",
+                    "model": "unknown",
+                    "total_pages": 0,
+                    "pages": [],
+                }
+
+            response_data = {
+                "verification_id": rec_id,
+                "backend": raw_ocr.get("backend") or "unknown",
+                "model": raw_ocr.get("model") or "unknown",
+                "total_pages": raw_ocr.get("total_pages", len(raw_ocr.get("pages", []))),
+                "pages": raw_ocr.get("pages", []),
+            }
+            if "gpu_hardware" in raw_ocr:
+                response_data["gpu_hardware"] = raw_ocr["gpu_hardware"]
+
+            data = json.dumps(response_data, indent=2, ensure_ascii=False).encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.end_headers()
+            self.wfile.write(data)
+            return
+
         # Official Certificate Export with Lock: /export_pdf?verification_id=...&password=...&lock=...
         if parsed.path in {"/export_pdf", "/export_locked_pdf", "/download_pdf"}:
             rec_id = query_params.get("verification_id", [None])[0] or query_params.get("id", [None])[0]
@@ -2914,9 +3705,13 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 "document_date": payload_data.get("document_date"),
                 "execution_date": payload_data.get("execution_date"),
             })
+            is_land_doc, _ = verification_service.check_is_land_document(payload_data, record)
+            record_msg = ""
+            if not is_land_doc:
+                record_msg = "Error: This is not a land document. All land registry fields are empty."
             page = render_page(
                 payload=json.dumps(user_facing, indent=2, ensure_ascii=False),
-                message="",
+                message=record_msg,
                 preview=preview_html,
                 colab_url_value=get_colab_url(),
                 active_record=record,
@@ -3354,6 +4149,22 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         ocr_time_ms = 5.0
                         network_time_ms = 0.0
                         gpu_name = "Digital PDF Parser (Instant Fast-Path)"
+                        digi_pages: dict[int, list[OCRLine]] = {}
+                        for l in lines:
+                            digi_pages.setdefault(l.page_num, []).append(l)
+                        multi_raw_ocr = build_raw_ocr_payload(
+                            [
+                                {
+                                    "page_number": p_n,
+                                    "raw_text": "\n".join(l.text for l in digi_pages[p_n]),
+                                    "lines": [serialize_ocr_line(l, idx) for idx, l in enumerate(digi_pages[p_n], start=1)],
+                                    "preprocessing": {"method": "digital_pdf_stream"},
+                                }
+                                for p_n in sorted(digi_pages.keys())
+                            ],
+                            backend="digital_pdf",
+                            model="PyMuPDF Digital Text Engine",
+                        )
                     else:
                         # 2. Scanned PDF: Render directly to in-memory compressed JPEGs (scale 1.6x, ~300KB/page)
                         page_buffers = extract_pdf_pages_to_memory(uploaded, scale=1.6)
@@ -3363,6 +4174,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         t_net_start = perf_counter()
 
                         page_prep_metas = []
+                        pages_raw_list = []
+                        last_gpu_model = "PaddleOCR (Multilingual PP-OCRv6 GPU)"
 
                         def _post_page(item: tuple[int, bytes, int, int]):
                             p_idx, img_bytes, pw, ph = item
@@ -3415,6 +4228,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                             page_prep_metas.append(prep_meta)
                             total_ocr_time_ms += gpu_result.get("ocr_time_ms", 0.0)
                             gpu_name = gpu_result.get("gpu_name", gpu_name)
+                            if gpu_result.get("model"):
+                                last_gpu_model = gpu_result["model"]
 
                             p_words = []
                             for text, score, poly in zip(
@@ -3481,9 +4296,18 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                                 l.page_num = page_idx
                                 l.page_height = ph
                                 l.page_width = pw
+                                l_script, l_lang = detect_script_and_language(l.text)
+                                l.script = l_script
+                                l.language = l_lang
                             all_lines.extend(p_lines)
                             p_raw = "\n".join(l.text for l in p_lines)
                             all_raw_texts.append(f"--- PAGE {page_idx} ---\n{p_raw}")
+                            pages_raw_list.append({
+                                "page_number": page_idx,
+                                "raw_text": p_raw,
+                                "lines": [serialize_ocr_line(l, idx) for idx, l in enumerate(p_lines, start=1)],
+                                "preprocessing": prep_meta or {},
+                            })
 
                         t_net_end = perf_counter()
                         total_request_time = (t_net_end - t_net_start) * 1000
@@ -3491,6 +4315,12 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         network_time_ms = max(0.0, total_request_time - ocr_time_ms)
                         lines = all_lines
                         raw_text = "\n\n".join(all_raw_texts)
+                        multi_raw_ocr = build_raw_ocr_payload(
+                            pages_raw_list,
+                            backend="remote_gpu",
+                            model=last_gpu_model,
+                            gpu_hardware=gpu_name,
+                        )
                 else:
                     t_net_start = perf_counter()
                     upload_files = None
@@ -3529,6 +4359,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     gpu_result = ocr_resp.json()
                     ocr_time_ms = gpu_result.get("ocr_time_ms", 0.0)
                     gpu_name = gpu_result.get("gpu_name", gpu_name)
+                    single_gpu_model = gpu_result.get("model", "PaddleOCR (Multilingual PP-OCRv6 GPU)")
                     network_time_ms = max(0.0, total_request_time - ocr_time_ms)
 
                     words = []
@@ -3561,7 +4392,21 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         l.page_num = 1
                         l.page_height = _est_h
                         l.page_width = _est_w
+                        l_script, l_lang = detect_script_and_language(l.text)
+                        l.script = l_script
+                        l.language = l_lang
                     raw_text = "\n".join(l.text for l in lines)
+                    multi_raw_ocr = build_raw_ocr_payload(
+                        [{
+                            "page_number": 1,
+                            "raw_text": raw_text,
+                            "lines": [serialize_ocr_line(l, idx) for idx, l in enumerate(lines, start=1)],
+                            "preprocessing": prep_meta or {},
+                        }],
+                        backend="remote_gpu",
+                        model=single_gpu_model,
+                        gpu_hardware=gpu_name,
+                    )
 
                 gpu_ocr_timings = {
                     "model_initialization_ms": 0.0,
@@ -3574,8 +4419,9 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     "ocr_total_ms": ocr_time_ms,
                 }
                 result = extract_land_document_from_lines(
-                    lines, raw_text, temp_path, timings=gpu_ocr_timings
+                    lines, raw_text, temp_path, timings=gpu_ocr_timings, raw_ocr=multi_raw_ocr
                 )
+                result["raw_ocr"] = multi_raw_ocr
                 if 'page_prep_metas' in locals() and page_prep_metas:
                     result["preprocessing"] = page_prep_metas[0]
                     result["all_pages_preprocessing"] = page_prep_metas
@@ -3623,6 +4469,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             file_hash = hashlib.sha256(uploaded).hexdigest() if uploaded else None
             record = verification_service.create_verification_record(result, file_hash=file_hash)
             record["filename"] = filename
+            record["raw_ocr"] = result.get("raw_ocr")
+            record["field_provenance"] = result.get("field_provenance", {})
             verification_service.save_record(record)
 
             from semantic_extractor import clean_user_facing_schema
@@ -3653,7 +4501,13 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                   <img src="data:{mime_type};base64,{image_data}" style="width: 100%; max-width: 100%; border: 1.5px solid var(--rule); box-shadow: 0 4px 20px rgba(0,0,0,0.12); background: #fff; display: block;" alt="Uploaded scan copy">
                 </div>
                 """
-            if record.get("status") == "DUPLICATE" or record.get("duplicate_info"):
+            is_land_doc, _ = verification_service.check_is_land_document(
+                record.get("document_payload", {}), result
+            )
+            record["is_land_document"] = is_land_doc
+            if not is_land_doc:
+                message = "Error: This is not a land document. All land registry fields are empty."
+            elif record.get("status") == "DUPLICATE" or record.get("duplicate_info"):
                 dup = record.get("duplicate_info") or {}
                 dup_id = dup.get("matched_record_id", "")
                 message = f"DUPLICATE DETECTED: This document has already been registered and cryptographically sealed (Record No. {dup_id[:8].upper()})."

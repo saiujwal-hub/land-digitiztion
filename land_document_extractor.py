@@ -118,6 +118,56 @@ class OCRLine:
         return self.page_num == 1 and self.y_rel <= 0.25
 
 
+def serialize_ocr_line(line: Any, line_number: int = 1) -> dict[str, Any]:
+    return {
+        "line_number": line_number,
+        "text": getattr(line, "text", str(line)),
+        "confidence": round(float(getattr(line, "score", 0.9)), 4),
+        "bbox": [
+            int(getattr(line, "x_min", 0)),
+            int(getattr(line, "y_min", 0)),
+            int(getattr(line, "x_max", 0)),
+            int(getattr(line, "y_max", 0)),
+        ],
+        "page_number": int(getattr(line, "page_num", 1)),
+        "language": getattr(line, "language", "English"),
+        "script": getattr(line, "script", "Latin"),
+    }
+
+
+def build_raw_ocr_payload(
+    pages_data: list[dict[str, Any]],
+    backend: str = "local_cpu",
+    model: str = "PaddleOCR",
+    gpu_hardware: str | None = None,
+) -> dict[str, Any]:
+    raw_payload: dict[str, Any] = {
+        "backend": backend,
+        "model": model,
+        "total_pages": len(pages_data),
+        "pages": [],
+    }
+    if gpu_hardware:
+        raw_payload["gpu_hardware"] = gpu_hardware
+
+    for p in pages_data:
+        p_lines = p.get("lines", [])
+        avg_conf = (
+            round(sum(float(l.get("confidence", 0.0)) for l in p_lines) / len(p_lines), 4)
+            if p_lines
+            else 0.0
+        )
+        raw_payload["pages"].append({
+            "page_number": p.get("page_number", 1),
+            "raw_text": p.get("raw_text", ""),
+            "line_count": len(p_lines),
+            "avg_confidence": avg_conf,
+            "lines": p_lines,
+            "preprocessing": p.get("preprocessing") or {},
+        })
+    return raw_payload
+
+
 def normalize_space(value: str) -> str:
     return re.sub(r"\s+", " ", value or "").strip()
 
@@ -1968,6 +2018,7 @@ def extract_land_document_from_lines(
     raw_text: str,
     image_path: str,
     timings: dict[str, float] | None = None,
+    raw_ocr: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     from semantic_extractor import extract_fields_semantic
 
@@ -1975,6 +2026,31 @@ def extract_land_document_from_lines(
     t0 = perf_counter()
     full_text = normalize_upper(raw_text)
     pipeline_timings["text_normalization_ms"] = (perf_counter() - t0) * 1000
+
+    if raw_ocr is None and isinstance(timings, dict) and "raw_ocr" in timings:
+        raw_ocr = timings["raw_ocr"]
+
+    if raw_ocr is None:
+        pages_dict: dict[int, list[Any]] = {}
+        for l in lines:
+            p_n = getattr(l, "page_num", 1)
+            pages_dict.setdefault(p_n, []).append(l)
+        if not pages_dict:
+            pages_dict[1] = []
+
+        pages_data = []
+        for p_n in sorted(pages_dict.keys()):
+            p_lines = pages_dict[p_n]
+            p_raw = "\n".join(getattr(l, "text", str(l)) for l in p_lines)
+            pages_data.append({
+                "page_number": p_n,
+                "raw_text": p_raw,
+                "lines": [serialize_ocr_line(l, idx) for idx, l in enumerate(p_lines, 1)],
+                "preprocessing": {},
+            })
+        raw_backend = timings.get("ocr_backend", "local_cpu") if isinstance(timings, dict) else "local_cpu"
+        raw_model = timings.get("model_name", "PaddleOCR") if isinstance(timings, dict) else "PaddleOCR"
+        raw_ocr = build_raw_ocr_payload(pages_data, backend=raw_backend, model=raw_model)
 
     image = cv2.imread(image_path)
     if image is None and os.path.exists(image_path):
@@ -2116,8 +2192,10 @@ def extract_land_document_from_lines(
             "processed_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
             "line_count": len(lines),
             "lines": [line.text for line in lines],
+            "raw_ocr": raw_ocr,
         },
     }
+    output["raw_ocr"] = raw_ocr
     output["field_provenance"] = semantic_provenance
     output["debug_candidates"] = debug_candidates
     output["learning"] = semantic_result.get("learning", {
@@ -2172,6 +2250,8 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
         total_ocr_ms = 0.0
 
         page_prep_summaries = []
+        pages_raw_list = []
+        last_model_name = "PaddleOCR (PP-OCRv6 CPU)"
         for page_idx, page in enumerate(pdf, start=1):
             pil_img = page.render(scale=3).to_pil()
             img_np = np.array(pil_img)
@@ -2189,8 +2269,10 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
                 p_type = "registration_plan"
 
             p_lines, p_raw, p_timings = run_paddle_ocr_page_image(img_bgr, page_num=page_idx, page_type=p_type)
-            if "preprocessing" in p_timings:
-                page_prep_summaries.append(p_timings["preprocessing"])
+            p_prep = p_timings.get("preprocessing") or {}
+            page_prep_summaries.append(p_prep)
+            if p_timings.get("model_name"):
+                last_model_name = p_timings["model_name"]
 
             # If last page (e.g. Registration Plan), crop the header strip to bypass bounding frame box
             if page_idx == len(pdf):
@@ -2203,21 +2285,48 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
                 except Exception:
                     pass
 
+            pages_raw_list.append({
+                "page_number": page_idx,
+                "raw_text": p_raw,
+                "lines": [serialize_ocr_line(l, idx) for idx, l in enumerate(p_lines, 1)],
+                "preprocessing": p_prep,
+            })
             all_lines.extend(p_lines)
             all_raw_texts.append(f"--- PAGE {page_idx} ---\n{p_raw}")
             total_ocr_ms += p_timings.get("ocr_total_ms", 0.0)
 
+        multi_raw_ocr = build_raw_ocr_payload(
+            pages_raw_list,
+            backend="local_cpu",
+            model=last_model_name,
+        )
         full_raw_text = "\n\n".join(all_raw_texts)
-        ocr_timings = {"ocr_total_ms": total_ocr_ms}
-        result = extract_land_document_from_lines(all_lines, full_raw_text, file_path, timings=ocr_timings)
+        ocr_timings = {"ocr_total_ms": total_ocr_ms, "ocr_backend": "local_cpu", "model_name": last_model_name}
+        result = extract_land_document_from_lines(all_lines, full_raw_text, file_path, timings=ocr_timings, raw_ocr=multi_raw_ocr)
+        result["raw_ocr"] = multi_raw_ocr
         result["preprocessing"] = page_prep_summaries
         result.setdefault("profiling_ms", {})
         result["profiling_ms"]["pipeline_total_ms"] = round((perf_counter() - t0) * 1000, 3)
         return result
     else:
         lines, raw_text, ocr_timings = run_paddle_ocr(file_path)
-        result = extract_land_document_from_lines(lines, raw_text, file_path, timings=ocr_timings)
-        result["preprocessing"] = [ocr_timings["preprocessing"]] if "preprocessing" in ocr_timings else []
+        single_prep = ocr_timings.get("preprocessing") or {}
+        single_model = ocr_timings.get("model_name") or "PaddleOCR (PP-OCRv6 CPU)"
+        single_raw_ocr = build_raw_ocr_payload(
+            [{
+                "page_number": 1,
+                "raw_text": raw_text,
+                "lines": [serialize_ocr_line(l, idx) for idx, l in enumerate(lines, 1)],
+                "preprocessing": single_prep,
+            }],
+            backend="local_cpu",
+            model=single_model,
+        )
+        ocr_timings["ocr_backend"] = "local_cpu"
+        ocr_timings["model_name"] = single_model
+        result = extract_land_document_from_lines(lines, raw_text, file_path, timings=ocr_timings, raw_ocr=single_raw_ocr)
+        result["raw_ocr"] = single_raw_ocr
+        result["preprocessing"] = [single_prep] if single_prep else []
         result.setdefault("profiling_ms", {})
         result["profiling_ms"]["pipeline_total_ms"] = round((perf_counter() - t0) * 1000, 3)
         return result

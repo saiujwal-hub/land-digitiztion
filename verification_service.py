@@ -204,6 +204,128 @@ def parse_date(date_str: Any) -> Any:
     return None
 
 
+def check_is_land_document(payload: Dict[str, Any], result: Optional[Dict[str, Any]] = None) -> Tuple[bool, List[str]]:
+    """
+    Evaluates whether the document contains any identifiable land registry attributes.
+    Returns (is_land_doc: bool, populated_fields: List[str]).
+    If populated_fields is empty, the document is NOT a land document.
+    """
+    if not isinstance(payload, dict):
+        payload = {}
+    if not isinstance(result, dict):
+        result = {}
+
+    prop = payload.get("property") or result.get("property") or {}
+    if not isinstance(prop, dict):
+        prop = {}
+    stamp = payload.get("stamp_information") or result.get("stamp_information") or {}
+    if not isinstance(stamp, dict):
+        stamp = {}
+    parties = payload.get("parties") or result.get("parties") or result.get("parties_list") or []
+
+    populated = []
+    
+    # 1. Document Type
+    dt = payload.get("document_type") or result.get("document_type")
+    if dt and str(dt).strip():
+        populated.append("document_type")
+
+    # 2. Document Number
+    dn = payload.get("document_number") or result.get("document_number")
+    if dn and str(dn).strip():
+        populated.append("document_number")
+
+    # 3. Survey Number
+    sn = prop.get("survey_number") or payload.get("survey_number") or result.get("survey_number")
+    if sn and str(sn).strip():
+        populated.append("survey_number")
+
+    # 4. Sub-Survey Number
+    ssn = prop.get("sub_survey_number") or payload.get("sub_survey_number") or result.get("sub_survey_number")
+    if ssn and str(ssn).strip():
+        populated.append("sub_survey_number")
+
+    # 5. Property Area
+    ar = prop.get("area") or payload.get("property_area") or result.get("property_area")
+    if ar is not None and str(ar).strip():
+        populated.append("property_area")
+
+    # 6. Village
+    vg = prop.get("village") or payload.get("village") or result.get("village")
+    if vg and str(vg).strip():
+        populated.append("village")
+
+    # 7. Mandal
+    md = prop.get("mandal") or payload.get("mandal") or result.get("mandal")
+    if md and str(md).strip():
+        populated.append("mandal")
+
+    # 8. District
+    ds = prop.get("district") or payload.get("district") or result.get("district")
+    if ds and str(ds).strip():
+        populated.append("district")
+
+    # 9. Stamp Serial Number
+    st_num = (
+        payload.get("serial_number")
+        or payload.get("stamp_number")
+        or stamp.get("stamp_number")
+        or result.get("stamp_serial_number")
+        or result.get("serial_number")
+        or result.get("stamp_number")
+    )
+    if st_num and str(st_num).strip():
+        populated.append("stamp_serial_number")
+
+    # 10. Stamp Value
+    st_val = payload.get("stamp_value") if payload.get("stamp_value") is not None else stamp.get("stamp_value")
+    if st_val is None:
+        st_val = result.get("stamp_value")
+    if st_val is not None and str(st_val).strip():
+        populated.append("stamp_value")
+
+    # 11. Stamp Sold To
+    sold = stamp.get("sold_to") or payload.get("stamp_sold_to") or result.get("stamp_sold_to")
+    if sold and str(sold).strip():
+        populated.append("stamp_sold_to")
+
+    # 12. Document Date
+    dd = payload.get("document_date") or result.get("document_date")
+    if dd and str(dd).strip():
+        populated.append("document_date")
+
+    # 13. Execution Date
+    ed = payload.get("execution_date") or result.get("execution_date")
+    if ed and str(ed).strip():
+        populated.append("execution_date")
+
+    # 14. Parties (only supportive evidence; cannot classify as land doc alone)
+    if isinstance(parties, list) and len(parties) > 0:
+        populated.append("parties")
+    elif isinstance(parties, dict) and any(parties.values()):
+        populated.append("parties")
+
+    # A valid land document MUST have at least one core land registry attribute
+    # (deed type, document number, survey number, area, location, stamp details, or dates)
+    core_land_fields = {
+        "document_type",
+        "document_number",
+        "survey_number",
+        "sub_survey_number",
+        "property_area",
+        "village",
+        "mandal",
+        "district",
+        "stamp_serial_number",
+        "stamp_value",
+        "stamp_sold_to",
+        "document_date",
+        "execution_date",
+    }
+    is_land_doc = any(f in core_land_fields for f in populated)
+    return is_land_doc, populated
+
+
 def run_verification_checks(
     result: Dict[str, Any],
     file_hash: Optional[str] = None,
@@ -249,6 +371,31 @@ def run_verification_checks(
             "severity": "critical",
             "message": "Unique document. No prior sealed record found in the registry ledger.",
             "details": {},
+        })
+
+    # 0.5 Land Document Classification Check
+    is_land_doc, populated = check_is_land_document(payload, result)
+    if not is_land_doc:
+        checks.append({
+            "check_id": "land_document_classification",
+            "name": "Land Document Classification",
+            "status": "FAIL",
+            "severity": "critical",
+            "message": "Error: This is not a land document. All land registry fields are empty.",
+            "details": {
+                "populated_fields": [],
+                "is_land_document": False,
+                "error": "This is not a land document",
+            }
+        })
+    else:
+        checks.append({
+            "check_id": "land_document_classification",
+            "name": "Land Document Classification",
+            "status": "PASS",
+            "severity": "normal",
+            "message": f"Recognized land document ({len(populated)} attributes identified).",
+            "details": {"populated_fields": populated, "is_land_document": True}
         })
 
     # 1. Required field validation
@@ -539,11 +686,21 @@ def create_verification_record(result: Dict[str, Any], file_hash: Optional[str] 
     status = calculate_overall_status(checks)
     dup_info = check_duplicate_document(payload, file_hash=file_hash)
     
+    raw_ocr = result.get("raw_ocr")
+    if not raw_ocr and isinstance(result.get("ocr_debug"), dict):
+        raw_ocr = result["ocr_debug"].get("raw_ocr")
+
+    is_land_doc, populated = check_is_land_document(payload, result)
+
     return {
         "verification_id": str(uuid.uuid4()),
         "status": status,
+        "is_land_document": is_land_doc,
+        "populated_fields": populated,
         "file_hash": file_hash,
         "document_payload": payload,
+        "raw_ocr": raw_ocr,
+        "field_provenance": result.get("field_provenance", {}),
         "checks": checks,
         "duplicate_info": dup_info,
         "created_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -726,6 +883,12 @@ def save_record(record: Dict[str, Any]) -> None:
         # Check if the document payload or key verification elements are being tampered with
         if existing.get("document_payload") != record.get("document_payload"):
             raise ValueError("Immutable approved records cannot be modified.")
+
+    if existing and "raw_ocr" in existing:
+        # Preserve raw_ocr immutably - clerk corrections and approval modify only normalized payload
+        record["raw_ocr"] = existing["raw_ocr"]
+    if existing and "field_provenance" in existing and not record.get("field_provenance"):
+        record["field_provenance"] = existing["field_provenance"]
 
     db[verification_id] = record
     save_db(db)

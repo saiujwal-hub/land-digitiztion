@@ -30,6 +30,7 @@ BADGE_LABELS = {
     "PASS": "Checks Passed",
     "FAIL": "Checks Failed",
     "DUPLICATE": "Duplicate Detected",
+    "NOT_A_LAND_DOCUMENT": "Not a Land Document",
 }
 
 DASHBOARD_CSS = """
