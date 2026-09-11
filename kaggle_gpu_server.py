@@ -46,14 +46,75 @@ if hasattr(sys.stderr, "reconfigure"):
 
 
 # ==============================================================================
-# 0. DEFENSIVE RUNTIME COMPATIBILITY SHIM
+# 0. DEFENSIVE RUNTIME COMPATIBILITY SHIMS
 # ==============================================================================
+def apply_langchain_compatibility_shims():
+    """
+    Shims langchain.docstore and langchain.text_splitter in sys.modules.
+    In modern Kaggle environments (Python 3.12 + LangChain 1.2+),
+    'langchain.docstore' was removed in favor of langchain_core.documents.
+    PaddleX 3.0.x relies on the older import path; this shim prevents:
+    ModuleNotFoundError: No module named 'langchain.docstore'.
+    """
+    import sys
+    import types
+
+    doc_cls = None
+    try:
+        from langchain_core.documents import Document as CoreDoc
+        doc_cls = CoreDoc
+    except Exception:
+        try:
+            from langchain.schema.document import Document as SchemaDoc
+            doc_cls = SchemaDoc
+        except Exception:
+            class MockDocument:
+                def __init__(self, page_content="", metadata=None):
+                    self.page_content = page_content
+                    self.metadata = metadata or {}
+            doc_cls = MockDocument
+
+    splitter_cls = None
+    try:
+        from langchain_text_splitters import RecursiveCharacterTextSplitter as TextSplitter
+        splitter_cls = TextSplitter
+    except Exception:
+        class MockSplitter:
+            def __init__(self, *args, **kwargs):
+                pass
+            def split_text(self, text):
+                return [text]
+        splitter_cls = MockSplitter
+
+    try:
+        if "langchain" not in sys.modules:
+            sys.modules["langchain"] = types.ModuleType("langchain")
+
+        if "langchain.docstore" not in sys.modules or "langchain.docstore.document" not in sys.modules:
+            docstore_mod = types.ModuleType("langchain.docstore")
+            doc_mod = types.ModuleType("langchain.docstore.document")
+            doc_mod.Document = doc_cls
+            docstore_mod.document = doc_mod
+            sys.modules["langchain.docstore"] = docstore_mod
+            sys.modules["langchain.docstore.document"] = doc_mod
+            setattr(sys.modules["langchain"], "docstore", docstore_mod)
+
+        if "langchain.text_splitter" not in sys.modules:
+            ts_mod = types.ModuleType("langchain.text_splitter")
+            ts_mod.RecursiveCharacterTextSplitter = splitter_cls
+            sys.modules["langchain.text_splitter"] = ts_mod
+            setattr(sys.modules["langchain"], "text_splitter", ts_mod)
+    except Exception as e:
+        print(f"[COMPATIBILITY SHIM] Note on langchain shims: {e}")
+
+
 def apply_runtime_compatibility_shims():
     """
     Applies runtime shims for C++ bindings in PaddlePaddle / PaddleOCR.
     Specifically guarantees that AnalysisConfig.set_optimization_level exists as a safe callable
     regardless of whether Paddle 3.x or 2.x C++ bindings are active in memory.
     """
+    apply_langchain_compatibility_shims()
     try:
         import paddle
         # Paddle 2.x vs 3.x AnalysisConfig compatibility
@@ -76,6 +137,11 @@ def apply_runtime_compatibility_shims():
                     pass
     except Exception:
         pass
+
+
+# Apply shims immediately at script load time
+apply_langchain_compatibility_shims()
+apply_runtime_compatibility_shims()
 
 
 # ==============================================================================
@@ -263,10 +329,19 @@ def install_compatible_dependencies():
         "pydantic"
     ], check=False)
 
+    # Refresh Python path and invalidate caches after pip execution
+    import importlib
+    import site
+    importlib.invalidate_caches()
+    for p in site.getsitepackages():
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    apply_langchain_compatibility_shims()
     apply_runtime_compatibility_shims()
 
 
 # Run dependency installation check prior to model initialization
+apply_langchain_compatibility_shims()
 apply_runtime_compatibility_shims()
 try:
     import paddle
@@ -275,13 +350,25 @@ try:
     import numpy as np
     from flask import Flask, request, jsonify
     from paddleocr import PaddleOCR
-except ImportError:
+except (ImportError, ModuleNotFoundError) as initial_err:
+    print(f"[SETUP] Initial module import note: {initial_err}. Running compatible dependency setup...")
     install_compatible_dependencies()
+    import importlib
+    import site
+    importlib.invalidate_caches()
+    for p in site.getsitepackages():
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    apply_langchain_compatibility_shims()
+    apply_runtime_compatibility_shims()
     import cv2
     import numpy as np
     from flask import Flask, request, jsonify
+    import paddle
+    import paddleocr
     from paddleocr import PaddleOCR
 
+apply_langchain_compatibility_shims()
 apply_runtime_compatibility_shims()
 
 
