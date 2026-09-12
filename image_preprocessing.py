@@ -194,7 +194,10 @@ def estimate_skew_angle(image: np.ndarray) -> float:
     if lines is not None and len(lines) > 0:
         angles = []
         for line in lines:
-            x1, y1, x2, y2 = line[0]
+            coords = line.flatten() if hasattr(line, "flatten") else line
+            if len(coords) < 4:
+                continue
+            x1, y1, x2, y2 = int(coords[0]), int(coords[1]), int(coords[2]), int(coords[3])
             dx = x2 - x1
             dy = y2 - y1
             if dx == 0:

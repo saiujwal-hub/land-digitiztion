@@ -677,7 +677,11 @@ def calculate_overall_status(checks: List[Dict[str, Any]]) -> str:
     return "READY_FOR_APPROVAL"
 
 
-def create_verification_record(result: Dict[str, Any], file_hash: Optional[str] = None) -> Dict[str, Any]:
+def create_verification_record(
+    result: Dict[str, Any],
+    file_hash: Optional[str] = None,
+    uploaded_by_user_id: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     Assembles the structured in-memory verification registry item.
     """
@@ -698,11 +702,13 @@ def create_verification_record(result: Dict[str, Any], file_hash: Optional[str] 
         "is_land_document": is_land_doc,
         "populated_fields": populated,
         "file_hash": file_hash,
+        "uploaded_by_user_id": uploaded_by_user_id or result.get("uploaded_by_user_id"),
         "document_payload": payload,
         "raw_ocr": raw_ocr,
         "field_provenance": result.get("field_provenance", {}),
         "checks": checks,
         "duplicate_info": dup_info,
+        "clerk_submitted": False,
         "created_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decision": None,
         "signature": None,
@@ -847,7 +853,19 @@ def load_db() -> Dict[str, Any]:
         return {}
     try:
         with open(DB_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+            if isinstance(data, dict):
+                for rec in data.values():
+                    if isinstance(rec, dict):
+                        if "uploaded_by_user_id" not in rec:
+                            rec["uploaded_by_user_id"] = None
+                        if "clerk_submitted" not in rec:
+                            rec_status = (rec.get("status") or "").upper()
+                            if rec_status in {"APPROVED", "REJECTED", "DUPLICATE"}:
+                                rec["clerk_submitted"] = True
+                            else:
+                                rec["clerk_submitted"] = False
+            return data
     except Exception:
         return {}
 
@@ -875,6 +893,13 @@ def save_record(record: Dict[str, Any]) -> None:
     verification_id = record.get("verification_id")
     if not verification_id:
         raise ValueError("Record is missing a verification_id")
+
+    if "clerk_submitted" not in record:
+        rec_status = (record.get("status") or "").upper()
+        if rec_status in {"APPROVED", "REJECTED", "DUPLICATE"}:
+            record["clerk_submitted"] = True
+        else:
+            record["clerk_submitted"] = False
 
     db = load_db()
     existing = db.get(verification_id)

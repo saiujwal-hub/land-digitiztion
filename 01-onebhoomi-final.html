@@ -440,6 +440,7 @@
           <option value="ta">தமிழ் (Tamil)</option>
         </select>
       </div>
+      <a class="btn btn-ghost btn-head" href="/auth/signin" id="headerSignInBtn" style="padding:10px 18px; border:1.5px solid var(--stamp); color:var(--stamp); text-transform:uppercase; letter-spacing:.14em; font-weight:700;">Sign In</a>
       <a class="btn btn-primary btn-head" href="/dashboard" data-i18n="nav_dashboard">Go to Dashboard</a>
     </div>
 </header>
@@ -452,7 +453,10 @@
       <h1 data-i18n="hero_h1">The deed becomes <em>data.</em><br>The data stays <em>provable.</em></h1>
       <p class="lede" data-i18n="hero_lede">OneBhoomi reads sale deeds, agreements of sale and GPAs straight off the scanner — offline — turns them into checked, clerk-corrected records, and seals each one with an RSA-PSS signature your office owns.</p>
       <div class="acts">
-        <a class="btn btn-primary" href="#workflow" data-i18n="hero_act_stages">See the three stages</a>
+        <a class="btn btn-primary" href="/auth/signin" style="display:inline-flex; align-items:center; gap:8px;">
+          <span>Official Sign In</span> &rarr;
+        </a>
+        <a class="btn btn-ghost" href="#workflow" data-i18n="hero_act_stages">See the three stages</a>
         <a class="btn btn-ghost" href="#sealing" data-i18n="hero_act_seal">How the seal works</a>
       </div>
       <div class="stamp" aria-hidden="true">

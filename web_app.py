@@ -40,6 +40,8 @@ import gis_service
 import dashboard_view
 import certificate_pdf_service
 import socket
+import accounts_store
+import auth_service
 
 def get_lan_ip() -> str:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -85,7 +87,7 @@ def get_public_web_tunnel() -> str:
 # =====================================================================
 # Kaggle / Colab OCR Tunnel Configuration
 # =====================================================================
-COLAB_OCR_URL = "https://instrumentation-cables-ranking-holds.trycloudflare.com"
+COLAB_OCR_URL = "https://implies-representations-lab-terminal.trycloudflare.com"
 
 
 def get_colab_url() -> str:
@@ -2474,7 +2476,7 @@ def _raw_ocr_panel(record: dict) -> str:
     """
 
 
-def _clerk_panel(record: dict, message: str) -> str:
+def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
     rec_id = record["verification_id"]
     payload_data = record["document_payload"]
     checks = record.get("checks", [])
@@ -2489,7 +2491,19 @@ def _clerk_panel(record: dict, message: str) -> str:
     is_rejected = current_status == "REJECTED"
     dup_info = record.get("duplicate_info")
     is_duplicate = current_status == "DUPLICATE" or bool(dup_info)
-    readonly_attr = "readonly" if (is_approved or is_duplicate) else ""
+
+    # Determine read-only mode based on role and record status:
+    # 1. Officers always see values read-only (officer verifies what clerk finalized).
+    # 2. Clerks on records submitted to officer (clerk_submitted == True), or final (APPROVED, REJECTED, DUPLICATE), are read-only.
+    # 3. Duplicate records are always read-only.
+    is_clerk_submitted = bool(record.get("clerk_submitted", False))
+    is_locked_for_clerk = is_approved or is_rejected or is_duplicate or is_clerk_submitted
+    if role == "officer":
+        readonly_attr = "readonly"
+    elif role == "clerk":
+        readonly_attr = "readonly" if is_locked_for_clerk else ""
+    else:
+        readonly_attr = "readonly" if (is_approved or is_duplicate) else ""
 
     is_land_doc, populated_fields = verification_service.check_is_land_document(payload_data, record)
     is_not_land_doc = not is_land_doc
@@ -2515,57 +2529,128 @@ def _clerk_panel(record: dict, message: str) -> str:
 
     if is_approved:
         approved_at = record.get("approved_at", "Certified")
-        action_buttons = f"""
-        <div class="action-panel">
-          <p class="warnbox ok" style="border-left-color:var(--green)">
-            🔒 <b>Officially Approved &amp; Cryptographically Sealed ({html.escape(approved_at)})</b><br>
-            This document has been certified with RSA-PSS 2048-bit. Document facts are locked and immutable.
-          </p>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <a href="/?verification_id={html.escape(rec_id)}" target="_blank" class="btn btn-green" data-i18n="btn_view_cert_qr">View Standalone Certificate &amp; QR</a>
-            <div class="reject-group" style="margin-left:auto;">
-              <input type="text" name="rejection_reason" id="rejection_reason" placeholder="Reason to revoke approval (required)" aria-label="Rejection reason">
-              <button type="submit" name="action" value="reject" class="btn btn-outline-red" data-i18n="btn_officer_reject"
-                onclick="if(!document.getElementById('rejection_reason').value.trim()) {{ alert('Please provide a reason to revoke approval.'); return false; }} return confirm('Are you sure you want to revoke the certified seal and reject this record?');">Revoke / Officer Reject</button>
+        if role == "clerk":
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox ok" style="border-left-color:var(--green)">
+                🔒 <b>Officially Approved &amp; Cryptographically Sealed ({html.escape(approved_at)})</b><br>
+                This document has been certified with RSA-PSS 2048-bit. Document facts are locked and immutable.
+              </p>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <a href="/?verification_id={html.escape(rec_id)}" target="_blank" class="btn btn-green" data-i18n="btn_view_cert_qr">View Standalone Certificate &amp; QR</a>
+              </div>
             </div>
-          </div>
-        </div>
-        """
+            """
+        else:
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox ok" style="border-left-color:var(--green)">
+                🔒 <b>Officially Approved &amp; Cryptographically Sealed ({html.escape(approved_at)})</b><br>
+                This document has been certified with RSA-PSS 2048-bit. Document facts are locked and immutable.
+              </p>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <a href="/?verification_id={html.escape(rec_id)}" target="_blank" class="btn btn-green" data-i18n="btn_view_cert_qr">View Standalone Certificate &amp; QR</a>
+                <div class="reject-group" style="margin-left:auto;">
+                  <input type="text" name="rejection_reason" id="rejection_reason" placeholder="Reason to revoke approval (required)" aria-label="Rejection reason">
+                  <button type="submit" name="action" value="reject" class="btn btn-outline-red" data-i18n="btn_officer_reject"
+                    onclick="if(!document.getElementById('rejection_reason').value.trim()) {{ alert('Please provide a reason to revoke approval.'); return false; }} return confirm('Are you sure you want to revoke the certified seal and reject this record?');">Revoke / Officer Reject</button>
+                </div>
+              </div>
+            </div>
+            """
     elif is_duplicate:
         dup_matched = (dup_info or {}).get("matched_record_id", "")
         dup_sealed = (dup_info or {}).get("sealed_at", "Certified")
         dup_reason = (dup_info or {}).get("match_reason", "Identical document")
-        action_buttons = f"""
-        <div class="action-panel">
-          <p class="warnbox stop" style="border-left-color:var(--stamp); background:rgba(166,25,60,0.06);">
-            ⛔ <b>Duplicate Document Detected &mdash; Officer Seal Blocked</b><br>
-            A certified sealed record already exists for this document in the registry (Record No. <b>{html.escape(dup_matched[:8].upper())}</b> sealed on {html.escape(dup_sealed)}).<br>
-            <b>Cause:</b> {html.escape(dup_reason)}.<br>
-            Re-registration of an already certified and sealed document is strictly prohibited.
-          </p>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <a href="/?verification_id={html.escape(dup_matched)}" target="_blank" class="btn btn-outline-red" style="font-weight:700;">
-              View Original Sealed Certificate &amp; QR &rarr;
-            </a>
-            <div class="reject-group" style="margin-left:auto;">
-              <input type="text" name="rejection_reason" id="rejection_reason" value="Duplicate registration attempt of Record {html.escape(dup_matched[:8].upper())}" aria-label="Rejection reason">
-              <button type="submit" name="action" value="reject" class="btn btn-outline-red">Reject Duplicate Record</button>
+        if role == "clerk":
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox stop" style="border-left-color:var(--stamp); background:rgba(166,25,60,0.06);">
+                ⛔ <b>Duplicate Document Detected &mdash; Officer Seal Blocked</b><br>
+                A certified sealed record already exists for this document in the registry (Record No. <b>{html.escape(dup_matched[:8].upper())}</b> sealed on {html.escape(dup_sealed)}).<br>
+                <b>Cause:</b> {html.escape(dup_reason)}.<br>
+                Re-registration of an already certified and sealed document is strictly prohibited.
+              </p>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <a href="/?verification_id={html.escape(dup_matched)}" target="_blank" class="btn btn-outline-red" style="font-weight:700;">
+                  View Original Sealed Certificate &amp; QR &rarr;
+                </a>
+              </div>
             </div>
-          </div>
-        </div>
-        """
+            """
+        else:
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox stop" style="border-left-color:var(--stamp); background:rgba(166,25,60,0.06);">
+                ⛔ <b>Duplicate Document Detected &mdash; Officer Seal Blocked</b><br>
+                A certified sealed record already exists for this document in the registry (Record No. <b>{html.escape(dup_matched[:8].upper())}</b> sealed on {html.escape(dup_sealed)}).<br>
+                <b>Cause:</b> {html.escape(dup_reason)}.<br>
+                Re-registration of an already certified and sealed document is strictly prohibited.
+              </p>
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                <a href="/?verification_id={html.escape(dup_matched)}" target="_blank" class="btn btn-outline-red" style="font-weight:700;">
+                  View Original Sealed Certificate &amp; QR &rarr;
+                </a>
+                <div class="reject-group" style="margin-left:auto;">
+                  <input type="text" name="rejection_reason" id="rejection_reason" value="Duplicate registration attempt of Record {html.escape(dup_matched[:8].upper())}" aria-label="Rejection reason">
+                  <button type="submit" name="action" value="reject" class="btn btn-outline-red">Reject Duplicate Record</button>
+                </div>
+              </div>
+            </div>
+            """
     elif is_rejected:
         rejected_at = record.get("rejected_at", "On file")
         rej_reason = record.get("rejection_reason", "No reason provided")
+        if role == "clerk":
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox stop">
+                ❌ <b>Document Rejected by Officer ({html.escape(rejected_at)})</b><br>
+                <b>Reason:</b> {html.escape(rej_reason)}<br>
+                This record was rejected by the officer and is locked in read-only mode.
+              </p>
+            </div>
+            """
+        else:
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox stop">
+                ❌ <b>Document Rejected by Officer ({html.escape(rejected_at)})</b><br>
+                <b>Reason:</b> {html.escape(rej_reason)}
+              </p>
+              <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled}>Re-Approve &amp; Seal</button>
+            </div>
+            """
+    elif role == "clerk":
+        if is_clerk_submitted:
+            action_buttons = f"""
+            <div class="action-panel">
+              <p class="warnbox ok" style="border-left-color:var(--gold); background:rgba(217,119,6,0.06);">
+                ⏳ <b>Record Sent to Officer (Pending Approval)</b><br>
+                This record has been submitted and is currently in the Officer's verification queue. Modifications are locked while awaiting officer decision.
+              </p>
+            </div>
+            """
+        else:
+            submit_disabled = approve_disabled
+            submit_title = "Submit to Officer queue for final review & seal" if not submit_disabled else "Cannot submit: resolve critical errors or duplicate document first"
+            action_buttons = f"""
+            <div class="action-panel">
+              {warn}
+              <button type="submit" name="action" value="correct" class="btn btn-primary" data-i18n="btn_save_corrections">Save Corrections</button>
+              <button type="submit" name="action" value="submit_to_officer" class="btn btn-green" {submit_disabled} title="{submit_title}">Submit to Officer</button>
+            </div>
+            """
+    elif role == "officer":
         action_buttons = f"""
         <div class="action-panel">
-          <p class="warnbox stop">
-            ❌ <b>Document Rejected by Officer ({html.escape(rejected_at)})</b><br>
-            <b>Reason:</b> {html.escape(rej_reason)}<br>
-            Review and correct the flagged fields below, then save or re-submit for officer approval.
-          </p>
-          <button type="submit" name="action" value="correct" class="btn btn-ghost" data-i18n="btn_save_corrections">Save Corrections</button>
-          <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled}>Re-Approve &amp; Seal</button>
+          {warn}
+          <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled} data-i18n="btn_officer_approve_seal">Officer Approve &amp; Seal</button>
+          <div class="reject-group">
+            <input type="text" name="rejection_reason" id="rejection_reason" placeholder="Rejection reason (required)" data-i18n-ph="ph_rej_reason" aria-label="Rejection reason">
+            <button type="submit" name="action" value="reject" class="btn btn-outline-red"
+              onclick="if(!document.getElementById('rejection_reason').value.trim()) {{ alert('Please provide a rejection reason.'); return false; }}">Officer Reject</button>
+          </div>
         </div>
         """
     else:
@@ -2596,12 +2681,22 @@ def _clerk_panel(record: dict, message: str) -> str:
         </div>
         """
 
+    if role == "officer":
+        tab_header = '<div class="tab t-green"><span data-i18n="sched_b_panel_title_officer">Schedule B · Officer Verification</span><em data-i18n="sched_b_sub_officer">read-only finalized facts</em></div>'
+        note_markup = f'<p class="note"><span data-i18n="lbl_record">Record</span> {html.escape(rec_id)} · <span>Review clerk-finalized facts against scan, then approve and cryptographically seal or reject.</span></p>'
+    elif role == "clerk" and is_locked_for_clerk:
+        tab_header = '<div class="tab"><span data-i18n="sched_b_panel_title">Schedule B · Record Summary</span><em data-i18n="sched_b_sub_locked">read-only · locked</em></div>'
+        note_markup = f'<p class="note"><span data-i18n="lbl_record">Record</span> {html.escape(rec_id)} · <span>This record is under officer review or decided; modifications are locked.</span></p>'
+    else:
+        tab_header = '<div class="tab"><span data-i18n="sched_b_panel_title">Schedule B · Clerk Review</span><em data-i18n="sched_b_sub">correct in place</em></div>'
+        note_markup = f'<p class="note"><span data-i18n="lbl_record">Record</span> {html.escape(rec_id)} · <span data-i18n="clerk_instruction_note">read each field against the scan, fix what the OCR got wrong, then save corrections.</span></p>'
+
     return f"""
     <section class="panel clerk rv">
-      <div class="tab"><span data-i18n="sched_b_panel_title">Schedule B · Clerk Review</span><em data-i18n="sched_b_sub">correct in place</em></div>
+      {tab_header}
       <div class="body">
         {blocked}
-        <p class="note"><span data-i18n="lbl_record">Record</span> {html.escape(rec_id)} · <span data-i18n="clerk_instruction_note">read each field against the scan, fix what the OCR got wrong, then save or pass it up to the officer.</span></p>
+        {note_markup}
         <form action="/extract" method="post" enctype="multipart/form-data" autocomplete="off">
           <input type="hidden" name="verification_id" value="{html.escape(rec_id)}">
           <div class="editor-grid">
@@ -2904,6 +2999,7 @@ def render_page(
     active_record: dict = None,
     host_name: str = "localhost:8001",
     stage: str = "results",
+    role: str = "clerk",
 ) -> bytes:
     colab_val = colab_url_value or get_colab_url()
     if not cpu_selected and not gpu_selected:
@@ -3057,11 +3153,11 @@ def render_page(
                 body_parts.append(
                     '<div class="console-grid">'
                     + '<div class="exhibit-col">' + _exhibit_panel(preview, preview_caption) + '</div>'
-                    + '<div class="clerk-col">' + _clerk_panel(active_record, message or "") + '</div>'
+                    + '<div class="clerk-col">' + _clerk_panel(active_record, message or "", role=role) + '</div>'
                     + '</div>'
                 )
             else:
-                body_parts.append(_clerk_panel(active_record, message or ""))
+                body_parts.append(_clerk_panel(active_record, message or "", role=role))
 
             # Schedule C / Evidence: Raw OCR Output Panel
             body_parts.append(_raw_ocr_panel(active_record))
@@ -3076,6 +3172,10 @@ def render_page(
                     + gis_markup
                     + '</div>'
                 )
+
+        # 4. Activity & Audit Lifecycle Timeline (read-only panel below existing content on officer record view)
+        if role == "officer" and active_record:
+            body_parts.append(dashboard_view.render_activity_timeline(active_record))
 
         if payload and payload.strip() not in ("", "{}"):
             body_parts.append(
@@ -3420,9 +3520,31 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
         query_params = parse_qs(parsed.query)
         host_name = self.headers.get("Host", f"localhost:{self.server.server_address[1]}")
 
-        # Serve brand logo image
-        if parsed.path in {"/logo.png", "/logo", "/static/logo.png"}:
-            logo_path = Path(__file__).parent / "logo.png"
+        # Auth Routes: /auth/signin, /auth/signup, /auth/choose-role
+        if parsed.path in {"/auth/signin", "/auth/choose-role"}:
+            auth_service.handle_signin_get(self, query_params)
+            return
+
+        if parsed.path == "/auth/signup":
+            auth_service.handle_signup_get(self, query_params)
+            return
+
+        if parsed.path in {"/auth/signout", "/auth/logout"}:
+            token = accounts_store.extract_session_token_from_request(self)
+            if token:
+                accounts_store.delete_session(token)
+            self.send_response(HTTPStatus.SEE_OTHER)
+            self.send_header("Location", "/auth/signin")
+            self.send_header(
+                "Set-Cookie",
+                f"{accounts_store.SESSION_COOKIE_NAME}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+            )
+            self.end_headers()
+            return
+
+        # Serve brand logo and static image assets
+        if parsed.path in {"/logo.png", "/logo", "/static/logo.png", "/base.png"}:
+            logo_path = Path(__file__).parent / ("logo.png" if "logo" in parsed.path else "base.png")
             if logo_path.exists():
                 data = logo_path.read_bytes()
                 self.send_response(HTTPStatus.OK)
@@ -3434,6 +3556,127 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(data)
                 return
+
+        # Verification view routing (offline QR validation & public certificate)
+        verification_id = query_params.get("verification_id", [None])[0]
+        if parsed.path == "/verify" or (verification_id and parsed.path in {"/", "/index.html"}):
+            if verification_id:
+                record = verification_service.get_record(verification_id)
+                if record:
+                    pub_key = record.get(
+                        "public_key"
+                    ) or verification_service.get_public_verification_key()
+                    signature = record.get("signature")
+                    payload = record.get("document_payload")
+                    status = record.get("status")
+
+                    sig_valid = False
+                    if signature and pub_key and payload:
+                        sig_valid = verification_service.verify_document_signature(
+                            payload, signature, pub_key
+                        )
+
+                    page = render_verification_view(record, sig_valid)
+                    self.send_response(HTTPStatus.OK)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(page)))
+                    self.end_headers()
+                    self.wfile.write(page)
+                    return
+                else:
+                    self.send_error(HTTPStatus.NOT_FOUND, "Verification record not found")
+                    return
+            else:
+                self.send_error(HTTPStatus.BAD_REQUEST, "Missing verification_id parameter")
+                return
+
+        # Public Landing Page (OneBhoomi Design System)
+        if parsed.path in {"/", "/index.html"}:
+            landing_file = Path(__file__).parent / "01-onebhoomi-final.html"
+            if landing_file.exists():
+                content_str = landing_file.read_text(encoding="utf-8")
+                current_user = accounts_store.get_current_user(self)
+                if current_user:
+                    user_name = html.escape(current_user.get("name") or current_user.get("email") or "User")
+                    auth_indicator = (
+                        f'<span class="user-status-indicator" style="display:inline-flex; align-items:center; gap:8px; font-family:var(--sans); font-size:12.5px; color:var(--ink); white-space:nowrap;">'
+                        f'Signed in as <strong style="color:var(--ink); font-weight:700;">{user_name}</strong>'
+                        f'<span style="color:var(--ink-soft); opacity:0.6;">&middot;</span>'
+                        f'<a href="/auth/signout" style="color:var(--stamp); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:.08em; text-decoration:none;">Sign Out</a>'
+                        f'</span>'
+                    )
+                    content_str = re.sub(
+                        r'<a\s+[^>]*id="headerSignInBtn"[^>]*>.*?</a>',
+                        auth_indicator,
+                        content_str,
+                        count=1,
+                        flags=re.DOTALL,
+                    )
+                content = content_str.encode("utf-8")
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+                self.send_header("Pragma", "no-cache")
+                self.send_header("Expires", "0")
+                self.send_header("Content-Length", str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+            page = render_page(colab_url_value=get_colab_url(), host_name=host_name)
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page)))
+            self.end_headers()
+            self.wfile.write(page)
+            return
+
+        # Authentication Gate: require valid session for all protected routes
+        current_user = accounts_store.get_current_user(self)
+        if not current_user:
+            self.send_response(HTTPStatus.SEE_OTHER)
+            self.send_header("Location", "/auth/signin")
+            self.end_headers()
+            return
+
+        self.current_user = current_user
+        self.user_role = current_user.get("role")
+
+        # New Role-Gated Route: /clerk
+        if parsed.path == "/clerk":
+            if self.user_role != "clerk":
+                self.send_error(HTTPStatus.FORBIDDEN, "Access Denied: Clerk role required.")
+                return
+            colab_url = get_colab_url()
+            page_bytes = dashboard_view.render_clerk_dashboard(
+                user_id=self.current_user.get("user_id"),
+                host_name=host_name,
+                colab_url=colab_url,
+                user_name=self.current_user.get("name", "Clerk"),
+            )
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page_bytes)))
+            self.end_headers()
+            self.wfile.write(page_bytes)
+            return
+
+        # New Role-Gated Route: /officer
+        if parsed.path == "/officer":
+            if self.user_role != "officer":
+                self.send_error(HTTPStatus.FORBIDDEN, "Access Denied: Officer role required.")
+                return
+            colab_url = get_colab_url()
+            page_bytes = dashboard_view.render_officer_dashboard(
+                host_name=host_name,
+                colab_url=colab_url,
+                user_name=self.current_user.get("name", "Officer"),
+            )
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page_bytes)))
+            self.end_headers()
+            self.wfile.write(page_bytes)
+            return
 
         # Quick OCR URL update endpoint: /set_ocr_url?url=https://...
         if parsed.path == "/set_ocr_url":
@@ -3589,35 +3832,6 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 self.send_error(HTTPStatus.INTERNAL_SERVER_ERROR, f"PDF generation error: {exc}")
                 return
 
-        # Verification view routing (offline QR validation & public certificate)
-        verification_id = query_params.get("verification_id", [None])[0]
-        if verification_id and parsed.path in {"/", "/index.html", "/verify"}:
-            record = verification_service.get_record(verification_id)
-            if record:
-                pub_key = record.get(
-                    "public_key"
-                ) or verification_service.get_public_verification_key()
-                signature = record.get("signature")
-                payload = record.get("document_payload")
-                status = record.get("status")
-
-                sig_valid = False
-                if signature and pub_key and payload:
-                    sig_valid = verification_service.verify_document_signature(
-                        payload, signature, pub_key
-                    )
-
-                page = render_verification_view(record, sig_valid)
-                self.send_response(HTTPStatus.OK)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(page)))
-                self.end_headers()
-                self.wfile.write(page)
-                return
-            else:
-                self.send_error(HTTPStatus.NOT_FOUND, "Verification record not found")
-                return
-
         # Quick registry reset endpoint
         if parsed.path in {"/api/reset_registry", "/reset"}:
             try:
@@ -3709,6 +3923,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             record_msg = ""
             if not is_land_doc:
                 record_msg = "Error: This is not a land document. All land registry fields are empty."
+            role = getattr(self, "user_role", None) or query_params.get("role", [None])[0] or "clerk"
             page = render_page(
                 payload=json.dumps(user_facing, indent=2, ensure_ascii=False),
                 message=record_msg,
@@ -3716,6 +3931,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 colab_url_value=get_colab_url(),
                 active_record=record,
                 host_name=host_name,
+                role=role,
             )
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -3727,31 +3943,27 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             self.wfile.write(page)
             return
 
-        # Public Landing Page (OneBhoomi Design System)
-        if parsed.path in {"/", "/index.html"}:
-            landing_file = Path(__file__).parent / "01-onebhoomi-final.html"
-            if landing_file.exists():
-                content = landing_file.read_bytes()
-                self.send_response(HTTPStatus.OK)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-                self.send_header("Pragma", "no-cache")
-                self.send_header("Expires", "0")
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                self.wfile.write(content)
-                return
-            page = render_page(colab_url_value=get_colab_url(), host_name=host_name)
-            self.send_response(HTTPStatus.OK)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(page)))
-            self.end_headers()
-            self.wfile.write(page)
-            return
-
         self.send_error(HTTPStatus.NOT_FOUND)
 
     def do_POST(self):
+        # Auth Routes: /auth/signin, /auth/signup, /auth/choose-role
+        if self.path.split("?")[0] in {"/auth/signin", "/auth/signup", "/auth/choose-role"}:
+            if self.path.split("?")[0] == "/auth/signin":
+                auth_service.handle_signin_post(self)
+            else:
+                auth_service.handle_signup_post(self)
+            return
+
+        # Authentication Gate: require valid session for all protected POST routes
+        current_user = accounts_store.get_current_user(self)
+        if not current_user:
+            self.send_response(HTTPStatus.SEE_OTHER)
+            self.send_header("Location", "/auth/signin")
+            self.end_headers()
+            return
+
+        self.current_user = current_user
+        self.user_role = current_user.get("role")
         # In-memory OCR URL update API
         if self.path == "/api/update_ocr_url":
             length = int(self.headers.get("Content-Length", "0"))
@@ -3924,7 +4136,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         message = "Approved certification was revoked and the record marked as REJECTED."
                 elif action == "approve":
                     message = "Document is already approved and cryptographically sealed."
-                elif action == "correct":
+                elif action in ("correct", "submit_to_officer"):
                     message = "Cannot modify facts: This document is already approved and sealed."
 
             # 2. Rejection on a non-approved record (NEEDS_REVIEW, FAIL, or REJECTED)
@@ -3942,7 +4154,14 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     ocr_learning_service.reject_feedback_for_verification(verification_id)
                     message = "Document was rejected by the officer."
 
-            # 3. Clerk corrections or officer approval on a non-approved record
+            # 3. Clerk submits verified record to officer queue
+            elif action == "submit_to_officer":
+                record["clerk_submitted"] = True
+                record["submitted_at"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                verification_service.save_record(record)
+                message = "Document submitted to Officer approval queue successfully."
+
+            # 4. Clerk corrections or officer approval on a non-approved record
             elif action in ("approve", "correct"):
                 import copy
                 import ocr_learning_service
@@ -4089,6 +4308,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 get_preview_html(verification_id)
                 or f"<p><strong>Active Verification Record:</strong> {verification_id}</p>"
             )
+            role = getattr(self, "user_role", None) or "clerk"
             page = render_page(
                 payload=payload_str,
                 message=message,
@@ -4099,6 +4319,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 timing_info="",
                 active_record=record,
                 host_name=host_name,
+                role=role,
             )
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -4467,7 +4688,13 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
 
             # Create local verification record instantly with file hash for duplicate detection
             file_hash = hashlib.sha256(uploaded).hexdigest() if uploaded else None
-            record = verification_service.create_verification_record(result, file_hash=file_hash)
+            current_user = accounts_store.get_current_user(self)
+            current_user_id = current_user.get("user_id") if current_user else None
+            record = verification_service.create_verification_record(
+                result,
+                file_hash=file_hash,
+                uploaded_by_user_id=current_user_id,
+            )
             record["filename"] = filename
             record["raw_ocr"] = result.get("raw_ocr")
             record["field_provenance"] = result.get("field_provenance", {})
@@ -4523,6 +4750,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             host_name = self.headers.get("Host", f"localhost:{self.server.server_address[1]}")
             full_preview_html = preview
             save_preview_html(record["verification_id"], full_preview_html)
+            role = getattr(self, "user_role", None) or "clerk"
             page = render_page(
                 payload=payload,
                 message=message,
@@ -4535,6 +4763,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 active_record=record,
                 host_name=host_name,
                 stage="results",
+                role=role,
             )
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/html; charset=utf-8")

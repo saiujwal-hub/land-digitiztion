@@ -22,6 +22,10 @@ land_document_output.json
 verification_keys/
 verification_db.json
 verification_db_*.json
+auth_credentials.json
+sessions_db.json
+users_db.json
+*.zip
 scratch/
 .DS_Store
 *.bak

@@ -1937,3 +1937,1095 @@ def render_new_scan(host_name: str = "localhost:8001", colab_url: str = "", mess
 </html>
 """
     return page_html.encode("utf-8")
+
+
+def render_activity_timeline(record: dict) -> str:
+    """
+    Renders an activity and audit timeline for a record, strictly formatting
+    fields that verification_service.py's existing sealing and audit-trail logic
+    already writes to each record (upload timestamp, clerk corrections,
+    submission state, and officer decision with RSA-PSS seal hash).
+    """
+    import accounts_store
+
+    rec_id = record.get("verification_id", "")
+    status = record.get("status", "UNKNOWN")
+    payload = record.get("document_payload") or {}
+    doc_type = payload.get("document_type") or record.get("filename") or "Land Document"
+    doc_no = payload.get("document_number") or rec_id[:8]
+
+    # 1. Upload Event
+    created_at = record.get("created_at") or record.get("timestamp")
+    created_str = _fmt_date(created_at) if created_at else "Not recorded"
+    uploaded_by = record.get("uploaded_by_user_id")
+    uploader_label = "Unassigned / Legacy Ingestion"
+    if uploaded_by:
+        user_info = accounts_store.get_user(uploaded_by)
+        if user_info:
+            uploader_label = f"Clerk: {user_info.get('name', uploaded_by)}"
+        else:
+            uploader_label = f"Clerk ID: {uploaded_by[:8]}"
+
+    # 2. Clerk Correction Event
+    corrected_at = record.get("corrected_at") or record.get("updated_at")
+    field_prov = record.get("field_provenance") or {}
+    has_corrections = bool(field_prov) or status in {"READY_FOR_APPROVAL", "APPROVED", "REJECTED"}
+    if corrected_at:
+        correction_status = f"Corrections saved on {_fmt_date(corrected_at)}"
+        corr_done = True
+    elif has_corrections:
+        correction_status = "Field corrections reviewed &amp; saved · <em>(Timestamp not stored on record)</em>"
+        corr_done = True
+    else:
+        correction_status = "Pending review / No clerk corrections"
+        corr_done = False
+
+    # 3. Submission to Officer Event
+    submitted_at = record.get("submitted_at") or record.get("ready_for_approval_at")
+    clerk_sub = bool(record.get("clerk_submitted", False))
+    is_submitted = (status in {"APPROVED", "REJECTED", "DUPLICATE"}) or (status == "READY_FOR_APPROVAL" and clerk_sub)
+    if submitted_at:
+        submission_status = f"Submitted to Officer queue on {_fmt_date(submitted_at)}"
+        sub_done = True
+    elif is_submitted:
+        submission_status = "Transferred to Master Officer Queue · <em>(Timestamp not stored on record)</em>"
+        sub_done = True
+    else:
+        submission_status = "Not yet submitted to Officer (In Clerk Review)"
+        sub_done = False
+
+    # 4. Final Decision Event
+    is_decided = status in {"APPROVED", "REJECTED", "DUPLICATE"}
+    approved_at = record.get("approved_at")
+    rejected_at = record.get("rejected_at")
+    decided_by = record.get("approved_by_user_id") or record.get("decided_by") or record.get("rejected_by_user_id")
+    if decided_by:
+        off_user = accounts_store.get_user(decided_by)
+        dec_by_label = f" by {off_user.get('name', decided_by)}" if off_user else f" by Officer {decided_by[:8]}"
+    else:
+        dec_by_label = " · <em>(Officer ID not stored on record)</em>"
+
+    signature = record.get("signature") or ""
+    sig_short = f"{signature[:24]}...{signature[-16:]}" if len(signature) > 40 else signature
+
+    if status == "APPROVED":
+        dec_title = "Officially Approved &amp; Cryptographically Sealed"
+        dec_time = _fmt_date(approved_at) if approved_at else "Timestamp not stored"
+        dec_color = "var(--green)"
+        dec_icon = "🔒"
+        dec_body = f"""
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.5;">
+            <b>Certified At:</b> {html.escape(dec_time)}{dec_by_label}<br>
+            <b>Algorithm:</b> RSA-PSS 2048-bit / SHA-256<br>
+            <div style="margin-top:6px; background:#f8fafc; border:1px solid var(--rule); padding:6px 10px; border-radius:4px; font-family:var(--type); font-size:11px; word-break:break-all;">
+                <b>Seal Signature Hash:</b> <code>{html.escape(sig_short)}</code>
+            </div>
+        </div>
+        """
+    elif status == "REJECTED":
+        dec_title = "Document Rejected by Officer"
+        dec_time = _fmt_date(rejected_at) if rejected_at else "Timestamp not stored"
+        dec_color = "var(--stamp)"
+        dec_icon = "❌"
+        rej_reason = record.get("rejection_reason") or "No rejection reason was recorded."
+        dec_body = f"""
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.5;">
+            <b>Rejected At:</b> {html.escape(dec_time)}{dec_by_label}<br>
+            <b>Rejection Reason:</b> {html.escape(rej_reason)}
+        </div>
+        """
+    elif status == "DUPLICATE":
+        dup = record.get("duplicate_info") or {}
+        dup_matched = dup.get("matched_record_id", "")
+        dec_title = "Blocked as Duplicate Registration Attempt"
+        dec_color = "var(--amber)"
+        dec_icon = "⛔"
+        dec_body = f"""
+        <div style="font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.5;">
+            Matches existing sealed record No. <code>{html.escape(dup_matched[:8].upper())}</code>. Double registration blocked.
+        </div>
+        """
+    elif status == "READY_FOR_APPROVAL":
+        dec_title = "Awaiting Officer Final Determination &amp; Seal"
+        dec_color = "#2563eb"
+        dec_icon = "⏳"
+        dec_body = '<div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">In officer verification queue awaiting final legal certification.</div>'
+    else:
+        dec_title = "Pending Officer Review"
+        dec_color = "var(--ink-soft)"
+        dec_icon = "⚪"
+        dec_body = '<div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">Document has not completed Stage 1 clerk review.</div>'
+
+    return f"""
+    <section class="panel timeline-panel rv in" style="margin-top:20px; border:1px solid var(--rule); background:var(--card); border-radius:6px; overflow:hidden;">
+      <div class="tab" style="background:#334155; color:#fff; padding:9px 16px; font-family:var(--type); font-size:11px; letter-spacing:.16em; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+        <span>Schedule D · Record Lifecycle &amp; Audit Trail</span>
+        <em style="color:#94a3b8; font-style:normal;">Record {html.escape(rec_id[:8].upper())}</em>
+      </div>
+      <div class="body" style="padding:20px 24px;">
+        <div style="position:relative; padding-left:28px; display:flex; flex-direction:column; gap:18px;">
+          <!-- Vertical connecting bar -->
+          <div style="position:absolute; left:9px; top:6px; bottom:6px; width:2px; background:var(--rule-soft);"></div>
+
+          <!-- Step 1: Upload -->
+          <div class="timeline-step" style="position:relative;">
+            <div style="position:absolute; left:-28px; top:1px; width:20px; height:20px; border-radius:50%; background:#2563eb; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">✓</div>
+            <div style="font-size:13px; font-weight:700; color:var(--ink);">1. Document Ingestion &amp; Upload</div>
+            <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">
+              <b>Received:</b> {html.escape(created_str)} &middot; <b>Uploader:</b> {html.escape(uploader_label)} &middot; <b>Document:</b> {html.escape(doc_type)} (No. {html.escape(doc_no)})
+            </div>
+          </div>
+
+          <!-- Step 2: Corrections -->
+          <div class="timeline-step" style="position:relative;">
+            <div style="position:absolute; left:-28px; top:1px; width:20px; height:20px; border-radius:50%; background:{'#059669' if corr_done else '#cbd5e1'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">{'✓' if corr_done else '•'}</div>
+            <div style="font-size:13px; font-weight:700; color:var(--ink);">2. Clerk Fact Review &amp; Corrections</div>
+            <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">
+              {correction_status}
+            </div>
+          </div>
+
+          <!-- Step 3: Submission -->
+          <div class="timeline-step" style="position:relative;">
+            <div style="position:absolute; left:-28px; top:1px; width:20px; height:20px; border-radius:50%; background:{'#2563eb' if sub_done else '#cbd5e1'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">{'✓' if sub_done else '•'}</div>
+            <div style="font-size:13px; font-weight:700; color:var(--ink);">3. Transfer to Officer Verification Queue</div>
+            <div style="font-size:12px; color:var(--ink-soft); margin-top:2px;">
+              {submission_status}
+            </div>
+          </div>
+
+          <!-- Step 4: Final Determination -->
+          <div class="timeline-step" style="position:relative;">
+            <div style="position:absolute; left:-28px; top:1px; width:20px; height:20px; border-radius:50%; background:{dec_color}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700;">{dec_icon}</div>
+            <div style="font-size:13px; font-weight:700; color:{dec_color};">4. {dec_title}</div>
+            {dec_body}
+          </div>
+
+        </div>
+      </div>
+    </section>
+    """
+
+
+# =====================================================================
+# Clerk Dedicated Workspace & Ingestion Console (Module 4)
+# =====================================================================
+
+def render_clerk_dashboard(
+    user_id: Optional[str] = None,
+    host_name: str = "localhost:8001",
+    colab_url: str = "",
+    user_name: str = "Clerk",
+) -> bytes:
+    """
+    Renders the dedicated Clerk Workspace:
+    1. Reuses the document upload dropzone from render_new_scan().
+    2. Groups clerk's records (uploaded_by_user_id == user_id) into:
+       - 'Needs your review' (EXTRACTED, NEEDS_REVIEW)
+       - 'Sent to officer' (READY_FOR_APPROVAL)
+       - 'Decided' (APPROVED, REJECTED, DUPLICATE)
+       using the existing _badge() helper.
+    3. For Decided records, links directly to certificate/QR for APPROVED,
+       and displays the officer's rejection reason for REJECTED.
+    4. Displays an 'Unassigned / legacy' section for pre-existing records (uploaded_by_user_id = null).
+    """
+    data = get_dashboard_data()
+
+    if colab_url:
+        try:
+            worker_host = urlparse(colab_url).hostname or colab_url
+        except Exception:
+            worker_host = colab_url
+        worker_label = f"Remote GPU ({worker_host[:16]}...)"
+        gpu_selected = "selected"
+        cpu_selected = ""
+        mode_note = f"GPU Worker active at {worker_host} · Ultra-fast ~2s OCR inference via encrypted tunnel."
+    else:
+        worker_label = "Local CPU (PaddleOCR)"
+        gpu_selected = ""
+        cpu_selected = "selected"
+        mode_note = "Local CPU OCR active · Runs directly on this machine with PaddleOCR."
+
+    sidebar_html = _render_sidebar("clerk", data["desk_n"], data["sealed_n"], worker_label)
+
+    # Load all records from database
+    try:
+        db = verification_service.load_db()
+    except Exception:
+        db = {}
+
+    all_recs = [r for r in db.values() if isinstance(r, dict) and r.get("verification_id")]
+    all_recs.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+
+    # Filter into the four designated groups
+    needs_review: List[Dict[str, Any]] = []
+    sent_to_officer: List[Dict[str, Any]] = []
+    decided: List[Dict[str, Any]] = []
+    legacy: List[Dict[str, Any]] = []
+
+    for r in all_recs:
+        status = r.get("status") or "EXTRACTED"
+        uploaded_by = r.get("uploaded_by_user_id")
+
+        if uploaded_by is None or str(uploaded_by).strip().lower() in {"none", "null", ""}:
+            legacy.append(r)
+        elif user_id and uploaded_by == user_id:
+            clerk_submitted = bool(r.get("clerk_submitted", False))
+            if status in {"APPROVED", "REJECTED", "DUPLICATE"}:
+                decided.append(r)
+            elif status == "READY_FOR_APPROVAL" and clerk_submitted:
+                sent_to_officer.append(r)
+            else:
+                # Other statuses (EXTRACTED, NEEDS_REVIEW, FAIL, or unsubmitted READY_FOR_APPROVAL)
+                needs_review.append(r)
+        else:
+            # Uploaded by another user or different clerk - keep visible in legacy overview
+            legacy.append(r)
+
+    def _render_clerk_table(records: List[Dict[str, Any]], empty_text: str, is_decided_section: bool = False) -> str:
+        if not records:
+            return f"""
+            <div class="table-empty" style="padding:24px; text-align:center; background:rgba(0,0,0,0.02); border-radius:8px; border:1px dashed var(--rule);">
+                <p style="color:var(--ink-soft); font-size:13px; margin:0;">{html.escape(empty_text)}</p>
+            </div>
+            """
+
+        rows_html = []
+        for i, r in enumerate(records, start=1):
+            vid = r.get("verification_id", "")
+            payload = r.get("document_payload") or {}
+            prop = payload.get("property") or {}
+            status = r.get("status") or "EXTRACTED"
+            doc_type = payload.get("document_type") or r.get("filename") or "Land Deed"
+            doc_no = payload.get("document_number") or payload.get("serial_number") or vid[:8]
+            rec_date = _fmt_date(r.get("created_at") or "")
+            village = prop.get("village") or "—"
+            district = prop.get("district") or "—"
+            survey = prop.get("survey_number") or "—"
+
+            parties_list = payload.get("parties") or []
+            parties_str = ", ".join(
+                p.get("name", "") for p in parties_list if isinstance(p, dict) and p.get("name")
+            ) or "—"
+
+            # Details & Actions
+            details_html = ""
+            action_buttons = []
+
+            if status == "APPROVED":
+                details_html = '<div style="font-size:11.5px; color:#059669; font-weight:600;">✓ Certified &amp; RSA-PSS Sealed</div>'
+                action_buttons.append(
+                    f'<a class="act-btn" style="background:#059669; color:#fff; font-weight:600;" href="/?verification_id={html.escape(vid)}" target="_blank" title="Open Public Certificate with QR">📜 Certificate &amp; QR</a>'
+                )
+                action_buttons.append(
+                    f'<a class="act-btn" href="/record?verification_id={html.escape(vid)}&role=clerk" title="Review canonical extraction">Record Details</a>'
+                )
+            elif status == "REJECTED":
+                rej_reason = r.get("rejection_reason") or "No reason was recorded by the officer."
+                details_html = f"""
+                <div style="font-size:11.5px; color:#dc2626; background:#fef2f2; border:1px solid #fecaca; border-left:3px solid #dc2626; padding:5px 8px; border-radius:5px; margin-top:2px;">
+                    <b>Officer Rejection Reason:</b> {html.escape(rej_reason)}
+                </div>
+                """
+                action_buttons.append(
+                    f'<a class="act-btn" style="border-color:#f87171; color:#dc2626;" href="/record?verification_id={html.escape(vid)}&role=clerk">Inspect &amp; Resubmit</a>'
+                )
+            elif status == "DUPLICATE":
+                details_html = '<div style="font-size:11.5px; color:#b45309;">Flagged as duplicate entry in registration ledger</div>'
+                action_buttons.append(
+                    f'<a class="act-btn" href="/record?verification_id={html.escape(vid)}&role=clerk">Audit Conflict</a>'
+                )
+            elif status == "READY_FOR_APPROVAL" and r.get("clerk_submitted", False):
+                details_html = '<div style="font-size:11.5px; color:var(--ink-soft);">Awaiting officer review &amp; legal seal</div>'
+                action_buttons.append(
+                    f'<a class="act-btn" href="/record?verification_id={html.escape(vid)}&role=clerk">View Submission</a>'
+                )
+            elif status == "READY_FOR_APPROVAL":
+                details_html = '<div style="font-size:11.5px; color:#15803d; font-weight:600;">✓ Checks passed · Ready to submit to officer</div>'
+                action_buttons.append(
+                    f'<a class="act-btn" style="background:var(--forest); color:#fff; font-weight:600;" href="/record?verification_id={html.escape(vid)}&role=clerk">Review &amp; Submit &rarr;</a>'
+                )
+            else:
+                # EXTRACTED or NEEDS_REVIEW
+                details_html = '<div style="font-size:11.5px; color:#d97706;">Stage 1 complete · Needs field review</div>'
+                action_buttons.append(
+                    f'<a class="act-btn" style="background:var(--forest); color:#fff; font-weight:600;" href="/record?verification_id={html.escape(vid)}&role=clerk">Review &amp; Amend &rarr;</a>'
+                )
+
+            rows_html.append(f"""
+            <tr class="data-row" data-status="{html.escape(status)}">
+              <td class="td-sl">{i}</td>
+              <td class="td-date">{html.escape(rec_date)}</td>
+              <td>
+                <span class="td-doc-main">{html.escape(doc_type)}</span>
+                <span class="td-doc-sub">No. {html.escape(doc_no)}</span>
+              </td>
+              <td title="{html.escape(parties_str)}">{html.escape(parties_str[:32] + ('...' if len(parties_str) > 32 else ''))}</td>
+              <td>
+                <span class="td-place-main">{html.escape(village)}</span>
+                <span class="td-place-sub">{html.escape(district)}</span>
+              </td>
+              <td class="td-mono">{html.escape(survey)}</td>
+              <td>{_badge(status)}</td>
+              <td>{details_html}</td>
+              <td>
+                <div class="action-links">
+                  {' '.join(action_buttons)}
+                </div>
+              </td>
+            </tr>
+            """)
+
+        return f"""
+        <table class="master-ledger">
+          <thead>
+            <tr>
+              <th>Sl.</th>
+              <th>Received</th>
+              <th>Document &amp; No.</th>
+              <th>Parties</th>
+              <th>Location</th>
+              <th>Survey No.</th>
+              <th>Status</th>
+              <th>Verification Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {''.join(rows_html)}
+          </tbody>
+        </table>
+        """
+
+    needs_review_table = _render_clerk_table(needs_review, "No documents currently waiting for your review. Ingest a new deed scan above.")
+    sent_to_officer_table = _render_clerk_table(sent_to_officer, "No documents currently pending with the officer.")
+    decided_table = _render_clerk_table(decided, "No decided documents in your archive yet.", is_decided_section=True)
+    legacy_table = _render_clerk_table(legacy, "No legacy or unassigned records found.")
+
+    page_html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneBhoomi — Clerk Digitization Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    {DASHBOARD_CSS}
+    .clerk-summary-strip {{
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 24px;
+    }}
+    .clerk-stat-card {{
+        background: #ffffff;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        position: relative;
+        overflow: hidden;
+    }}
+    .clerk-stat-card::before {{
+        content: '';
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 4px;
+    }}
+    .card-review::before {{ background: #f59e0b; }}
+    .card-officer::before {{ background: #3b82f6; }}
+    .card-decided::before {{ background: #10b981; }}
+    .card-legacy::before {{ background: #64748b; }}
+    .stat-num {{
+        font-family: 'Fraunces', serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1;
+    }}
+    .stat-title {{
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-soft);
+        margin-top: 6px;
+    }}
+    .section-box {{
+        background: #ffffff;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        overflow: hidden;
+    }}
+    .section-header {{
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--rule);
+        background: #fafaf9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+    .section-title {{
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }}
+    .section-count {{
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 12px;
+        background: rgba(0,0,0,0.06);
+        color: var(--ink);
+    }}
+  </style>
+</head>
+<body>
+
+<div class="security-bg" aria-hidden="true"></div>
+
+<!-- Loading overlay on extraction submission -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div class="loading-title">Ingesting Document Scan</div>
+    <div class="loading-sub">Performing local OCR extraction, semantic field mapping, and validation checks...</div>
+  </div>
+</div>
+
+<div class="app-layout">
+
+  {sidebar_html}
+
+  <main class="dash-content">
+    <div class="main-inner">
+
+      <!-- Top Action Bar -->
+      <div class="top-action-bar">
+        <div class="header-left">
+          <h1>Clerk <em>Digitization Desk</em></h1>
+          <div class="header-tagline">
+            Logged in as <b>{html.escape(user_name)}</b> · Land Document Upload, Provenance Audit &amp; Intake
+          </div>
+        </div>
+        <div class="header-right">
+          <a href="/auth/signout" class="act-btn" style="border-color:#fca5a5; color:#b91c1c;">Sign Out</a>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="clerk-summary-strip">
+        <div class="clerk-stat-card card-review">
+          <div class="stat-num">{len(needs_review)}</div>
+          <div class="stat-title">Needs Your Review</div>
+        </div>
+        <div class="clerk-stat-card card-officer">
+          <div class="stat-num">{len(sent_to_officer)}</div>
+          <div class="stat-title">Sent to Officer</div>
+        </div>
+        <div class="clerk-stat-card card-decided">
+          <div class="stat-num">{len(decided)}</div>
+          <div class="stat-title">Decided</div>
+        </div>
+        <div class="clerk-stat-card card-legacy">
+          <div class="stat-num">{len(legacy)}</div>
+          <div class="stat-title">Unassigned / Legacy</div>
+        </div>
+      </div>
+
+      <!-- REUSED INGESTION DROPZONE (Stage 1 Intake Desk) -->
+      <div class="intake-card" style="margin-bottom:28px;">
+        <div class="intake-head">
+          <h2>New Document Scan &amp; Intake Desk</h2>
+          <span class="intake-badge">Reused Intake Point · Desk 01</span>
+        </div>
+
+        <form id="scanForm" action="/extract" method="post" enctype="multipart/form-data">
+          <!-- Dropzone File Selector -->
+          <div class="intake-dropzone" id="intakeDropzone" tabindex="0" role="button" aria-label="Drop scan file here or click to browse">
+            <svg class="dz-icon-svg" viewBox="0 0 24 24" stroke-width="1.6">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            <div class="dz-main-text">Drop the title deed or scan copy here, or <span>browse local files</span></div>
+            <div class="dz-sub-text">Supports PDF (Multi-page) · PNG · JPG · TIFF &mdash; Processed in-memory and linked to your clerk profile</div>
+            <input type="file" name="document_image" id="scan_file_input" accept="image/*,.pdf,application/pdf" hidden required>
+          </div>
+
+          <!-- Selected File Chip -->
+          <div class="filechip" id="fileChip" style="display:none;">
+            <div class="filechip-name">
+              <span>📄</span>
+              <span id="chipName">document.pdf</span>
+            </div>
+            <div class="filechip-actions">
+              <span class="filechip-size" id="chipSize">0.0 MB</span>
+              <button type="button" class="filechip-btn" id="chipRemove" title="Remove file">&times;</button>
+            </div>
+          </div>
+
+          <!-- Submit Button & Security Note -->
+          <div class="submit-row" style="margin-top:16px;">
+            <div class="submit-note">
+              🔒 Ingestion will automatically link this document to user profile <b>{html.escape(user_name)}</b>.
+            </div>
+            <button type="submit" class="btn btn-primary" id="submitBtn" style="padding:12px 28px; font-size:12.5px;">
+              Start Document Extraction &rarr;
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- SECTION 1: Needs Your Review -->
+      <div class="section-box" id="sec-needs-review">
+        <div class="section-header">
+          <div class="section-title">
+            <span>📝 Needs Your Review</span>
+            <span class="section-count" style="background:#fef3c7; color:#92400e;">{len(needs_review)} items</span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft);">
+            Fresh extractions and records requiring clerk field corrections
+          </div>
+        </div>
+        {needs_review_table}
+      </div>
+
+      <!-- SECTION 2: Sent to Officer -->
+      <div class="section-box" id="sec-sent-officer">
+        <div class="section-header">
+          <div class="section-title">
+            <span>📤 Sent to Officer</span>
+            <span class="section-count" style="background:#dbeafe; color:#1e40af;">{len(sent_to_officer)} items</span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft);">
+            Marked READY_FOR_APPROVAL and pending officer cryptographic seal
+          </div>
+        </div>
+        {sent_to_officer_table}
+      </div>
+
+      <!-- SECTION 3: Decided -->
+      <div class="section-box" id="sec-decided">
+        <div class="section-header">
+          <div class="section-title">
+            <span>⚖️ Decided Documents</span>
+            <span class="section-count" style="background:#d1fae5; color:#065f46;">{len(decided)} items</span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft);">
+            Official final determinations (Approved certificates, Rejections, or Duplicate flags)
+          </div>
+        </div>
+        {decided_table}
+        {f'<div class="decided-timelines-wrap" style="margin-top:20px; padding:16px 20px; background:#f8fafc; border-top:1px solid var(--rule);"><div style="font-family:var(--serif); font-size:13px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px;">📜 Decided Records Activity &amp; Audit Lifecycles</div>{"".join(render_activity_timeline(r) for r in decided)}</div>' if decided else ''}
+      </div>
+
+      <!-- SECTION 4: Unassigned / Legacy Records -->
+      <div class="section-box" id="sec-legacy">
+        <div class="section-header">
+          <div class="section-title">
+            <span>🗄️ Unassigned / Legacy Records</span>
+            <span class="section-count" style="background:#f1f5f9; color:#475569;">{len(legacy)} items</span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft);">
+            Pre-existing records or documents not explicitly linked to a user profile
+          </div>
+        </div>
+        {legacy_table}
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <footer class="dash-footer">
+      <div class="main-inner" style="padding-top:0; padding-bottom:0;">
+        <div class="dash-footer-wrap">
+          <div><b>OneBhoomi Registry Console</b> · Clerk Workspace</div>
+          <div>100% Air-Gapped &amp; Immutable · Zero cloud dependencies · Host: <code>{html.escape(host_name)}</code></div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+</div>
+
+<script>{DASHBOARD_JS}</script>
+</body>
+</html>
+"""
+    return page_html.encode("utf-8")
+
+
+# =====================================================================
+# Officer Approval & Sealing Queue (Module 5)
+# =====================================================================
+
+def render_officer_dashboard(
+    host_name: str = "localhost:8001",
+    colab_url: str = "",
+    user_name: str = "Officer",
+) -> bytes:
+    """
+    Renders the dedicated Officer Workspace:
+    1. Lists clerk-submitted records with status READY_FOR_APPROVAL or NEEDS_REVIEW.
+    2. Sorts by wait duration (oldest first by default).
+    3. Each row links to the existing record view for that document (/record?verification_id=...)
+       where the officer takes approval/rejection/sealing action.
+    4. Displays at-a-glance workload summary metrics at the top.
+    """
+    import accounts_store
+    data = get_dashboard_data()
+
+    if colab_url:
+        try:
+            worker_host = urlparse(colab_url).hostname or colab_url
+        except Exception:
+            worker_host = colab_url
+        worker_label = f"Remote GPU ({worker_host[:16]}...)"
+    else:
+        worker_label = "Local CPU (PaddleOCR)"
+
+    sidebar_html = _render_sidebar("officer", data["desk_n"], data["sealed_n"], worker_label)
+
+    # Load all records from verification database
+    try:
+        db = verification_service.load_db()
+    except Exception:
+        db = {}
+
+    # Extract all clerk-submitted records with status in ('READY_FOR_APPROVAL', 'NEEDS_REVIEW')
+    pending_records = [
+        r for r in db.values()
+        if isinstance(r, dict)
+        and r.get("verification_id")
+        and (r.get("status") or "").upper() in {"READY_FOR_APPROVAL", "NEEDS_REVIEW"}
+        and bool(r.get("clerk_submitted", False))
+    ]
+
+    # Sort oldest first (ascending created_at timestamp)
+    pending_records.sort(key=lambda r: r.get("created_at") or "")
+
+    # Count other overall statuses for workload context
+    sealed_count = sum(1 for r in db.values() if isinstance(r, dict) and r.get("status") == "APPROVED")
+    rejected_count = sum(1 for r in db.values() if isinstance(r, dict) and r.get("status") == "REJECTED")
+    total_ledger_count = len([r for r in db.values() if isinstance(r, dict) and r.get("verification_id")])
+
+    def _calc_wait_time(created_at_str: str) -> Tuple[str, bool]:
+        """Calculates humanized elapsed wait time and urgency boolean."""
+        if not created_at_str:
+            return "—", False
+        try:
+            clean = created_at_str.replace("Z", "+00:00")
+            dt = datetime.fromisoformat(clean)
+            if dt.tzinfo is None:
+                from datetime import timezone
+                dt = dt.replace(tzinfo=timezone.utc)
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
+            diff = now - dt
+            secs = max(0, int(diff.total_seconds()))
+            if secs < 60:
+                return f"{secs}s waiting", False
+            elif secs < 3600:
+                return f"{secs // 60}m waiting", False
+            elif secs < 86400:
+                h = secs // 3600
+                m = (secs % 3600) // 60
+                return f"{h}h {m}m waiting", (h >= 2)
+            else:
+                d = secs // 86400
+                return f"{d}d waiting", True
+        except Exception:
+            return "—", False
+
+    # Extract distinct filter options for jurisdiction narrowing
+    districts = sorted({
+        (r.get("document_payload", {}).get("property", {}).get("district") or "").strip()
+        for r in pending_records
+        if (r.get("document_payload", {}).get("property", {}).get("district") or "").strip()
+    })
+    mandals = sorted({
+        (r.get("document_payload", {}).get("property", {}).get("mandal") or "").strip()
+        for r in pending_records
+        if (r.get("document_payload", {}).get("property", {}).get("mandal") or "").strip()
+    })
+    doc_types = sorted({
+        (r.get("document_payload", {}).get("document_type") or "").strip()
+        for r in pending_records
+        if (r.get("document_payload", {}).get("document_type") or "").strip()
+    })
+
+    district_options = "".join(f'<option value="{html.escape(d)}">{html.escape(d)}</option>' for d in districts)
+    mandal_options = "".join(f'<option value="{html.escape(m)}">{html.escape(m)}</option>' for m in mandals)
+    doc_type_options = "".join(f'<option value="{html.escape(dt)}">{html.escape(dt)}</option>' for dt in doc_types)
+
+    filter_bar_html = f"""
+    <div class="officer-filter-bar" style="background:#f8fafc; border-bottom:1px solid var(--rule); padding:14px 22px; display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap;">
+      <div class="filter-control" style="flex:1; min-width:180px;">
+        <label for="filterDistrict" style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:4px;">District</label>
+        <select id="filterDistrict" class="dash-select" onchange="applyOfficerFilters()" style="width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px; background:#fff; font-size:13px;">
+          <option value="">All Districts ({len(districts)})</option>
+          {district_options}
+        </select>
+      </div>
+      <div class="filter-control" style="flex:1; min-width:180px;">
+        <label for="filterMandal" style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:4px;">Mandal</label>
+        <select id="filterMandal" class="dash-select" onchange="applyOfficerFilters()" style="width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px; background:#fff; font-size:13px;">
+          <option value="">All Mandals ({len(mandals)})</option>
+          {mandal_options}
+        </select>
+      </div>
+      <div class="filter-control" style="flex:1; min-width:180px;">
+        <label for="filterDocType" style="display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:4px;">Document Type</label>
+        <select id="filterDocType" class="dash-select" onchange="applyOfficerFilters()" style="width:100%; padding:8px 12px; border:1px solid var(--rule); border-radius:4px; background:#fff; font-size:13px;">
+          <option value="">All Document Types ({len(doc_types)})</option>
+          {doc_type_options}
+        </select>
+      </div>
+      <div class="filter-actions" style="display:flex; gap:10px; align-items:center;">
+        <button type="button" class="act-btn" onclick="clearOfficerFilters()" style="padding:8px 14px; font-size:12px; background:#fff; cursor:pointer;">Clear Filters</button>
+      </div>
+      <div id="filterMatchCount" style="width:100%; font-size:12px; color:var(--ink-soft); margin-top:4px;">
+        Showing all <b>{len(pending_records)}</b> pending queue records
+      </div>
+    </div>
+    """
+
+    rows_html = []
+    for i, r in enumerate(pending_records, start=1):
+        vid = r.get("verification_id", "")
+        payload = r.get("document_payload") or {}
+        prop = payload.get("property") or {}
+        doc_type = payload.get("document_type") or r.get("filename") or "Land Deed"
+        doc_no = payload.get("document_number") or payload.get("serial_number") or vid[:8]
+        rec_date = _fmt_date(r.get("created_at") or "")
+        village = prop.get("village") or "—"
+        district = prop.get("district") or "—"
+        mandal = prop.get("mandal") or "—"
+        survey = prop.get("survey_number") or "—"
+
+        wait_str, is_urgent = _calc_wait_time(r.get("created_at") or "")
+        wait_badge = f"""
+        <span class="badge" style="background:{'#fef2f2' if is_urgent else '#f1f5f9'}; color:{'#b91c1c' if is_urgent else '#334155'}; border:1px solid {'#fca5a5' if is_urgent else '#cbd5e1'}; font-weight:600;">
+            {'⏱️ ' if is_urgent else ''}{html.escape(wait_str)}
+        </span>
+        """
+
+        # Clerk attribution lookup
+        clerk_id = r.get("uploaded_by_user_id")
+        clerk_label = "Legacy / Unassigned"
+        if clerk_id:
+            clerk_user = accounts_store.get_user(clerk_id)
+            if clerk_user:
+                clerk_label = f"👤 {clerk_user.get('name', clerk_id)}"
+            else:
+                clerk_label = f"👤 Clerk ({clerk_id[:8]})"
+
+        # Checks overview
+        checks = r.get("checks", [])
+        pass_count = sum(1 for c in checks if isinstance(c, dict) and c.get("status") == "PASS")
+        total_checks = len(checks)
+        checks_badge = f'<span style="font-size:12px; color:#059669; font-weight:600;">✓ {pass_count}/{total_checks} Checks Passed</span>' if total_checks else '<span style="font-size:12px; color:var(--ink-soft);">Stage 1 Verified</span>'
+
+        loc_sub = f"{mandal} · {district}" if mandal != "—" else district
+
+        rec_status = (r.get("status") or "READY_FOR_APPROVAL").upper()
+        rows_html.append(f"""
+        <tr class="data-row" data-status="{html.escape(rec_status)}" data-district="{html.escape(district)}" data-mandal="{html.escape(mandal)}" data-doc-type="{html.escape(doc_type)}">
+          <td class="td-sl">{i}</td>
+          <td>{wait_badge}</td>
+          <td class="td-date">{html.escape(rec_date)}</td>
+          <td>
+            <span class="td-doc-main">{html.escape(doc_type)}</span>
+            <span class="td-doc-sub">No. {html.escape(doc_no)}</span>
+          </td>
+          <td>
+            <span style="font-size:12px; color:var(--ink); font-weight:500;">{html.escape(clerk_label)}</span>
+          </td>
+          <td>
+            <span class="td-place-main">{html.escape(village)}</span>
+            <span class="td-place-sub">{html.escape(loc_sub)}</span>
+          </td>
+          <td class="td-mono">{html.escape(survey)}</td>
+          <td>{checks_badge}</td>
+          <td>{_badge(rec_status)}</td>
+          <td>
+            <div class="action-links">
+              <a class="act-btn btn-primary" style="background:#059669; color:#fff; font-weight:600; padding:6px 14px; font-size:12px;" href="/record?verification_id={html.escape(vid)}&role=officer">
+                Review &amp; Approve / Seal &rarr;
+              </a>
+            </div>
+          </td>
+        </tr>
+        """)
+
+    if rows_html:
+        queue_table_html = f"""
+        <table class="master-ledger" id="officerQueueTable">
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Queue Age</th>
+              <th>Received</th>
+              <th>Document &amp; No.</th>
+              <th>Ingested By</th>
+              <th>Location</th>
+              <th>Survey No.</th>
+              <th>Audit Status</th>
+              <th>State</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {''.join(rows_html)}
+            <tr id="officerFilterEmptyRow" style="display:none;">
+              <td colspan="10" style="text-align:center; padding:36px 16px; color:var(--ink-soft); font-size:13.5px;">
+                🔍 No pending records match the selected district, mandal, or document type filters.
+                <br><button type="button" class="act-btn" onclick="clearOfficerFilters()" style="margin-top:10px; font-size:12px; padding:6px 14px; cursor:pointer;">Reset Filters</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        """
+    else:
+        queue_table_html = """
+        <div class="table-empty" style="padding:48px 24px; text-align:center; background:#ffffff;">
+          <div style="font-size:2.4rem; margin-bottom:12px;">✓</div>
+          <h3 style="font-family:'Fraunces', serif; font-size:1.3rem; color:var(--ink); margin-bottom:6px;">Approval Queue is Clear</h3>
+          <p style="color:var(--ink-soft); font-size:13.5px; max-width:460px; margin:0 auto;">
+            All pending land documents have been audited and sealed. When clerks submit records with <code>READY_FOR_APPROVAL</code> status, they will automatically appear here sorted by waiting duration.
+          </p>
+        </div>
+        """
+
+    page_html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneBhoomi — Officer Approval &amp; Sealing Queue</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    {DASHBOARD_CSS}
+    .officer-workload-strip {{
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }}
+    .officer-metric-card {{
+        background: #ffffff;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        padding: 18px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        position: relative;
+        overflow: hidden;
+    }}
+    .officer-metric-card::before {{
+        content: '';
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 4px;
+    }}
+    .card-pending::before {{ background: #2563eb; }}
+    .card-sealed::before {{ background: #059669; }}
+    .card-rejected::before {{ background: #dc2626; }}
+    .card-total::before {{ background: #475569; }}
+    .metric-val {{
+        font-family: 'Fraunces', serif;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--ink);
+        line-height: 1;
+    }}
+    .metric-label {{
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-soft);
+        margin-top: 6px;
+    }}
+    .queue-box {{
+        background: #ffffff;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }}
+    .queue-header {{
+        padding: 18px 22px;
+        border-bottom: 1px solid var(--rule);
+        background: #fafaf9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+    .queue-title {{
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--ink);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }}
+    .queue-badge-count {{
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 12px;
+    }}
+  </style>
+</head>
+<body>
+
+<div class="security-bg" aria-hidden="true"></div>
+
+<div class="app-layout">
+
+  {sidebar_html}
+
+  <main class="dash-content">
+    <div class="main-inner">
+
+      <!-- Top Action Bar -->
+      <div class="top-action-bar">
+        <div class="header-left">
+          <h1>Officer <em>Approval &amp; Digital Seal Queue</em></h1>
+          <div class="header-tagline">
+            Logged in as <b>{html.escape(user_name)}</b> · Official Legal Inspection &amp; RSA Cryptographic Sealing
+          </div>
+        </div>
+        <div class="header-right">
+          <a href="/auth/signout" class="act-btn" style="border-color:#fca5a5; color:#b91c1c;">Sign Out</a>
+        </div>
+      </div>
+
+      <!-- Workload Summary Strip -->
+      <div class="officer-workload-strip">
+        <div class="officer-metric-card card-pending">
+          <div class="metric-val">{len(pending_records)}</div>
+          <div class="metric-label">{len(pending_records)} Pending Review</div>
+        </div>
+        <div class="officer-metric-card card-sealed">
+          <div class="metric-val">{sealed_count}</div>
+          <div class="metric-label">Sealed &amp; Certified</div>
+        </div>
+        <div class="officer-metric-card card-rejected">
+          <div class="metric-val">{rejected_count}</div>
+          <div class="metric-label">Rejected Records</div>
+        </div>
+        <div class="officer-metric-card card-total">
+          <div class="metric-val">{total_ledger_count}</div>
+          <div class="metric-label">Total Registry Ledger</div>
+        </div>
+      </div>
+
+      <!-- OFFICER QUEUE (Oldest Waiting First) -->
+      <div class="queue-box">
+        <div class="queue-header">
+          <div class="queue-title">
+            <span>🏛️ Master Officer Approval Queue</span>
+            <span class="queue-badge-count">{len(pending_records)} Pending</span>
+          </div>
+          <div style="font-size:12.5px; color:var(--ink-soft);">
+            Sorted by wait duration (oldest first) · Across all clerk desks
+          </div>
+        </div>
+        {filter_bar_html if rows_html else ""}
+        {queue_table_html}
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <footer class="dash-footer">
+      <div class="main-inner" style="padding-top:0; padding-bottom:0;">
+        <div class="dash-footer-wrap">
+          <div><b>OneBhoomi Registry Console</b> · Officer Approval Bureau</div>
+          <div>100% Air-Gapped &amp; Immutable · Zero cloud dependencies · Host: <code>{html.escape(host_name)}</code></div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+</div>
+
+<script>
+{DASHBOARD_JS}
+
+function applyOfficerFilters() {{
+  const distEl = document.getElementById('filterDistrict');
+  const mandEl = document.getElementById('filterMandal');
+  const dtypeEl = document.getElementById('filterDocType');
+  if (!distEl || !mandEl || !dtypeEl) return;
+  
+  const dist = distEl.value.trim().toLowerCase();
+  const mand = mandEl.value.trim().toLowerCase();
+  const dtype = dtypeEl.value.trim().toLowerCase();
+  
+  const rows = document.querySelectorAll('#officerQueueTable tbody tr.data-row');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {{
+    const rowDist = (row.getAttribute('data-district') || '').trim().toLowerCase();
+    const rowMand = (row.getAttribute('data-mandal') || '').trim().toLowerCase();
+    const rowDtype = (row.getAttribute('data-doc-type') || '').trim().toLowerCase();
+    
+    const matchDist = !dist || rowDist === dist;
+    const matchMand = !mand || rowMand === mand;
+    const matchDtype = !dtype || rowDtype === dtype;
+    
+    if (matchDist && matchMand && matchDtype) {{
+      row.style.display = '';
+      visibleCount++;
+    }} else {{
+      row.style.display = 'none';
+    }}
+  }});
+  
+  const counter = document.getElementById('filterMatchCount');
+  if (counter) {{
+    if (dist || mand || dtype) {{
+      counter.innerHTML = 'Showing <b>' + visibleCount + '</b> of ' + rows.length + ' records matching active jurisdiction filters';
+    }} else {{
+      counter.innerHTML = 'Showing all <b>' + rows.length + '</b> pending queue records';
+    }}
+  }}
+  
+  const emptyRow = document.getElementById('officerFilterEmptyRow');
+  if (emptyRow) {{
+    emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+  }}
+}}
+
+function clearOfficerFilters() {{
+  const distEl = document.getElementById('filterDistrict');
+  const mandEl = document.getElementById('filterMandal');
+  const dtypeEl = document.getElementById('filterDocType');
+  if (distEl) distEl.value = '';
+  if (mandEl) mandEl.value = '';
+  if (dtypeEl) dtypeEl.value = '';
+  applyOfficerFilters();
+}}
+</script>
+</body>
+</html>
+"""
+    return page_html.encode("utf-8")
+
+
