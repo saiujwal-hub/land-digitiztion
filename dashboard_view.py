@@ -19,6 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+import json
+import gis_service
 import verification_service
 
 BADGE_LABELS = {
@@ -546,6 +548,115 @@ DASHBOARD_CSS = """
       display:flex;justify-content:space-between;align-items:center;
       font-family:var(--type);font-size:11px;color:var(--ink-soft);flex-wrap:wrap;gap:12px;
     }
+
+    /* State & District Progress Panel */
+    .state-progress-section{
+      background:var(--card);border:1.5px solid var(--border);border-radius:2px;
+      padding:22px;margin-bottom:26px;box-shadow:2px 2px 0 rgba(0,0,0,.025);
+    }
+    .state-progress-header{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--rule-soft);
+      flex-wrap:wrap;gap:12px;
+    }
+    .state-card{
+      background:var(--paper);border:1px solid var(--border);border-radius:3px;
+      margin-bottom:12px;overflow:hidden;transition:border-color .15s ease;
+    }
+    .state-card:hover{border-color:var(--ink)}
+    .state-summary{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:14px 18px;cursor:pointer;user-select:none;gap:16px;flex-wrap:wrap;
+    }
+    .state-summary::-webkit-details-marker{display:none}
+    .state-title-col{display:flex;align-items:center;gap:10px}
+    .state-chevron{
+      display:inline-block;font-size:11px;transition:transform .2s ease;color:var(--ink-soft);
+    }
+    details[open] .state-chevron{transform:rotate(90deg)}
+    .state-name{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--ink)}
+    .state-counts{
+      display:flex;gap:10px;align-items:center;font-family:var(--type);font-size:11px;flex-wrap:wrap;
+    }
+    .count-pill{
+      padding:3px 8px;border-radius:3px;font-weight:700;
+    }
+    .pill-total{background:var(--paper-deep);color:var(--ink);border:1px solid var(--rule)}
+    .pill-sealed{background:#E6F4EA;color:var(--green);border:1px solid #A8DAB5}
+    .pill-pending{background:#FEF7E0;color:#8A5300;border:1px solid #F2CD86}
+    .pill-flagged{background:#FCE8E6;color:var(--stamp);border:1px solid #F5C6CB}
+    .progress-bar-wrap{
+      display:flex;align-items:center;gap:10px;min-width:180px;
+    }
+    .progress-stacked-bar{
+      height:10px;background:var(--paper-deep);border-radius:5px;overflow:hidden;
+      display:flex;width:130px;border:1px solid var(--rule);
+    }
+    .bar-seg-sealed{background:var(--green);height:100%}
+    .bar-seg-pending{background:var(--amber);height:100%}
+    .bar-seg-flagged{background:var(--stamp);height:100%}
+    .progress-pct{
+      font-family:var(--type);font-size:11.5px;font-weight:700;color:var(--ink);
+      min-width:38px;text-align:right;
+    }
+    .district-table-wrap{
+      padding:14px 18px 18px;background:var(--paper-deep);border-top:1px solid var(--rule);
+      overflow-x:auto;
+    }
+    .district-table{
+      width:100%;border-collapse:collapse;font-size:13px;
+    }
+    .district-table th{
+      font-family:var(--type);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--ink-soft);padding:8px 10px;border-bottom:1.5px solid var(--rule);
+      text-align:left;
+    }
+    .district-table td{
+      padding:8px 10px;border-bottom:1px solid var(--rule-soft);
+      font-family:var(--sans);
+    }
+    .district-table tr:last-child td{border-bottom:none}
+    .district-table td.td-center{text-align:center}
+    .district-table td.td-num{font-family:var(--type);font-weight:700}
+    .district-table td.td-right{text-align:right}
+
+    /* Extraction Accuracy & Field Intelligence Panel */
+    .extraction-accuracy-section{
+      background:var(--card);border:1.5px solid var(--border);border-radius:2px;
+      padding:22px;margin-bottom:26px;box-shadow:2px 2px 0 rgba(0,0,0,.025);
+    }
+    .accuracy-header{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--rule-soft);
+      flex-wrap:wrap;gap:12px;
+    }
+    .accuracy-grid{
+      display:grid;grid-template-columns:1.4fr 1fr;gap:20px;
+      align-items:stretch;
+    }
+    @media(max-width:1080px){.accuracy-grid{grid-template-columns:1fr}}
+    .accuracy-subcard{
+      background:var(--paper);border:1px solid var(--border);border-radius:3px;
+      padding:16px 18px;display:flex;flex-direction:column;justify-content:space-between;
+    }
+    .uncertain-field-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:7px 0;border-bottom:1px solid var(--rule-soft);font-size:12.5px;gap:10px;
+    }
+    .uncertain-field-row:last-child{border-bottom:none}
+    .field-name-wrap{display:flex;align-items:center;gap:6px;min-width:0;flex:1}
+    .field-pill-uncertain{
+      background:#FCE8E6;color:var(--stamp);border:1px solid #F5C6CB;
+      font-family:var(--type);font-size:9.5px;padding:1px 5px;border-radius:2px;font-weight:700;white-space:nowrap;
+    }
+    .field-pill-review{
+      background:#FEF7E0;color:#8A5300;border:1px solid #F2CD86;
+      font-family:var(--type);font-size:9.5px;padding:1px 5px;border-radius:2px;font-weight:700;white-space:nowrap;
+    }
+    .field-pill-good{
+      background:#E6F4EA;color:var(--green);border:1px solid #A8DAB5;
+      font-family:var(--type);font-size:9.5px;padding:1px 5px;border-radius:2px;font-weight:700;white-space:nowrap;
+    }
 """
 
 DASHBOARD_JS = """
@@ -774,6 +885,19 @@ def _fmt_date(iso: str) -> str:
         return raw[:10]
 
 
+def _fmt_datetime(iso: str) -> str:
+    raw = (iso or "").strip()
+    if not raw:
+        return "Not recorded"
+    try:
+        clean = raw.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(clean)
+        return dt.strftime("%d %b %Y, %H:%M UTC")
+    except Exception:
+        return _fmt_date(raw)
+
+
+
 def _badge(status: str) -> str:
     label = BADGE_LABELS.get(status, status.replace("_", " ").title())
     return f'<span class="badge b-{html.escape(status.lower())}" data-i18n="badge_{status.lower()}">{html.escape(label)}</span>'
@@ -927,6 +1051,620 @@ def get_dashboard_data() -> dict:
         "other_count": other_count,
         "latest_preprocessing": latest_prep,
     }
+
+
+FIELD_ACCURACY_LABELS = {
+    "area": "Property Extent & Area",
+    "property_area": "Property Extent & Area",
+    "stamp_sold_to": "Stamp Sold To / Vendor Endorsement",
+    "city_survey_number": "City Survey (C.S.) Number",
+    "purchaser": "Purchaser / Claimant Clause",
+    "mandal": "Mandal / Tehsil Jurisdiction",
+    "mandal_tehsil": "Mandal / Tehsil Jurisdiction",
+    "state": "State Jurisdiction",
+    "village": "Village / Revenue Ward",
+    "survey_number": "Survey / Sub-Survey Number",
+    "sub_survey_number": "Sub-Survey Subdivision",
+    "document_number": "Document Registration Number",
+    "document_type": "Deed Classification",
+    "stamp_value": "Stamp Duty Value",
+    "stamp_serial_number": "Stamp Paper Serial Number",
+    "stamp_purchase_date": "Stamp Purchase Date",
+    "vendor_owner": "Vendor / Executant Clause",
+    "district": "District Jurisdiction",
+    "locality_or_address": "Locality / Boundary Description",
+    "plot_number": "Plot / House Designation",
+    "layout_name": "Layout / Colony Name",
+    "parties": "Parties & Legal Representants",
+}
+
+
+def get_extraction_accuracy_data(db: Optional[dict] = None) -> dict:
+    """
+    Computes field-level OCR confidence intelligence and extraction accuracy metrics:
+      1. Reads (read-only) telangana_ground_truth_comparison.json if present.
+      2. Aggregates per-field confidences from record field_provenance / raw_ocr.
+      3. Calculates overall average confidence and a trend line for the most recent N documents.
+      4. Identifies uncertain fields (<85% confidence) per PS Requirement 11.
+    Gracefully excludes missing ground-truth comparisons without throwing errors.
+    """
+    if db is None:
+        try:
+            db = verification_service.load_db()
+        except Exception:
+            db = {}
+
+    gt_data = None
+    gt_path = Path("telangana_ground_truth_comparison.json")
+    if gt_path.exists():
+        try:
+            with open(gt_path, "r", encoding="utf-8") as f:
+                gt_raw = json.load(f)
+            gt_summary = gt_raw.get("summary_metrics") or {}
+            gt_comp = gt_raw.get("ground_truth_comparison") or {}
+
+            matched = gt_summary.get("fields_matching_independent_ground_truth", 0)
+            total_eval = gt_raw.get("total_fields_evaluated", len(gt_comp))
+            match_pct = round((matched / total_eval * 100), 1) if total_eval else None
+            coverage = gt_summary.get("required_field_processing_coverage", "100%")
+            review_req = gt_summary.get("fields_requiring_human_review", 0)
+            conflicts = gt_summary.get("genuine_conflicts", 0)
+
+            gt_data = {
+                "available": True,
+                "matched": matched,
+                "total_eval": total_eval,
+                "match_pct": match_pct,
+                "coverage": coverage,
+                "review_required": review_req,
+                "conflicts": conflicts,
+                "fields": gt_comp,
+            }
+        except Exception:
+            gt_data = None
+
+    field_scores: dict[str, list[float]] = {}
+    doc_points = []
+
+    recs = [r for r in db.values() if isinstance(r, dict) and r.get("verification_id")]
+    recs.sort(key=lambda r: r.get("created_at") or "")
+
+    for r in recs:
+        rec_id = r.get("verification_id", "")
+        prov = r.get("field_provenance") or (r.get("document_payload") or {}).get("field_provenance") or {}
+
+        doc_field_vals = []
+        if isinstance(prov, dict):
+            for f_name, f_info in prov.items():
+                if not isinstance(f_info, dict):
+                    continue
+                c = f_info.get("final_confidence") or f_info.get("confidence") or f_info.get("ocr_confidence")
+                if c is not None and float(c) > 0:
+                    val = min(float(c), 1.0)
+                    doc_field_vals.append(val)
+                    field_scores.setdefault(f_name, []).append(val)
+
+        if doc_field_vals:
+            doc_avg = sum(doc_field_vals) / len(doc_field_vals)
+        else:
+            raw_ocr = r.get("raw_ocr") or {}
+            pages = raw_ocr.get("pages", [])
+            p_confs = [p.get("avg_confidence") for p in pages if p.get("avg_confidence")]
+            doc_avg = (sum(p_confs) / len(p_confs)) if p_confs else 0.85
+
+        payload = r.get("document_payload") or {}
+        d_num = payload.get("document_number") or rec_id[:6]
+        d_type = payload.get("document_type") or "Deed"
+        doc_points.append({
+            "id": rec_id,
+            "label": f"Doc #{d_num}",
+            "doc_type": d_type,
+            "avg_conf": doc_avg,
+            "created_at": r.get("created_at") or "",
+        })
+
+    if gt_data and gt_data.get("fields"):
+        for f_name, f_info in gt_data["fields"].items():
+            if isinstance(f_info, dict):
+                c = f_info.get("confidence")
+                if c is not None and float(c) > 0:
+                    field_scores.setdefault(f_name, []).append(min(float(c), 1.0))
+
+    all_confs = [val for vals in field_scores.values() for val in vals]
+    overall_avg_conf = (sum(all_confs) / len(all_confs)) if all_confs else 0.0
+
+    field_breakdown = []
+    for f_name, vals in field_scores.items():
+        if not vals:
+            continue
+        avg_c = sum(vals) / len(vals)
+        field_breakdown.append({
+            "field": f_name,
+            "label": FIELD_ACCURACY_LABELS.get(f_name, f_name.replace("_", " ").title()),
+            "avg_confidence": avg_c,
+            "count": len(vals),
+            "needs_review": avg_c < 0.85,
+        })
+    field_breakdown.sort(key=lambda x: x["avg_confidence"])
+
+    return {
+        "overall_avg_confidence": overall_avg_conf,
+        "doc_trend": doc_points[-10:],
+        "field_breakdown": field_breakdown,
+        "uncertain_fields": [f for f in field_breakdown if f["needs_review"]],
+        "ground_truth": gt_data,
+        "total_fields_tracked": len(field_breakdown),
+    }
+
+
+def _render_confidence_trend_svg(doc_trend: list[dict], overall_avg: float) -> str:
+    """Generates an SVG line/trend chart showing document confidence trajectory (PS Req. 11)."""
+    if not doc_trend:
+        return """
+        <svg class="chart-svg" viewBox="0 0 580 195">
+          <line x1="45" y1="170" x2="550" y2="170" stroke="var(--rule)" stroke-width="1.5"/>
+          <text x="290" y="105" text-anchor="middle" font-family="Courier Prime, monospace" font-size="11.5" fill="var(--ink-soft)" letter-spacing="1">NO EXTRACTIONS EVALUATED YET</text>
+        </svg>"""
+
+    pts = []
+    n = len(doc_trend)
+
+    for i, d in enumerate(doc_trend):
+        x = 50 + int(i * (480 / max(1, n - 1))) if n > 1 else 290
+        c = max(0.25, min(1.0, d.get("avg_conf", 0.85)))
+        y = round(170 - ((c - 0.25) / 0.75 * 135))
+        pts.append((x, y, d))
+
+    if n == 1:
+        x, y, d = pts[0]
+        line_pts = f"50,{y} 530,{y}"
+        area_pts = f"50,170 50,{y} 530,{y} 530,170"
+    else:
+        line_pts = " ".join(f"{x},{y}" for x, y, _ in pts)
+        area_pts = f"50,170 {line_pts} 530,170"
+
+    dots = []
+    for x, y, d in pts:
+        pct = round(d.get("avg_conf", 0) * 100, 1)
+        lbl = d.get("label", "Doc")
+        dots.append(f'<circle cx="{x}" cy="{y}" r="4.5" fill="var(--green)" stroke="#fff" stroke-width="1.5"><title>{lbl}: {pct}% avg confidence</title></circle>')
+        dots.append(f'<text x="{x}" y="{y - 10}" text-anchor="middle" font-family="Courier Prime, monospace" font-size="9.5" font-weight="700" fill="var(--green-deep)">{pct}%</text>')
+        dots.append(f'<text x="{x}" y="188" text-anchor="middle" font-family="Courier Prime, monospace" font-size="9" fill="var(--ink-soft)">{lbl}</text>')
+
+    target_y = round(170 - ((0.85 - 0.25) / 0.75 * 135))
+
+    return f"""
+    <svg class="chart-svg" viewBox="0 0 580 195">
+      <defs>
+        <linearGradient id="confGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--green)" stop-opacity="0.22"/>
+          <stop offset="100%" stop-color="var(--green)" stop-opacity="0.0"/>
+        </linearGradient>
+      </defs>
+
+      <line x1="45" y1="170" x2="550" y2="170" stroke="var(--rule-soft)" stroke-width="1"/>
+      <line x1="45" y1="125" x2="550" y2="125" stroke="var(--rule-soft)" stroke-dasharray="3 3" stroke-width="1"/>
+      <line x1="45" y1="80" x2="550" y2="80" stroke="var(--rule-soft)" stroke-dasharray="3 3" stroke-width="1"/>
+      <line x1="45" y1="35" x2="550" y2="35" stroke="var(--rule-soft)" stroke-dasharray="3 3" stroke-width="1"/>
+
+      <line x1="45" y1="{target_y}" x2="550" y2="{target_y}" stroke="var(--amber)" stroke-dasharray="4 4" stroke-width="1.5" opacity="0.8"/>
+      <text x="545" y="{target_y - 5}" text-anchor="end" font-family="Courier Prime, monospace" font-size="8.5" font-weight="bold" fill="var(--amber)">85% PS REQ. 11 BENCHMARK TARGET</text>
+
+      <text x="35" y="174" text-anchor="end" font-family="Courier Prime, monospace" font-size="9" fill="var(--ink-soft)">25%</text>
+      <text x="35" y="129" text-anchor="end" font-family="Courier Prime, monospace" font-size="9" fill="var(--ink-soft)">50%</text>
+      <text x="35" y="84" text-anchor="end" font-family="Courier Prime, monospace" font-size="9" fill="var(--ink-soft)">75%</text>
+      <text x="35" y="39" text-anchor="end" font-family="Courier Prime, monospace" font-size="9" fill="var(--ink-soft)">100%</text>
+
+      <polygon points="{area_pts}" fill="url(#confGrad)"/>
+      <polyline points="{line_pts}" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+      {''.join(dots)}
+    </svg>"""
+
+
+def _render_extraction_accuracy_panel(acc_data: Optional[dict] = None) -> str:
+    """Renders the Extraction Accuracy & Confidence Intelligence Panel."""
+    if acc_data is None:
+        acc_data = get_extraction_accuracy_data()
+
+    overall_pct = round(acc_data.get("overall_avg_confidence", 0) * 100, 1)
+    doc_trend = acc_data.get("doc_trend", [])
+    uncertain = acc_data.get("uncertain_fields", [])
+    gt = acc_data.get("ground_truth")
+
+    trend_svg = _render_confidence_trend_svg(doc_trend, acc_data.get("overall_avg_confidence", 0))
+
+    if gt and gt.get("available"):
+        match_str = f"{gt['match_pct']}%" if gt.get("match_pct") is not None else "Verified"
+        gt_pill = f"""
+        <div style="font-family:var(--type); font-size:11px; background:var(--paper-deep); border:1px solid var(--border); padding:6px 12px; border-radius:3px; line-height:1.4;">
+          <b>Independent Ground-Truth:</b> <span style="color:var(--green); font-weight:700;">{match_str} Exact Match</span> ({gt.get('matched')}/{gt.get('total_eval')} fields)<br>
+          <span style="color:var(--ink-soft);">Coverage: {gt.get('coverage', '100%')} · Human Review Required: {gt.get('review_required', 0)} fields</span>
+        </div>"""
+    else:
+        gt_pill = """
+        <div style="font-family:var(--type); font-size:11px; background:var(--paper-deep); border:1px solid var(--border); padding:6px 12px; border-radius:3px; color:var(--ink-soft); line-height:1.4;">
+          <b>Production Live Extraction:</b> Field provenance scoring active.<br>
+          <span>Offline OCR and semantic confidence evaluation.</span>
+        </div>"""
+
+    field_items = []
+    top_display_fields = acc_data.get("field_breakdown", [])[:8]
+    for item in top_display_fields:
+        c_val = item["avg_confidence"]
+        pct = round(c_val * 100, 1)
+        lbl = item["label"]
+        raw_k = item["field"]
+
+        if c_val < 0.75:
+            pill = '<span class="field-pill-uncertain">⚠️ High Uncertainty</span>'
+            bar_color = "var(--stamp)"
+        elif c_val < 0.85:
+            pill = '<span class="field-pill-review">✍️ Needs Review</span>'
+            bar_color = "var(--gold)"
+        else:
+            pill = '<span class="field-pill-good">✓ Confident</span>'
+            bar_color = "var(--green)"
+
+        bar_width = f"{max(5, int(c_val * 100))}%"
+
+        field_items.append(f"""
+        <div class="uncertain-field-row">
+          <div class="field-name-wrap">
+            <span style="font-weight:600; color:var(--ink); font-size:12.5px;" title="{html.escape(raw_k)}">{html.escape(lbl)}</span>
+            <code style="font-size:10px; color:var(--ink-soft);">({html.escape(raw_k)})</code>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-shrink:0;">
+            <div style="width:70px; height:7px; background:var(--paper-deep); border-radius:3px; overflow:hidden; border:1px solid var(--rule);">
+              <div style="width:{bar_width}; height:100%; background:{bar_color};"></div>
+            </div>
+            <span style="font-family:var(--type); font-weight:700; font-size:11.5px; width:44px; text-align:right;">{pct}%</span>
+            {pill}
+          </div>
+        </div>""")
+
+    fields_markup = "".join(field_items) if field_items else '<div style="font-size:12px; color:var(--ink-soft); padding:10px;">No field confidence scores registered yet.</div>'
+
+    return f"""
+    <section class="extraction-accuracy-section" id="accuracySection">
+      <div class="accuracy-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">🎯</span>
+            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">Extraction Accuracy &amp; Confidence Intelligence</span>
+            <span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--green); color:#fff; padding:2px 6px; border-radius:3px; letter-spacing:.06em;">PS REQ. 11</span>
+          </div>
+          <div class="chart-meta" style="margin-top:3px;">Field-level OCR confidence trajectory, independent ground-truth evaluation, and uncertain field review alerts</div>
+        </div>
+        {gt_pill}
+      </div>
+
+      <div class="accuracy-grid">
+        <!-- Card 1: Confidence Trend Line -->
+        <div class="accuracy-subcard">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--rule-soft); flex-wrap:wrap; gap:8px;">
+            <div>
+              <div style="font-family:var(--serif); font-size:15px; font-weight:700; color:var(--ink);">Document Extraction Confidence Trend</div>
+              <div class="chart-meta">Overall average field confidence across recent {len(doc_trend)} evaluated deed(s)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-family:var(--type); font-size:11px; color:var(--ink-soft);">Global Field Mean:</span>
+              <span style="font-family:var(--serif); font-size:22px; font-weight:700; color:var(--green); line-height:1;">{overall_pct}%</span>
+            </div>
+          </div>
+          <div class="chart-svg-wrap">
+            {trend_svg}
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:8px; border-top:1px solid var(--rule-soft); font-family:var(--type); font-size:10.5px; color:var(--ink-soft); flex-wrap:wrap; gap:8px;">
+            <span style="display:flex; align-items:center; gap:5px;">
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--green);"></span>
+              <span>Document Extraction Mean</span>
+            </span>
+            <span style="display:flex; align-items:center; gap:5px;">
+              <span style="width:12px; height:2px; background:var(--amber); border-top:1px dashed var(--amber);"></span>
+              <span>85% Benchmark Target (PS Req. 11)</span>
+            </span>
+            <span><b>{len(doc_trend)}</b> document(s) evaluated</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Uncertain Fields Breakdown (PS Req. 11) -->
+        <div class="accuracy-subcard">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--rule-soft); flex-wrap:wrap; gap:6px;">
+            <div>
+              <div style="font-family:var(--serif); font-size:15px; font-weight:700; color:var(--ink);">Uncertain Fields &amp; Review Triggers</div>
+              <div class="chart-meta">Field types ranked by lowest confidence (PS Req. 11)</div>
+            </div>
+            <span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--amber); color:#fff; padding:2px 6px; border-radius:3px;">{len(uncertain)} FLAGGED</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column;">
+            {fields_markup}
+          </div>
+
+          <div style="margin-top:12px; padding:8px 10px; background:var(--paper-deep); border:1px dashed var(--rule); border-radius:2px; font-family:var(--type); font-size:10px; color:var(--ink-soft); line-height:1.35;">
+            <b>PS Requirement 11 Advisory:</b> Fields with confidence below 85% or genuine candidate discrepancies automatically route to clerk review before officer cryptographic sealing.
+          </div>
+        </div>
+      </div>
+    </section>"""
+
+
+def get_state_district_progress(db: Optional[dict] = None) -> dict:
+    """
+    Reads record entries from verification_db.json (via verification_service.load_db)
+    and groups records by state and district/mandal into total, sealed, pending, and flagged counts.
+    Safely falls back to 'Unclassified' for missing/unrecognized geographic fields.
+    """
+    if db is None:
+        try:
+            db = verification_service.load_db()
+        except Exception:
+            db = {}
+
+    states_data: dict[str, dict] = {}
+    total_all = 0
+    sealed_all = 0
+    pending_all = 0
+    flagged_all = 0
+
+    for rec_id, r in db.items():
+        if not isinstance(r, dict) or not r.get("verification_id"):
+            continue
+
+        payload = r.get("document_payload") or {}
+        prop = payload.get("property") or {}
+
+        raw_state = payload.get("state") or r.get("state") or prop.get("state")
+        raw_district = prop.get("district") or payload.get("district") or r.get("district")
+        raw_mandal = prop.get("mandal") or payload.get("mandal") or r.get("mandal")
+        raw_village = prop.get("village") or payload.get("village") or r.get("village")
+
+        norm_state = None
+        if raw_state:
+            s_str = str(raw_state).strip()
+            if s_str.lower() in ("telangana", "ts", "tg"):
+                norm_state = "Telangana"
+            elif s_str.lower() in ("karnataka", "ka"):
+                norm_state = "Karnataka"
+            elif s_str and s_str.lower() not in ("none", "null", "n/a", ""):
+                norm_state = s_str.title()
+
+        if not norm_state:
+            try:
+                inferred = gis_service.normalize_state(raw_state, raw_district, raw_mandal, raw_village)
+                if inferred:
+                    norm_state = inferred.title()
+            except Exception:
+                norm_state = None
+
+        if not norm_state:
+            norm_state = "Unclassified"
+
+        norm_district = None
+        if raw_district:
+            d_str = str(raw_district).strip()
+            if d_str and d_str.lower() not in ("none", "null", "n/a", ""):
+                norm_district = d_str
+        if not norm_district and raw_mandal:
+            m_str = str(raw_mandal).strip()
+            if m_str and m_str.lower() not in ("none", "null", "n/a", ""):
+                norm_district = f"Mandal: {m_str}"
+
+        if not norm_district:
+            norm_district = "Unclassified"
+
+        status = str(r.get("status") or "EXTRACTED").upper()
+        is_sealed = (status == "APPROVED")
+        is_flagged = (
+            status in {"REJECTED", "DUPLICATE", "FAIL", "NOT_A_LAND_DOCUMENT"}
+            or bool(r.get("flagged"))
+            or bool(r.get("is_flagged"))
+        )
+        is_pending = not is_sealed and not is_flagged
+
+        total_all += 1
+        if is_sealed:
+            sealed_all += 1
+        elif is_flagged:
+            flagged_all += 1
+        else:
+            pending_all += 1
+
+        if norm_state not in states_data:
+            states_data[norm_state] = {
+                "total": 0,
+                "sealed": 0,
+                "pending": 0,
+                "flagged": 0,
+                "districts": {},
+            }
+
+        s_entry = states_data[norm_state]
+        s_entry["total"] += 1
+        if is_sealed:
+            s_entry["sealed"] += 1
+        elif is_flagged:
+            s_entry["flagged"] += 1
+        else:
+            s_entry["pending"] += 1
+
+        d_dict = s_entry["districts"]
+        if norm_district not in d_dict:
+            d_dict[norm_district] = {
+                "total": 0,
+                "sealed": 0,
+                "pending": 0,
+                "flagged": 0,
+            }
+
+        d_entry = d_dict[norm_district]
+        d_entry["total"] += 1
+        if is_sealed:
+            d_entry["sealed"] += 1
+        elif is_flagged:
+            d_entry["flagged"] += 1
+        else:
+            d_entry["pending"] += 1
+
+    return {
+        "states": states_data,
+        "total": total_all,
+        "sealed": sealed_all,
+        "pending": pending_all,
+        "flagged": flagged_all,
+    }
+
+
+def _render_state_district_panel(progress_data: Optional[dict] = None) -> str:
+    """Renders the expandable State & District Registration Progress panel."""
+    if progress_data is None:
+        progress_data = get_state_district_progress()
+
+    states = progress_data.get("states", {})
+    total_recs = progress_data.get("total", 0)
+
+    if not states or total_recs == 0:
+        return """
+    <section class="state-progress-section" id="stateProgressSection">
+      <div class="state-progress-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">🏛️</span>
+            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">State &amp; District Registration Progress</span>
+            <span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--ink); color:#fff; padding:2px 6px; border-radius:3px; letter-spacing:.06em;">JURISDICTION BREAKDOWN</span>
+          </div>
+          <div class="chart-meta" style="margin-top:3px;">Cadastral intake, certification velocity, and audit status grouped by administrative jurisdiction</div>
+        </div>
+      </div>
+      <div class="table-empty" style="padding:28px 16px; text-align:center; color:var(--ink-soft); font-size:13px;">
+        <p>No state or district entries recorded in the registry database yet.</p>
+      </div>
+    </section>"""
+
+    sorted_states = sorted(
+        states.keys(),
+        key=lambda s: (1 if s == "Unclassified" else 0, s.lower())
+    )
+
+    state_cards_html = []
+    for state_name in sorted_states:
+        s_data = states[state_name]
+        s_total = s_data["total"]
+        s_sealed = s_data["sealed"]
+        s_pending = s_data["pending"]
+        s_flagged = s_data["flagged"]
+
+        sealed_pct = round((s_sealed / s_total) * 100) if s_total > 0 else 0
+        w_sealed = f"{(s_sealed / s_total) * 100:.1f}%" if s_total > 0 else "0%"
+        w_pending = f"{(s_pending / s_total) * 100:.1f}%" if s_total > 0 else "0%"
+        w_flagged = f"{(s_flagged / s_total) * 100:.1f}%" if s_total > 0 else "0%"
+
+        districts = s_data.get("districts", {})
+        sorted_districts = sorted(
+            districts.keys(),
+            key=lambda d: (1 if d == "Unclassified" else 0, -districts[d]["total"], d.lower())
+        )
+
+        d_rows = []
+        for d_name in sorted_districts:
+            d_info = districts[d_name]
+            d_total = d_info["total"]
+            d_sealed = d_info["sealed"]
+            d_pending = d_info["pending"]
+            d_flagged = d_info["flagged"]
+
+            d_sealed_pct = round((d_sealed / d_total) * 100) if d_total > 0 else 0
+            d_w_sealed = f"{(d_sealed / d_total) * 100:.1f}%" if d_total > 0 else "0%"
+            d_w_pending = f"{(d_pending / d_total) * 100:.1f}%" if d_total > 0 else "0%"
+            d_w_flagged = f"{(d_flagged / d_total) * 100:.1f}%" if d_total > 0 else "0%"
+
+            d_rows.append(f"""
+            <tr>
+              <td><b>{html.escape(d_name)}</b></td>
+              <td class="td-center td-num">{d_total}</td>
+              <td class="td-center td-num" style="color:var(--green);">{d_sealed}</td>
+              <td class="td-center td-num" style="color:var(--amber);">{d_pending}</td>
+              <td class="td-center td-num" style="color:var(--stamp);">{d_flagged}</td>
+              <td>
+                <div class="progress-stacked-bar" title="Sealed: {d_sealed} | Pending: {d_pending} | Flagged: {d_flagged}">
+                  <div class="bar-seg-sealed" style="width:{d_w_sealed};"></div>
+                  <div class="bar-seg-pending" style="width:{d_w_pending};"></div>
+                  <div class="bar-seg-flagged" style="width:{d_w_flagged};"></div>
+                </div>
+              </td>
+              <td class="td-right td-num" style="color:{'var(--green)' if d_sealed_pct == 100 else 'var(--ink)'};">{d_sealed_pct}%</td>
+            </tr>""")
+
+        d_count_label = f"{len(districts)} district{'s' if len(districts) != 1 else ''} / jurisdiction{'s' if len(districts) != 1 else ''}"
+
+        state_cards_html.append(f"""
+      <details class="state-card" open>
+        <summary class="state-summary">
+          <div class="state-title-col">
+            <span class="state-chevron">▶</span>
+            <div>
+              <span class="state-name">{html.escape(state_name)}</span>
+              <span style="font-family:var(--type); font-size:11px; color:var(--ink-soft); margin-left:8px;">({d_count_label})</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+            <div class="state-counts">
+              <span class="count-pill pill-total" title="Total Processed">Total: {s_total}</span>
+              <span class="count-pill pill-sealed" title="Sealed & Certified">🛡️ Sealed: {s_sealed}</span>
+              <span class="count-pill pill-pending" title="Pending Review">✍️ Pending: {s_pending}</span>
+              <span class="count-pill pill-flagged" title="Flagged / Anomalous">⚠️ Flagged: {s_flagged}</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-stacked-bar" title="Sealed: {s_sealed} | Pending: {s_pending} | Flagged: {s_flagged}" style="width:140px; height:12px;">
+                <div class="bar-seg-sealed" style="width:{w_sealed};"></div>
+                <div class="bar-seg-pending" style="width:{w_pending};"></div>
+                <div class="bar-seg-flagged" style="width:{w_flagged};"></div>
+              </div>
+              <span class="progress-pct">{sealed_pct}%</span>
+            </div>
+          </div>
+        </summary>
+        <div class="district-table-wrap">
+          <table class="district-table">
+            <thead>
+              <tr>
+                <th>District / Mandal Jurisdiction</th>
+                <th class="td-center">Total Processed</th>
+                <th class="td-center">Sealed &amp; Certified</th>
+                <th class="td-center">Pending Review</th>
+                <th class="td-center">Flagged</th>
+                <th>Progress Ratio</th>
+                <th class="td-right">Certification Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {''.join(d_rows)}
+            </tbody>
+          </table>
+        </div>
+      </details>""")
+
+    cards_joined = "".join(state_cards_html)
+    return f"""
+    <section class="state-progress-section" id="stateProgressSection">
+      <div class="state-progress-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px;">🏛️</span>
+            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">State &amp; District Registration Progress</span>
+            <span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--ink); color:#fff; padding:2px 6px; border-radius:3px; letter-spacing:.06em;">JURISDICTION BREAKDOWN</span>
+          </div>
+          <div class="chart-meta" style="margin-top:3px;">Cadastral intake, certification velocity, and audit status grouped by administrative jurisdiction</div>
+        </div>
+        <div style="display:flex; gap:16px; font-family:var(--type); font-size:11px; align-items:center; flex-wrap:wrap;">
+          <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:10px; border-radius:2px; background:var(--green);"></span> Sealed / Certified</span>
+          <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:10px; border-radius:2px; background:var(--gold);"></span> Pending Review</span>
+          <span style="display:flex; align-items:center; gap:5px;"><span style="width:10px; height:10px; border-radius:2px; background:var(--stamp);"></span> Flagged</span>
+        </div>
+      </div>
+      {cards_joined}
+    </section>"""
 
 
 def _render_donut_svg(sale_n: int, gpa_n: int, other_n: int, total_n: int) -> str:
@@ -1450,6 +2188,7 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
           <td>
             <div class="action-links">
               <a class="act-btn" href="/record?verification_id={html.escape(r['id'])}">Review Console</a>
+              <a class="act-btn" href="/record?verification_id={html.escape(r['id'])}#audit-timeline" title="View Lifecycle Audit Trail Timeline" style="border-color:var(--rule); color:var(--ink-soft); font-size:11px;">Timeline &rarr;</a>
               {verify_btn}
             </div>
           </td>
@@ -1493,6 +2232,8 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
     preprocessing_panel_markup = _render_preprocessing_panel(
         data.get("latest_preprocessing"), total_on_file=data["on_file"]
     )
+    accuracy_panel_markup = _render_extraction_accuracy_panel()
+    state_progress_markup = _render_state_district_panel()
     fp_text = fp or "Keypair auto-generated on first seal"
 
     page_html = f"""<!doctype html>
@@ -1589,6 +2330,9 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
       <!-- Adaptive Preprocessing & Scan Quality Layer -->
       {preprocessing_panel_markup}
 
+      <!-- EXTRACTION ACCURACY & CONFIDENCE INTELLIGENCE LAYER -->
+      {accuracy_panel_markup}
+
       <!-- STATISTICAL ANALYTICS GRAPHS -->
       <section class="charts-grid" id="analyticsSection">
         
@@ -1669,6 +2413,9 @@ def render_dashboard(host_name: str = "localhost:8001", colab_url: str = "") -> 
         </div>
 
       </section>
+
+      <!-- STATE & DISTRICT PROGRESS PANEL -->
+      {state_progress_markup}
 
       <!-- MASTER LEDGER SECTION -->
       <section class="ledger-section" id="ledgerSection">
@@ -1941,12 +2688,12 @@ def render_new_scan(host_name: str = "localhost:8001", colab_url: str = "", mess
 
 def render_activity_timeline(record: dict) -> str:
     """
-    Renders an activity and audit timeline for a record, strictly formatting
-    fields that verification_service.py's existing sealing and audit-trail logic
-    already writes to each record (upload timestamp, clerk corrections,
-    submission state, and officer decision with RSA-PSS seal hash).
+    Renders a collapsible vertical audit-trail timeline for a record, strictly
+    reading existing lifecycle timestamps and actor fields from verification_db.json
+    without fabricating unrecorded fields.
     """
     import accounts_store
+    import ocr_learning_service
 
     rec_id = record.get("verification_id", "")
     status = record.get("status", "UNKNOWN")
@@ -1956,28 +2703,39 @@ def render_activity_timeline(record: dict) -> str:
 
     # 1. Upload Event
     created_at = record.get("created_at") or record.get("timestamp")
-    created_str = _fmt_date(created_at) if created_at else "Not recorded"
+    created_str = _fmt_datetime(created_at)
     uploaded_by = record.get("uploaded_by_user_id")
-    uploader_label = "Unassigned / Legacy Ingestion"
+    uploader_label = "System / Direct Intake Desk (User ID not recorded)"
     if uploaded_by:
         user_info = accounts_store.get_user(uploaded_by)
         if user_info:
-            uploader_label = f"Clerk: {user_info.get('name', uploaded_by)}"
+            uploader_label = f"{user_info.get('name', uploaded_by)} ({user_info.get('role', 'clerk').title()})"
         else:
-            uploader_label = f"Clerk ID: {uploaded_by[:8]}"
+            uploader_label = f"User ID: {uploaded_by[:8]}"
 
     # 2. Clerk Correction Event
     corrected_at = record.get("corrected_at") or record.get("updated_at")
-    field_prov = record.get("field_provenance") or {}
-    has_corrections = bool(field_prov) or status in {"READY_FOR_APPROVAL", "APPROVED", "REJECTED"}
+    fb_items = []
+    try:
+        store = ocr_learning_service.load_store()
+        fb_items = [fb for fb in store.get("feedback", []) if fb.get("verification_id") == rec_id]
+    except Exception:
+        fb_items = []
+
+    has_corrections = bool(fb_items) or bool(record.get("field_provenance")) or status in {"READY_FOR_APPROVAL", "APPROVED", "REJECTED"}
     if corrected_at:
-        correction_status = f"Corrections saved on {_fmt_date(corrected_at)}"
+        correction_status = f"Corrections saved on {_fmt_datetime(corrected_at)}"
+        corr_done = True
+    elif fb_items:
+        earliest_fb = min((fb.get("timestamp") for fb in fb_items if fb.get("timestamp")), default="")
+        fb_time_str = f" on {_fmt_datetime(earliest_fb)}" if earliest_fb else ""
+        correction_status = f"<b>{len(fb_items)} field correction(s) logged</b>{fb_time_str} &middot; <span style='color:var(--ink-soft); font-size:11px;'>(clerk_reviewed_at not stored on record in verification_db.json)</span>"
         corr_done = True
     elif has_corrections:
-        correction_status = "Field corrections reviewed &amp; saved · <em>(Timestamp not stored on record)</em>"
+        correction_status = "Field review marked complete &middot; <span style='color:var(--ink-soft); font-size:11px;'>(Review timestamp &amp; reviewer ID not stored on record in verification_db.json)</span>"
         corr_done = True
     else:
-        correction_status = "Pending review / No clerk corrections"
+        correction_status = "Awaiting clerk review &amp; verification"
         corr_done = False
 
     # 3. Submission to Officer Event
@@ -1985,37 +2743,37 @@ def render_activity_timeline(record: dict) -> str:
     clerk_sub = bool(record.get("clerk_submitted", False))
     is_submitted = (status in {"APPROVED", "REJECTED", "DUPLICATE"}) or (status == "READY_FOR_APPROVAL" and clerk_sub)
     if submitted_at:
-        submission_status = f"Submitted to Officer queue on {_fmt_date(submitted_at)}"
+        submission_status = f"Transferred to Officer Queue on {_fmt_datetime(submitted_at)} &middot; <span style='color:var(--ink-soft); font-size:11px;'>(Submitting clerk ID not stored on record)</span>"
         sub_done = True
     elif is_submitted:
-        submission_status = "Transferred to Master Officer Queue · <em>(Timestamp not stored on record)</em>"
+        submission_status = "Transferred to Officer Queue &middot; <span style='color:var(--ink-soft); font-size:11px;'>(Submission timestamp not stored on record)</span>"
         sub_done = True
     else:
         submission_status = "Not yet submitted to Officer (In Clerk Review)"
         sub_done = False
 
     # 4. Final Decision Event
-    is_decided = status in {"APPROVED", "REJECTED", "DUPLICATE"}
     approved_at = record.get("approved_at")
     rejected_at = record.get("rejected_at")
     decided_by = record.get("approved_by_user_id") or record.get("decided_by") or record.get("rejected_by_user_id")
     if decided_by:
         off_user = accounts_store.get_user(decided_by)
-        dec_by_label = f" by {off_user.get('name', decided_by)}" if off_user else f" by Officer {decided_by[:8]}"
+        dec_by_label = f"by {off_user.get('name', decided_by)}" if off_user else f"by Officer {decided_by[:8]}"
     else:
-        dec_by_label = " · <em>(Officer ID not stored on record)</em>"
+        dec_by_label = "Gazetted Officer &middot; <span style='color:var(--ink-soft); font-size:11px;'>(Officer ID not stored on record in verification_db.json)</span>"
 
     signature = record.get("signature") or ""
     sig_short = f"{signature[:24]}...{signature[-16:]}" if len(signature) > 40 else signature
 
     if status == "APPROVED":
-        dec_title = "Officially Approved &amp; Cryptographically Sealed"
-        dec_time = _fmt_date(approved_at) if approved_at else "Timestamp not stored"
+        dec_title = "Approved &amp; Cryptographically Sealed"
+        dec_time = _fmt_datetime(approved_at)
         dec_color = "var(--green)"
         dec_icon = "🔒"
         dec_body = f"""
         <div style="font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.5;">
-            <b>Certified At:</b> {html.escape(dec_time)}{dec_by_label}<br>
+            <b>Decided By:</b> {dec_by_label}<br>
+            <b>Certified At:</b> {html.escape(dec_time)}<br>
             <b>Algorithm:</b> RSA-PSS 2048-bit / SHA-256<br>
             <div style="margin-top:6px; background:#f8fafc; border:1px solid var(--rule); padding:6px 10px; border-radius:4px; font-family:var(--type); font-size:11px; word-break:break-all;">
                 <b>Seal Signature Hash:</b> <code>{html.escape(sig_short)}</code>
@@ -2024,13 +2782,14 @@ def render_activity_timeline(record: dict) -> str:
         """
     elif status == "REJECTED":
         dec_title = "Document Rejected by Officer"
-        dec_time = _fmt_date(rejected_at) if rejected_at else "Timestamp not stored"
+        dec_time = _fmt_datetime(rejected_at)
         dec_color = "var(--stamp)"
         dec_icon = "❌"
         rej_reason = record.get("rejection_reason") or "No rejection reason was recorded."
         dec_body = f"""
         <div style="font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.5;">
-            <b>Rejected At:</b> {html.escape(dec_time)}{dec_by_label}<br>
+            <b>Decided By:</b> {dec_by_label}<br>
+            <b>Rejected At:</b> {html.escape(dec_time)}<br>
             <b>Rejection Reason:</b> {html.escape(rej_reason)}
         </div>
         """
@@ -2057,11 +2816,17 @@ def render_activity_timeline(record: dict) -> str:
         dec_body = '<div style="font-size:12px; color:var(--ink-soft); margin-top:4px;">Document has not completed Stage 1 clerk review.</div>'
 
     return f"""
-    <section class="panel timeline-panel rv in" style="margin-top:20px; border:1px solid var(--rule); background:var(--card); border-radius:6px; overflow:hidden;">
-      <div class="tab" style="background:#334155; color:#fff; padding:9px 16px; font-family:var(--type); font-size:11px; letter-spacing:.16em; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
-        <span>Schedule D · Record Lifecycle &amp; Audit Trail</span>
-        <em style="color:#94a3b8; font-style:normal;">Record {html.escape(rec_id[:8].upper())}</em>
-      </div>
+    <details id="audit-timeline" class="panel timeline-panel rv in" open style="margin-top:24px; border:1.5px solid var(--rule); background:var(--card); border-radius:4px; overflow:hidden;">
+      <summary class="tab" style="cursor:pointer; user-select:none; background:#263342; color:#fff; padding:12px 18px; font-family:var(--type); font-size:11px; letter-spacing:.16em; text-transform:uppercase; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#38bdf8;"></span>
+          <span>Schedule D &middot; Record Audit Trail &amp; Lifecycle Timeline</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <em style="color:#94a3b8; font-style:normal; font-size:11px;">Record {html.escape(rec_id[:8].upper())}</em>
+          <span style="font-size:11px; color:#38bdf8; font-family:var(--type); text-transform:none; letter-spacing:0;">&#9660; Toggle Timeline</span>
+        </div>
+      </summary>
       <div class="body" style="padding:20px 24px;">
         <div style="position:relative; padding-left:28px; display:flex; flex-direction:column; gap:18px;">
           <!-- Vertical connecting bar -->
@@ -2103,8 +2868,9 @@ def render_activity_timeline(record: dict) -> str:
 
         </div>
       </div>
-    </section>
+    </details>
     """
+
 
 
 # =====================================================================

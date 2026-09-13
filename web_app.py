@@ -616,6 +616,207 @@ HTML_PAGE = Template("""<!doctype html>
     .preview-body{padding:16px;background:var(--paper-deep);flex:1;display:flex;flex-direction:column}
     .preview-body > div{flex:1;min-height:760px;max-height:calc(100vh - 140px) !important;overflow-y:auto}
     .preview-body img{width:100% !important;max-width:100% !important;border:1.5px solid var(--rule);background:#fff;box-shadow:0 4px 20px rgba(34,29,23,.14);display:block}
+
+    /* ---------- visual confidence heatmap overlay ---------- */
+    .btn-heatmap-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--paper-deep);
+      border: 1.5px solid var(--rule);
+      color: var(--ink);
+      font-family: var(--type);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-heatmap-toggle:hover {
+      background: var(--card);
+      border-color: var(--ink);
+      transform: translateY(-1px);
+    }
+    .btn-heatmap-toggle.active {
+      background: #1e3a2b;
+      color: #e6f7ec;
+      border-color: #1e3a2b;
+      box-shadow: 0 2px 8px rgba(30,58,43,0.25);
+    }
+    .btn-heatmap-toggle .heatmap-btn-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d97706;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+    .btn-heatmap-toggle.active .heatmap-btn-dot {
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
+    }
+    .heatmap-legend-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px;
+      background: #fdfbf7;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--type);
+      font-size: 11px;
+      color: var(--ink-soft);
+      flex-wrap: wrap;
+    }
+    .heatmap-legend-bar .legend-title {
+      font-weight: 700;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .heatmap-legend-bar .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .heatmap-legend-bar .legend-chip {
+      width: 14px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .legend-chip.legend-high {
+      background: rgba(34, 197, 94, 0.4);
+      border: 1px solid rgba(22, 163, 74, 0.9);
+    }
+    .legend-chip.legend-med {
+      background: rgba(245, 158, 11, 0.4);
+      border: 1px solid rgba(217, 119, 6, 0.9);
+    }
+    .legend-chip.legend-low {
+      background: rgba(239, 68, 68, 0.4);
+      border: 1px solid rgba(220, 38, 38, 0.95);
+    }
+    .heatmap-legend-bar .legend-count {
+      margin-left: auto;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .doc-page-heatmap-wrapper {
+      position: relative;
+      display: block;
+      width: 100%;
+      line-height: 0;
+    }
+    .confidence-heatmap-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+      z-index: 10;
+    }
+    .heatmap-box {
+      cursor: pointer;
+      transition: fill-opacity 0.15s ease, stroke-width 0.15s ease;
+    }
+    .heatmap-box:hover {
+      stroke-width: 2.5px !important;
+      fill-opacity: 0.55 !important;
+    }
+    .heatmap-box.conf-high {
+      fill: rgba(34, 197, 94, 0.26);
+      stroke: rgba(22, 163, 74, 0.9);
+      stroke-width: 1.5px;
+    }
+    .heatmap-box.conf-med {
+      fill: rgba(245, 158, 11, 0.28);
+      stroke: rgba(217, 119, 6, 0.9);
+      stroke-width: 1.5px;
+    }
+    .heatmap-box.conf-low {
+      fill: rgba(239, 68, 68, 0.32);
+      stroke: rgba(220, 38, 38, 0.95);
+      stroke-width: 1.5px;
+    }
+    .heatmap-floating-tooltip {
+      position: fixed;
+      z-index: 999999;
+      pointer-events: none;
+      background: rgba(22, 27, 34, 0.96);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #f0f6fc;
+      font-family: var(--sans);
+      font-size: 12.5px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      max-width: 320px;
+      line-height: 1.45;
+    }
+    .heatmap-floating-tooltip .ht-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 5px;
+    }
+    .heatmap-floating-tooltip .ht-conf {
+      font-family: var(--type);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .heatmap-floating-tooltip .ht-badge {
+      font-family: var(--type);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .heatmap-floating-tooltip .ht-badge.high { background: rgba(34, 197, 94, 0.25); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4); }
+    .heatmap-floating-tooltip .ht-badge.med { background: rgba(245, 158, 11, 0.25); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+    .heatmap-floating-tooltip .ht-badge.low { background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.4); }
+    .heatmap-floating-tooltip .ht-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 3px;
+      font-size: 12px;
+      color: #c9d1d9;
+    }
+    .heatmap-floating-tooltip .ht-label {
+      color: #8b949e;
+      font-family: var(--type);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .heatmap-floating-tooltip .ht-val {
+      font-weight: 600;
+      color: #ffffff;
+    }
+    .heatmap-floating-tooltip .ht-text {
+      margin-top: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.12);
+      font-family: var(--type);
+      font-size: 11px;
+      color: #e6edf3;
+      max-height: 48px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .checklist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px 24px}
     .pdf-note{padding:46px 20px;text-align:center;font-family:var(--type);font-size:12px;color:var(--ink-soft);border:1.5px dashed var(--rule)}
     .checklist{display:flex;flex-direction:column}
@@ -1772,7 +1973,7 @@ $stage_markup
 </script>
 
 <script>
-const CONSOLE_I18N = {"en": {"nav_registry": "Registry", "nav_dashboard": "Dashboard", "nav_new_scan": "New Scan", "nav_sealing": "Sealing", "nav_verify": "Verify", "console_h1": "Verification <em>Console</em>", "lbl_record": "Record", "badge_extracted": "Extracted", "badge_needs_review": "Needs Review", "badge_ready_for_approval": "Ready for Approval", "badge_approved": "Approved & Sealed", "badge_rejected": "Rejected", "badge_fail": "Checks Failed", "badge_duplicate": "Duplicate Detected", "step_scan": "Scan", "step_machine": "Machine Check", "step_clerk": "Clerk Review", "step_seal": "Officer Seal", "lbl_mode": "Mode", "lbl_hardware": "Hardware", "lbl_ocr": "OCR", "lbl_transit": "Transit", "lbl_total": "Total", "lbl_passed": "passed", "lbl_warnings": "warnings", "lbl_failed": "failed", "sched_a_panel_title": "Schedule A · Machine Checklist", "sched_a_sub": "automated", "chk_duplicate_document_check_name": "Ledger Duplicate Check", "chk_duplicate_document_check_msg": "Duplicate check against sealed records.", "chk_required_fields_name": "Required Document Fields", "chk_required_fields_msg": "All critical document fields are present.", "chk_area_bounds_name": "Property Area Boundary Validation", "chk_area_bounds_msg": "Property area is valid.", "chk_date_order_name": "Date Parse & Logic Validation", "chk_date_order_msg": "Document and execution dates are logically ordered.", "chk_survey_format_name": "Survey Number Validation", "chk_survey_format_msg": "Survey number format is valid.", "chk_geographic_consistency_name": "Geographic Authority Consistency", "chk_geographic_consistency_msg": "State Authority: VALIDATED via State Registry.", "sched_b_panel_title": "Schedule B · Clerk Review", "sched_b_sub": "correct in place", "clerk_instruction_note": "read each field against the scan, fix what the OCR got wrong, then save or pass it up to the officer.", "f_doc_type": "Document Type", "f_doc_no": "Document Number", "f_survey": "Survey Number", "f_subsurvey": "Sub-Survey Number", "f_area": "Property Area (Sq. Yards)", "f_village": "Village", "f_mandal": "Mandal", "f_district": "District", "f_stamp_no": "Stamp Serial Number", "f_stamp_val": "Stamp Value (₹)", "f_sold_to": "Stamp Sold To", "f_doc_date": "Document Date", "f_exec_date": "Execution Date", "f_parties": "Parties (JSON)", "warn_officer_ok": "Officer approval permanently certifies the reviewed facts and applies the seal.", "btn_save_corrections": "Save Corrections", "btn_officer_approve_seal": "Officer Approve & Seal", "btn_officer_reject": "Officer Reject", "ph_rej_reason": "Rejection reason (required)", "btn_view_cert_qr": "View Standalone Certificate & QR", "footer_title": "OneBhoomi · Offline Registry Console", "footer_sub": "Sale Deeds · Agreements · GPA", "footer_cloud": "No cloud. No keys leaving the office.", "chk_area_validation_name": "Property Area Boundary Validation", "chk_area_validation_msg": "Property area is valid.", "chk_date_validation_name": "Date Parse & Logic Validation", "chk_date_validation_msg": "Document and execution dates are logically ordered.", "chk_survey_number_validation_name": "Survey Number Validation", "chk_survey_number_validation_msg": "Survey number format is valid.", "chk_internal_consistency_name": "Internal Consistency Check", "chk_internal_consistency_msg": "No contradictions found across deed clauses.", "chk_signature_detection_name": "Signature & Stamp Presence", "chk_signature_detection_msg": "Signatures and stamps detected on document scan."}, "hi": {"nav_registry": "रजिस्ट्री", "nav_dashboard": "डैशबोर्ड", "nav_new_scan": "नया स्कैन", "nav_sealing": "डिजिटल मुहर", "nav_verify": "सत्यापन", "console_h1": "सत्यापन <em>कंसोल</em>", "lbl_record": "अभिलेख सं.", "badge_extracted": "निष्कर्षित", "badge_needs_review": "समीक्षा आवश्यक", "badge_ready_for_approval": "मुहर हेतु तैयार", "badge_approved": "अनुमोदित एवं मुहरबंद", "badge_rejected": "अस्वीकृत", "badge_fail": "जांच विफल", "badge_duplicate": "डुप्लिकेट दस्तावेज़", "step_scan": "स्कैन", "step_machine": "मशीन चेक", "step_clerk": "क्लर्क समीक्षा", "step_seal": "अधिकारी मुहर", "lbl_mode": "मोड", "lbl_hardware": "हार्डवेयर", "lbl_ocr": "ओसीआर", "lbl_transit": "ट्रांजिट", "lbl_total": "कुल समय", "lbl_passed": "सफल", "lbl_warnings": "चेतावनी", "lbl_failed": "विफल", "sched_a_panel_title": "अनुसूची क · स्वचालित मशीन चेकलिस्ट", "sched_a_sub": "स्वचालित", "chk_duplicate_document_check_name": "लेज़र डुप्लिकेट जांच", "chk_duplicate_document_check_msg": "सील किए गए रिकॉर्ड के विरुद्ध डुप्लिकेट जांच।", "chk_required_fields_name": "अनिवार्य दस्तावेज़ फ़ील्ड्स", "chk_required_fields_msg": "सभी महत्वपूर्ण दस्तावेज़ फ़ील्ड्स उपस्थित हैं।", "chk_area_bounds_name": "संपत्ति क्षेत्र सीमा सत्यापन", "chk_area_bounds_msg": "संपत्ति क्षेत्रफल वैध है।", "chk_date_order_name": "तिथि विश्लेषण एवं तार्किक क्रम", "chk_date_order_msg": "दस्तावेज़ एवं निष्पादन तिथियां तार्किक क्रम में हैं।", "chk_survey_format_name": "सर्वेक्षण संख्या सत्यापन", "chk_survey_format_msg": "सर्वेक्षण संख्या प्रारूप कानूनी रूप से मान्य है।", "chk_geographic_consistency_name": "भौगोलिक प्राधिकरण संगतता", "chk_geographic_consistency_msg": "राज्य प्राधिकरण: राज्य रजिस्ट्री द्वारा सत्यापित।", "sched_b_panel_title": "अनुसूची ख · क्लर्क समीक्षा एवं सुधार", "sched_b_sub": "तत्काल सुधारें", "clerk_instruction_note": "स्कैन के आधार पर प्रत्येक फ़ील्ड की जांच करें, ओसीआर त्रुटियों को सुधारें, फिर सहेजें या अनुमोदन हेतु अधिकारी को भेजें।", "f_doc_type": "दस्तावेज़ प्रकार", "f_doc_no": "दस्तावेज़ संख्या", "f_survey": "सर्वेक्षण संख्या", "f_subsurvey": "उप-सर्वेक्षण संख्या", "f_area": "संपत्ति क्षेत्रफल (वर्ग गज)", "f_village": "ग्राम", "f_mandal": "मंडल", "f_district": "ज़िला", "f_stamp_no": "स्टाम्प क्रमांक", "f_stamp_val": "स्टाम्प मूल्य (₹)", "f_sold_to": "स्टाम्प क्रेता", "f_doc_date": "दस्तावेज़ दिनांक", "f_exec_date": "निष्पादन दिनांक", "f_parties": "पक्षकार (JSON)", "warn_officer_ok": "अधिकारी का अनुमोदन तथ्यों को स्थायी रूप से प्रमाणित करता है और डिजिटल मुहर लगाता है।", "btn_save_corrections": "सुधार सहेजें", "btn_officer_approve_seal": "अधिकारी अनुमोदन एवं मुहर", "btn_officer_reject": "अधिकारी अस्वीकृति", "ph_rej_reason": "अस्वीकृति का कारण (अनिवार्य)", "btn_view_cert_qr": "प्रमाणपत्र एवं क्यूआर देखें", "footer_title": "वनभूमि · ऑफ़लाइन रजिस्ट्री कंसोल", "footer_sub": "बिक्री विलेख · अनुबंध · जीपीए", "footer_cloud": "कोई क्लाउड नहीं। कोई भी कुंजी कार्यालय से बाहर नहीं जाती।", "chk_area_validation_name": "संपत्ति क्षेत्र सीमा सत्यापन", "chk_area_validation_msg": "संपत्ति क्षेत्रफल वैध है।", "chk_date_validation_name": "तिथि विश्लेषण एवं तार्किक क्रम", "chk_date_validation_msg": "दस्तावेज़ एवं निष्पादन तिथियां तार्किक क्रम में हैं।", "chk_survey_number_validation_name": "सर्वेक्षण संख्या सत्यापन", "chk_survey_number_validation_msg": "सर्वेक्षण संख्या प्रारूप कानूनी रूप से मान्य है।", "chk_internal_consistency_name": "आंतरिक संगति जांच", "chk_internal_consistency_msg": "विलेख शर्तों में कोई अंतर्विरोध नहीं मिला।", "chk_signature_detection_name": "हस्ताक्षर एवं स्टाम्प उपस्थिति", "chk_signature_detection_msg": "दस्तावेज़ स्कैन पर हस्ताक्षर एवं स्टाम्प की पुष्टि हुई।"}, "te": {"nav_registry": "రిజిస్ట్రీ", "nav_dashboard": "డ్యాష్‌బోర్డ్", "nav_new_scan": "కొత్త స్కాన్", "nav_sealing": "డిజిటల్ ముద్ర", "nav_verify": "ధృవీకరణ", "console_h1": "ధృవీకరణ <em>కన్సోల్</em>", "lbl_record": "రికార్డు సంఖ్య", "badge_extracted": "సేకరించబడింది", "badge_needs_review": "సమీక్ష అవసరం", "badge_ready_for_approval": "ముద్రకు సిద్ధం", "badge_approved": "ఆమోదించబడి & సీల్ చేయబడింది", "badge_rejected": "తిరస్కరించబడింది", "badge_fail": "తనిఖీ విఫలమైంది", "badge_duplicate": "డూప్లికేట్ పత్రం", "step_scan": "స్కాన్", "step_machine": "మెషిన్ చెక్", "step_clerk": "క్లర్క్ సమీక్ష", "step_seal": "అధికారి ముద్ర", "lbl_mode": "మోడ్", "lbl_hardware": "హార్డ్‌వేర్", "lbl_ocr": "OCR", "lbl_transit": "రవాణా", "lbl_total": "మొత్తం సమయం", "lbl_passed": "విజయవంతం", "lbl_warnings": "హెచ్చరికలు", "lbl_failed": "విఫలమైనవి", "sched_a_panel_title": "షెడ్యూల్ A · ఆటోమేటెడ్ మెషిన్ చెక్‌లిస్ట్", "sched_a_sub": "ఆటోమేటెడ్", "chk_duplicate_document_check_name": "రిజిస్ట్రీ డూప్లికేట్ తనిఖీ", "chk_duplicate_document_check_msg": "సీల్ చేయబడిన రికార్డులతో డూప్లికేట్ తనిఖీ.", "chk_required_fields_name": "అవసరమైన పత్రం ఫీల్డులు", "chk_required_fields_msg": "అన్ని ముఖ్యమైన ఫీల్డులు ఉన్నాయి.", "chk_area_bounds_name": "ఆస్తి విస్తీర్ణం సరిహద్దు తనిఖీ", "chk_area_bounds_msg": "ఆస్తి విస్తీర్ణం చట్టబద్ధంగా ఉంది.", "chk_date_order_name": "తేదీల విశ్లేషణ & తార్కిక క్రమం", "chk_date_order_msg": "దస్తావేజు మరియు అమలు తేదీలు సరైన క్రమంలో ఉన్నాయి.", "chk_survey_format_name": "సర్వే నంబర్ ధృవీకరణ", "chk_survey_format_msg": "సర్వే నంబర్ సరైన ఫార్మాట్‌లో ఉంది.", "chk_geographic_consistency_name": "భౌగోళిక స్థానిక సరిపోలిక", "chk_geographic_consistency_msg": "స్టేట్ అథారిటీ: అధికారిక రిజిస్ట్రీ ద్వారా ధృవీకరించబడింది.", "sched_b_panel_title": "షెడ్యూల్ B · క్లర్క్ సమీక్ష & సవరణ", "sched_b_sub": "ఇక్కడే సవరించండి", "clerk_instruction_note": "స్కాన్ చేసిన పత్రంతో ప్రతి ఫీల్డ్‌ను సరిచూడండి, తప్పులను సరిదిద్దండి, ఆపై భద్రపరచండి లేదా అధికారికి పంపండి.", "f_doc_type": "పత్రం రకం", "f_doc_no": "పత్రం సంఖ్య", "f_survey": "సర్వే నంబర్", "f_subsurvey": "సబ్-సర్వే నంబర్", "f_area": "ఆస్తి విస్తీర్ణం (గజాలు)", "f_village": "గ్రామం", "f_mandal": "మండలం", "f_district": "జిల్లా", "f_stamp_no": "స్టాంప్ సీరియల్ సంఖ్య", "f_stamp_val": "స్టాంప్ విలువ (₹)", "f_sold_to": "స్టాంప్ కొనుగోలుదారు", "f_doc_date": "పత్రం తేదీ", "f_exec_date": "అమలు తేదీ", "f_parties": "పార్టీలు (JSON)", "warn_officer_ok": "అధికారి ఆమోదం రికార్డును శాశ్వతంగా లాక్ చేసి డిజిటల్ సీల్ వేస్తుంది.", "btn_save_corrections": "సవరణలను భద్రపరచండి", "btn_officer_approve_seal": "అధికారి ఆమోదం & ముద్ర", "btn_officer_reject": "అధికారి తిరస్కరణ", "ph_rej_reason": "తిరస్కరణకు కారణం (తప్పనిసరి)", "btn_view_cert_qr": "ధృవీకరణ పత్రం & QR చూడండి", "footer_title": "వన్‌భూమి · ఆఫ్‌లైన్ రిజిస్ట్రీ కన్సోల్", "footer_sub": "సేల్ డీడ్‌లు · ఒప్పందాలు · GPA", "footer_cloud": "క్లౌడ్ లేదు. కార్యాలయం నుండి కీలు ఎక్కడికీ వెళ్లవు.", "chk_area_validation_name": "ఆస్తి విస్తీర్ణం సరిహద్దు తనిఖీ", "chk_area_validation_msg": "ఆస్తి విస్తీర్ణం చట్టబద్ధంగా ఉంది.", "chk_date_validation_name": "తేదీల విశ్లేషణ & తార్కిక క్రమం", "chk_date_validation_msg": "దస్తావేజు మరియు అమలు తేదీలు సరైన క్రమంలో ఉన్నాయి.", "chk_survey_number_validation_name": "సర్వే నంబర్ ధృవీకరణ", "chk_survey_number_validation_msg": "సర్వే నంబర్ సరైన ఫార్మాట్‌లో ఉంది.", "chk_internal_consistency_name": "అంతర్గత స్థిరత్వ తనిఖీ", "chk_internal_consistency_msg": "నిబంధనలలో ఎటువంటి వైరుధ్యాలు కనుగొనబడలేదు.", "chk_signature_detection_name": "సంతకం మరియు స్టాంప్ గుర్తింపు", "chk_signature_detection_msg": "స్కాన్ పత్రంలో సంతకాలు మరియు స్టాంపులు గుర్తించబడ్డాయి."}, "kn": {"nav_registry": "ನೋಂದಣಿ", "nav_dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "nav_new_scan": "ಹೊಸ ಸ್ಕ್ಯಾನ್", "nav_sealing": "ಡಿಜಿಟಲ್ ಮುದ್ರೆ", "nav_verify": "ಪರಿಶೀಲನೆ", "console_h1": "ಪರಿಶೀಲನಾ <em>ಕನ್ಸೋಲ್</em>", "lbl_record": "ದಾಖಲೆ ಸಂಖ್ಯೆ", "badge_extracted": "ಹೊರತೆಗೆಯಲಾಗಿದೆ", "badge_needs_review": "ಪರಿಶೀಲನೆ ಅಗತ್ಯವಿದೆ", "badge_ready_for_approval": "ಮುದ್ರೆಗೆ ಸಿದ್ಧ", "badge_approved": "ಅನುಮೋದಿಸಿ ಮುದ್ರೆ ಹಾಕಲಾಗಿದೆ", "badge_rejected": "ತಿರಸ್ಕರಿಸಲಾಗಿದೆ", "badge_fail": "ಪರಿಶೀಲನೆ ವಿಫಲ", "badge_duplicate": "ನಕಲಿ ದಾಖಲೆ", "step_scan": "ಸ್ಕ್ಯಾನ್", "step_machine": "ಯಂತ್ರ ತಪಾಸಣೆ", "step_clerk": "ಗುಮಾಸ್ತರ ಪರಿಶೀಲನೆ", "step_seal": "ಅಧಿಕಾರಿಯ ಮುದ್ರೆ", "lbl_mode": "ಮೋಡ್", "lbl_hardware": "ಯಂತ್ರಾಂಶ", "lbl_ocr": "OCR", "lbl_transit": "ರವಾನೆ", "lbl_total": "ಒಟ್ಟು ಸಮಯ", "lbl_passed": "ಯಶಸ್ವಿ", "lbl_warnings": "ಎಚ್ಚರಿಕೆಗಳು", "lbl_failed": "ವಿಫಲ", "sched_a_panel_title": "ಹಂತ A · ಸ್ವಯಂಚಾಲಿತ ಯಂತ್ರ ಪರಿಶೀಲನಾಪಟ್ಟಿ", "sched_a_sub": "ಸ್ವಯಂಚಾಲಿತ", "chk_duplicate_document_check_name": "ನೋಂದಣಿ ನಕಲು ಪರಿಶೀಲನೆ", "chk_duplicate_document_check_msg": "ಮುದ್ರಿತ ದಾಖಲೆಗಳೊಂದಿಗೆ ನಕಲು ಪರಿಶೀಲನೆ.", "chk_required_fields_name": "ಅಗತ್ಯವಿರುವ ದಾಖಲೆ ಕ್ಷೇತ್ರಗಳು", "chk_required_fields_msg": "ಎಲ್ಲಾ ಪ್ರಮುಖ ಕ್ಷೇತ್ರಗಳು ಲಭ್ಯವಿವೆ.", "chk_area_bounds_name": "ವಿಸ್ತೀರ್ಣ ಮಿತಿ ಪರಿಶೀಲನೆ", "chk_area_bounds_msg": "ಆಸ್ತಿ ವಿಸ್ತೀರ್ಣ ಮಾನ್ಯವಾಗಿದೆ.", "chk_date_order_name": "ದಿನಾಂಕಗಳ ಕ್ರಮಬದ್ಧತೆ ಪರಿಶೀಲನೆ", "chk_date_order_msg": "ದಾಖಲೆ ದಿನಾಂಕಗಳು ಸರಿಯಾದ ಕ್ರಮದಲ್ಲಿವೆ.", "chk_survey_format_name": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಪರಿಶೀಲನೆ", "chk_survey_format_msg": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಮಾದರಿ ಕಾನೂನುಬದ್ಧವಾಗಿದೆ.", "chk_geographic_consistency_name": "ಭೌಗೋಳಿಕ ತಾಳೆ ಪರಿಶೀಲನೆ", "chk_geographic_consistency_msg": "ರಾಜ್ಯ ಪ್ರಾಧಿಕಾರ: ಅಧಿಕೃತ ನೋಂದಣಿಯಿಂದ ದೃಢೀಕರಿಸಲಾಗಿದೆ.", "sched_b_panel_title": "ಹಂತ B · ಸಿಬ್ಬಂದಿ ಪರಿಶೀಲನೆ & ತಿದ್ದುಪಡಿ", "sched_b_sub": "ಇಲ್ಲಿಯೇ ಸರಿಪಡಿಸಿ", "clerk_instruction_note": "ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಪ್ರತಿಯೊಂದಿಗೆ ತಾಳೆ ನೋಡಿ, ತಪ್ಪುಗಳನ್ನು ಸರಿಪಡಿಸಿ, ನಂತರ ಉಳಿಸಿ ಅಥವಾ ಅಧಿಕಾರಿಗೆ ಸಲ್ಲಿಸಿ.", "f_doc_type": "ದಾಖಲೆಯ ಪ್ರಕಾರ", "f_doc_no": "ದಾಖಲೆ ಸಂಖ್ಯೆ", "f_survey": "ಸರ್ವೇ ಸಂಖ್ಯೆ", "f_subsurvey": "ಉಪ-ಸರ್ವೇ ಸಂಖ್ಯೆ", "f_area": "ಆಸ್ತಿ ವಿಸ್ತೀರ್ಣ (ಚದರ ಗಜ)", "f_village": "ಗ್ರಾಮ", "f_mandal": "ಹೋಬಳಿ", "f_district": "ಜಿಲ್ಲೆ", "f_stamp_no": "ಮುದ್ರಾಂಕ ಸಂಖ್ಯೆ", "f_stamp_val": "ಮುದ್ರಾಂಕ ಮೌಲ್ಯ (₹)", "f_sold_to": "ಖರೀದಿದಾರರ ಹೆಸರು", "f_doc_date": "ದಾಖಲೆ ದಿನಾಂಕ", "f_exec_date": "ನೋಂದಣಿ ದಿನಾಂಕ", "f_parties": "ಪಕ್ಷಗಾರರ ವಿವರ (JSON)", "warn_officer_ok": "ಅಧಿಕಾರಿಯ ಅನುಮೋದನೆಯು ದಾಖಲೆಯನ್ನು ಅಂತಿಮಗೊಳಿಸಿ ಡಿಜಿಟಲ್ ಮುದ್ರೆ ಹಾಕುತ್ತದೆ.", "btn_save_corrections": "ತಿದ್ದುಪಡಿ ಉಳಿಸಿ", "btn_officer_approve_seal": "ಅಧಿಕಾರಿ ಅನುಮೋದನೆ & ಮುದ್ರೆ", "btn_officer_reject": "ಅಧಿಕಾರಿ ತಿರಸ್ಕಾರ", "ph_rej_reason": "ತಿರಸ್ಕಾರಕ್ಕೆ ಕಾರಣ (ಕಡ್ಡಾಯ)", "btn_view_cert_qr": "ಪ್ರಮಾಣಪತ್ರ & QR ವೀಕ್ಷಿಸಿ", "footer_title": "ವನ್‌ಭೂಮಿ · ಆಫ್‌ಲೈನ್ ನೋಂದಣಿ ಕನ್ಸೋಲ್", "footer_sub": "ಮಾರಾಟ ಪತ್ರಗಳು · ಒಪ್ಪಂದಗಳು · ಜಿಪಿಎ", "footer_cloud": "ಯಾವುದೇ ಕ್ಲೌಡ್ ಇಲ್ಲ. ಕಚೇರಿಯಿಂದ ಕೀಗಳು ಹೊರಹೋಗುವುದಿಲ್ಲ.", "chk_area_validation_name": "ವಿಸ್ತೀರ್ಣ ಮಿತಿ ಪರಿಶೀಲನೆ", "chk_area_validation_msg": "ಆಸ್ತಿ ವಿಸ್ತೀರ್ಣ ಮಾನ್ಯವಾಗಿದೆ.", "chk_date_validation_name": "ದಿನಾಂಕಗಳ ಕ್ರಮಬದ್ಧತೆ ಪರಿಶೀಲನೆ", "chk_date_validation_msg": "ದಾಖಲೆ ದಿನಾಂಕಗಳು ಸರಿಯಾದ ಕ್ರಮದಲ್ಲಿವೆ.", "chk_survey_number_validation_name": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಪರಿಶೀಲನೆ", "chk_survey_number_validation_msg": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಮಾದರಿ ಕಾನೂನುಬದ್ಧವಾಗಿದೆ.", "chk_internal_consistency_name": "ಆಂತರಿಕ ಸುಸಂಗತತೆ ಪರಿಶೀಲನೆ", "chk_internal_consistency_msg": "ಷರತ್ತುಗಳಲ್ಲಿ ಯಾವುದೇ ವಿರೋಧಾಭಾಸಗಳು ಕಂಡುಬಂದಿಲ್ಲ.", "chk_signature_detection_name": "ಸಹಿ ಮತ್ತು ಮುದ್ರಾಂಕ ಪರಿಶೀಲನೆ", "chk_signature_detection_msg": "ಸ್ಕ್ಯಾನ್ ಪ್ರತಿಯಲ್ಲಿ ಸಹಿ ಮತ್ತು ಮುದ್ರಾಂಕಗಳು ದೃಢಪಟ್ಟಿವೆ."}, "ta": {"nav_registry": "பதிவேடு", "nav_dashboard": "டாஷ்போர்டு", "nav_new_scan": "புதிய ஸ்கேன்", "nav_sealing": "டிஜிட்டல் முத்திரை", "nav_verify": "சரிபார்ப்பு", "console_h1": "சரிபார்ப்பு <em>கன்சோல்</em>", "lbl_record": "பதிவு எண்", "badge_extracted": "பிரித்தெடுக்கப்பட்டது", "badge_needs_review": "மதிப்பாய்வு தேவை", "badge_ready_for_approval": "முத்திரைக்கு தயார்", "badge_approved": "ஒப்புதல் அளிக்கப்பட்டு முத்திரையிடப்பட்டது", "badge_rejected": "நிராகரிக்கப்பட்டது", "badge_fail": "சரிபார்ப்பு தோல்வி", "badge_duplicate": "நகல் ஆவணம்", "step_scan": "ஸ்கேன்", "step_machine": "இயந்திர சரிபார்ப்பு", "step_clerk": "எழுத்தர் மதிப்பாய்வு", "step_seal": "அதிகாரி முத்திரை", "lbl_mode": "முறைமை", "lbl_hardware": "வன்பொருள்", "lbl_ocr": "OCR", "lbl_transit": "போக்குவரத்து", "lbl_total": "மொத்த நேரம்", "lbl_passed": "வெற்றி", "lbl_warnings": "எச்சரிக்கைகள்", "lbl_failed": "தோல்வி", "sched_a_panel_title": "அட்டவணை A · தானியங்கி இயந்திர சரிபார்ப்பு பட்டியல்", "sched_a_sub": "தானியங்கி", "chk_duplicate_document_check_name": "பதிவேடு நகல் சரிபார்ப்பு", "chk_duplicate_document_check_msg": "முத்திரையிடப்பட்ட பதிவேட்டுடன் நகல் சரிபார்ப்பு.", "chk_required_fields_name": "தேவையான ஆவணப் புலங்கள்", "chk_required_fields_msg": "அனைத்து முக்கிய புலங்களும் உள்ளன.", "chk_area_bounds_name": "நிலப் பரப்பளவு எல்லைச் சரிபார்ப்பு", "chk_area_bounds_msg": "பரப்பளவு செல்லுபடியாகும்.", "chk_date_order_name": "தேதி பகுப்பாய்வு & தர்க்கரீதியான வரிசை", "chk_date_order_msg": "ஆவணத் தேதிகள் சரியான வரிசையில் உள்ளன.", "chk_survey_format_name": "சர்வே எண் சரிபார்ப்பு", "chk_survey_format_msg": "சர்வே எண் வடிவம் சட்டப்பூர்வமானது.", "chk_geographic_consistency_name": "இடஞ்சார்ந்த அதிகாரப் பொருத்தம்", "chk_geographic_consistency_msg": "அரசு அதிகாரம்: அதிகாரப்பூர்வ பதிவேடு மூலம் உறுதிப்படுத்தப்பட்டது.", "sched_b_panel_title": "அட்டவணை B · எழுத்தர் மதிப்பாய்வு & திருத்தம்", "sched_b_sub": "இங்கேயே திருத்துக", "clerk_instruction_note": "ஸ்கேன் செய்யப்பட்ட ஆவணத்துடன் ஒப்பிட்டு பிழைகளைத் திருத்துக, பின்னர் சேமிக்கவும் அல்லது அதிகாரிக்கு சமர்ப்பிக்கவும்.", "f_doc_type": "ஆவண வகை", "f_doc_no": "ஆவண எண்", "f_survey": "சர்வே எண்", "f_subsurvey": "உட்பிரிவு சர்வே எண்", "f_area": "சொத்து பரப்பளவு (சதுர கெஜம்)", "f_village": "கிராமம்", "f_mandal": "மண்டலம்", "f_district": "மாவட்டம்", "f_stamp_no": "முத்திரைத்தாள் எண்", "f_stamp_val": "முத்திரை மதிப்பு (₹)", "f_sold_to": "வாங்குபவர் பெயர்", "f_doc_date": "ஆவண தேதி", "f_exec_date": "நிறைவேற்றப்பட்ட தேதி", "f_parties": "நபர்கள் (JSON)", "warn_officer_ok": "அதிகாரியின் ஒப்புதல் ஆவணத்தை உறுதிசெய்து டிஜிட்டல் முத்திரையிடுகிறது.", "btn_save_corrections": "திருத்தங்களை சேமிக்கவும்", "btn_officer_approve_seal": "அதிகாரி ஒப்புதல் & முத்திரை", "btn_officer_reject": "அதிகாரி நிராகரிப்பு", "ph_rej_reason": "நிராகரிப்புக்கான காரணம் (கட்டாயம்)", "btn_view_cert_qr": "சான்றிதழ் & QR பார்க்க", "footer_title": "ஒன்பூமி · ஆஃப்லைன் பதிவேடு கன்சோல்", "footer_sub": "விற்பனைப் பத்திரங்கள் · ஒப்பந்தங்கள் · ஜிபிஏ", "footer_cloud": "கிளவுட் இல்லை. விசைகள் அலுவலகத்தை விட்டு வெளியேறாது.", "chk_area_validation_name": "நிலப் பரப்பளவு எல்லைச் சரிபார்ப்பு", "chk_area_validation_msg": "பரப்பளவு செல்லுபடியாகும்.", "chk_date_validation_name": "தேதி பகுப்பாய்வு & தர்க்கரீதியான வரிசை", "chk_date_validation_msg": "ஆவணத் தேதிகள் சரியான வரிசையில் உள்ளன.", "chk_survey_number_validation_name": "சர்வே எண் சரிபார்ப்பு", "chk_survey_number_validation_msg": "சர்வே எண் வடிவம் சட்டப்பூர்வமானது.", "chk_internal_consistency_name": "உள் நிலைத்தன்மை சரிபார்ப்பு", "chk_internal_consistency_msg": "பத்திரப் பிரிவுகளில் முரண்பாடுகள் எதுவும் இல்லை.", "chk_signature_detection_name": "கையொப்பம் மற்றும் முத்திரை சரிபார்ப்பு", "chk_signature_detection_msg": "ஸ்கேன் செய்யப்பட்ட ஆவணத்தில் கையொப்பங்கள் மற்றும் முத்திரைகள் உறுதிசெய்யப்பட்டன."}};
+const CONSOLE_I18N = {"en": {"nav_registry": "Registry", "nav_dashboard": "Dashboard", "nav_new_scan": "New Scan", "nav_sealing": "Sealing", "nav_verify": "Verify", "console_h1": "Verification <em>Console</em>", "lbl_record": "Record", "badge_extracted": "Extracted", "badge_needs_review": "Needs Review", "badge_ready_for_approval": "Ready for Approval", "badge_approved": "Approved & Sealed", "badge_rejected": "Rejected", "badge_fail": "Checks Failed", "badge_duplicate": "Duplicate Detected", "step_scan": "Scan", "step_machine": "Machine Check", "step_clerk": "Clerk Review", "step_seal": "Officer Seal", "lbl_mode": "Mode", "lbl_hardware": "Hardware", "lbl_ocr": "OCR", "lbl_transit": "Transit", "lbl_total": "Total", "lbl_passed": "passed", "lbl_warnings": "warnings", "lbl_failed": "failed", "sched_a_panel_title": "Schedule A · Machine Checklist", "sched_a_sub": "automated", "chk_duplicate_document_check_name": "Ledger Duplicate Check", "chk_duplicate_document_check_msg": "Duplicate check against sealed records.", "chk_required_fields_name": "Required Document Fields", "chk_required_fields_msg": "All critical document fields are present.", "chk_area_bounds_name": "Property Area Boundary Validation", "chk_area_bounds_msg": "Property area is valid.", "chk_date_order_name": "Date Parse & Logic Validation", "chk_date_order_msg": "Document and execution dates are logically ordered.", "chk_survey_format_name": "Survey Number Validation", "chk_survey_format_msg": "Survey number format is valid.", "chk_geographic_consistency_name": "Geographic Authority Consistency", "chk_geographic_consistency_msg": "State Authority: VALIDATED via State Registry.", "sched_b_panel_title": "Schedule B · Clerk Review", "sched_b_sub": "correct in place", "clerk_instruction_note": "read each field against the scan, fix what the OCR got wrong, then save or pass it up to the officer.", "f_doc_type": "Document Type", "f_doc_no": "Document Number", "f_survey": "Survey Number", "f_subsurvey": "Sub-Survey Number", "f_area": "Property Area (Sq. Yards)", "f_village": "Village", "f_mandal": "Mandal", "f_district": "District", "f_stamp_no": "Stamp Serial Number", "f_stamp_val": "Stamp Value (₹)", "f_sold_to": "Stamp Sold To", "f_doc_date": "Document Date", "f_exec_date": "Execution Date", "f_parties": "Parties (JSON)", "warn_officer_ok": "Officer approval permanently certifies the reviewed facts and applies the seal.", "btn_save_corrections": "Save Corrections", "btn_officer_approve_seal": "Officer Approve & Seal", "btn_officer_reject": "Officer Reject", "ph_rej_reason": "Rejection reason (required)", "btn_view_cert_qr": "View Standalone Certificate & QR", "footer_title": "OneBhoomi · Offline Registry Console", "footer_sub": "Sale Deeds · Agreements · GPA", "footer_cloud": "No cloud. No keys leaving the office.", "chk_area_validation_name": "Property Area Boundary Validation", "chk_area_validation_msg": "Property area is valid.", "chk_date_validation_name": "Date Parse & Logic Validation", "chk_date_validation_msg": "Document and execution dates are logically ordered.", "chk_survey_number_validation_name": "Survey Number Validation", "chk_survey_number_validation_msg": "Survey number format is valid.", "chk_internal_consistency_name": "Internal Consistency Check", "chk_internal_consistency_msg": "No contradictions found across deed clauses.", "chk_signature_detection_name": "Signature & Stamp Presence", "chk_signature_detection_msg": "Signatures and stamps detected on document scan.", "show_confidence_heatmap": "Show confidence heatmap", "hide_confidence_heatmap": "Hide confidence heatmap"}, "hi": {"nav_registry": "रजिस्ट्री", "nav_dashboard": "डैशबोर्ड", "nav_new_scan": "नया स्कैन", "nav_sealing": "डिजिटल मुहर", "nav_verify": "सत्यापन", "console_h1": "सत्यापन <em>कंसोल</em>", "lbl_record": "अभिलेख सं.", "badge_extracted": "निष्कर्षित", "badge_needs_review": "समीक्षा आवश्यक", "badge_ready_for_approval": "मुहर हेतु तैयार", "badge_approved": "अनुमोदित एवं मुहरबंद", "badge_rejected": "अस्वीकृत", "badge_fail": "जांच विफल", "badge_duplicate": "डुप्लिकेट दस्तावेज़", "step_scan": "स्कैन", "step_machine": "मशीन चेक", "step_clerk": "क्लर्क समीक्षा", "step_seal": "अधिकारी मुहर", "lbl_mode": "मोड", "lbl_hardware": "हार्डवेयर", "lbl_ocr": "ओसीआर", "lbl_transit": "ट्रांजिट", "lbl_total": "कुल समय", "lbl_passed": "सफल", "lbl_warnings": "चेतावनी", "lbl_failed": "विफल", "sched_a_panel_title": "अनुसूची क · स्वचालित मशीन चेकलिस्ट", "sched_a_sub": "स्वचालित", "chk_duplicate_document_check_name": "लेज़र डुप्लिकेट जांच", "chk_duplicate_document_check_msg": "सील किए गए रिकॉर्ड के विरुद्ध डुप्लिकेट जांच।", "chk_required_fields_name": "अनिवार्य दस्तावेज़ फ़ील्ड्स", "chk_required_fields_msg": "सभी महत्वपूर्ण दस्तावेज़ फ़ील्ड्स उपस्थित हैं।", "chk_area_bounds_name": "संपत्ति क्षेत्र सीमा सत्यापन", "chk_area_bounds_msg": "संपत्ति क्षेत्रफल वैध है।", "chk_date_order_name": "तिथि विश्लेषण एवं तार्किक क्रम", "chk_date_order_msg": "दस्तावेज़ एवं निष्पादन तिथियां तार्किक क्रम में हैं।", "chk_survey_format_name": "सर्वेक्षण संख्या सत्यापन", "chk_survey_format_msg": "सर्वेक्षण संख्या प्रारूप कानूनी रूप से मान्य है।", "chk_geographic_consistency_name": "भौगोलिक प्राधिकरण संगतता", "chk_geographic_consistency_msg": "राज्य प्राधिकरण: राज्य रजिस्ट्री द्वारा सत्यापित।", "sched_b_panel_title": "अनुसूची ख · क्लर्क समीक्षा एवं सुधार", "sched_b_sub": "तत्काल सुधारें", "clerk_instruction_note": "स्कैन के आधार पर प्रत्येक फ़ील्ड की जांच करें, ओसीआर त्रुटियों को सुधारें, फिर सहेजें या अनुमोदन हेतु अधिकारी को भेजें।", "f_doc_type": "दस्तावेज़ प्रकार", "f_doc_no": "दस्तावेज़ संख्या", "f_survey": "सर्वेक्षण संख्या", "f_subsurvey": "उप-सर्वेक्षण संख्या", "f_area": "संपत्ति क्षेत्रफल (वर्ग गज)", "f_village": "ग्राम", "f_mandal": "मंडल", "f_district": "ज़िला", "f_stamp_no": "स्टाम्प क्रमांक", "f_stamp_val": "स्टाम्प मूल्य (₹)", "f_sold_to": "स्टाम्प क्रेता", "f_doc_date": "दस्तावेज़ दिनांक", "f_exec_date": "निष्पादन दिनांक", "f_parties": "पक्षकार (JSON)", "warn_officer_ok": "अधिकारी का अनुमोदन तथ्यों को स्थायी रूप से प्रमाणित करता है और डिजिटल मुहर लगाता है।", "btn_save_corrections": "सुधार सहेजें", "btn_officer_approve_seal": "अधिकारी अनुमोदन एवं मुहर", "btn_officer_reject": "अधिकारी अस्वीकृति", "ph_rej_reason": "अस्वीकृति का कारण (अनिवार्य)", "btn_view_cert_qr": "प्रमाणपत्र एवं क्यूआर देखें", "footer_title": "वनभूमि · ऑफ़लाइन रजिस्ट्री कंसोल", "footer_sub": "बिक्री विलेख · अनुबंध · जीपीए", "footer_cloud": "कोई क्लाउड नहीं। कोई भी कुंजी कार्यालय से बाहर नहीं जाती।", "chk_area_validation_name": "संपत्ति क्षेत्र सीमा सत्यापन", "chk_area_validation_msg": "संपत्ति क्षेत्रफल वैध है।", "chk_date_validation_name": "तिथि विश्लेषण एवं तार्किक क्रम", "chk_date_validation_msg": "दस्तावेज़ एवं निष्पादन तिथियां तार्किक क्रम में हैं।", "chk_survey_number_validation_name": "सर्वेक्षण संख्या सत्यापन", "chk_survey_number_validation_msg": "सर्वेक्षण संख्या प्रारूप कानूनी रूप से मान्य है।", "chk_internal_consistency_name": "आंतरिक संगति जांच", "chk_internal_consistency_msg": "विलेख शर्तों में कोई अंतर्विरोध नहीं मिला।", "chk_signature_detection_name": "हस्ताक्षर एवं स्टाम्प उपस्थिति", "chk_signature_detection_msg": "दस्तावेज़ स्कैन पर हस्ताक्षर एवं स्टाम्प की पुष्टि हुई।", "show_confidence_heatmap": "विश्वास हीटमैप दिखाएं", "hide_confidence_heatmap": "हीटमैप छुपाएं"}, "te": {"nav_registry": "రిజిస్ట్రీ", "nav_dashboard": "డ్యాష్‌బోర్డ్", "nav_new_scan": "కొత్త స్కాన్", "nav_sealing": "డిజిటల్ ముద్ర", "nav_verify": "ధృవీకరణ", "console_h1": "ధృవీకరణ <em>కన్సోల్</em>", "lbl_record": "రికార్డు సంఖ్య", "badge_extracted": "సేకరించబడింది", "badge_needs_review": "సమీక్ష అవసరం", "badge_ready_for_approval": "ముద్రకు సిద్ధం", "badge_approved": "ఆమోదించబడి & సీల్ చేయబడింది", "badge_rejected": "తిరస్కరించబడింది", "badge_fail": "తనిఖీ విఫలమైంది", "badge_duplicate": "డూప్లికేట్ పత్రం", "step_scan": "స్కాన్", "step_machine": "మెషిన్ చెక్", "step_clerk": "క్లర్క్ సమీక్ష", "step_seal": "అధికారి ముద్ర", "lbl_mode": "మోడ్", "lbl_hardware": "హార్డ్‌వేర్", "lbl_ocr": "OCR", "lbl_transit": "రవాణా", "lbl_total": "మొత్తం సమయం", "lbl_passed": "విజయవంతం", "lbl_warnings": "హెచ్చరికలు", "lbl_failed": "విఫలమైనవి", "sched_a_panel_title": "షెడ్యూల్ A · ఆటోమేటెడ్ మెషిన్ చెక్‌లిస్ట్", "sched_a_sub": "ఆటోమేటెడ్", "chk_duplicate_document_check_name": "రిజిస్ట్రీ డూప్లికేట్ తనిఖీ", "chk_duplicate_document_check_msg": "సీల్ చేయబడిన రికార్డులతో డూప్లికేట్ తనిఖీ.", "chk_required_fields_name": "అవసరమైన పత్రం ఫీల్డులు", "chk_required_fields_msg": "అన్ని ముఖ్యమైన ఫీల్డులు ఉన్నాయి.", "chk_area_bounds_name": "ఆస్తి విస్తీర్ణం సరిహద్దు తనిఖీ", "chk_area_bounds_msg": "ఆస్తి విస్తీర్ణం చట్టబద్ధంగా ఉంది.", "chk_date_order_name": "తేదీల విశ్లేషణ & తార్కిక క్రమం", "chk_date_order_msg": "దస్తావేజు మరియు అమలు తేదీలు సరైన క్రమంలో ఉన్నాయి.", "chk_survey_format_name": "సర్వే నంబర్ ధృవీకరణ", "chk_survey_format_msg": "సర్వే నంబర్ సరైన ఫార్మాట్‌లో ఉంది.", "chk_geographic_consistency_name": "భౌగోళిక స్థానిక సరిపోలిక", "chk_geographic_consistency_msg": "స్టేట్ అథారిటీ: అధికారిక రిజిస్ట్రీ ద్వారా ధృవీకరించబడింది.", "sched_b_panel_title": "షెడ్యూల్ B · క్లర్క్ సమీక్ష & సవరణ", "sched_b_sub": "ఇక్కడే సవరించండి", "clerk_instruction_note": "స్కాన్ చేసిన పత్రంతో ప్రతి ఫీల్డ్‌ను సరిచూడండి, తప్పులను సరిదిద్దండి, ఆపై భద్రపరచండి లేదా అధికారికి పంపండి.", "f_doc_type": "పత్రం రకం", "f_doc_no": "పత్రం సంఖ్య", "f_survey": "సర్వే నంబర్", "f_subsurvey": "సబ్-సర్వే నంబర్", "f_area": "ఆస్తి విస్తీర్ణం (గజాలు)", "f_village": "గ్రామం", "f_mandal": "మండలం", "f_district": "జిల్లా", "f_stamp_no": "స్టాంప్ సీరియల్ సంఖ్య", "f_stamp_val": "స్టాంప్ విలువ (₹)", "f_sold_to": "స్టాంప్ కొనుగోలుదారు", "f_doc_date": "పత్రం తేదీ", "f_exec_date": "అమలు తేదీ", "f_parties": "పార్టీలు (JSON)", "warn_officer_ok": "అధికారి ఆమోదం రికార్డును శాశ్వతంగా లాక్ చేసి డిజిటల్ సీల్ వేస్తుంది.", "btn_save_corrections": "సవరణలను భద్రపరచండి", "btn_officer_approve_seal": "అధికారి ఆమోదం & ముద్ర", "btn_officer_reject": "అధికారి తిరస్కరణ", "ph_rej_reason": "తిరస్కరణకు కారణం (తప్పనిసరి)", "btn_view_cert_qr": "ధృవీకరణ పత్రం & QR చూడండి", "footer_title": "వన్‌భూమి · ఆఫ్‌లైన్ రిజిస్ట్రీ కన్సోల్", "footer_sub": "సేల్ డీడ్‌లు · ఒప్పందాలు · GPA", "footer_cloud": "క్లౌడ్ లేదు. కార్యాలయం నుండి కీలు ఎక్కడికీ వెళ్లవు.", "chk_area_validation_name": "ఆస్తి విస్తీర్ణం సరిహద్దు తనిఖీ", "chk_area_validation_msg": "ఆస్తి విస్తీర్ణం చట్టబద్ధంగా ఉంది.", "chk_date_validation_name": "తేదీల విశ్లేషణ & తార్కిక క్రమం", "chk_date_validation_msg": "దస్తావేజు మరియు అమలు తేదీలు సరైన క్రమంలో ఉన్నాయి.", "chk_survey_number_validation_name": "సర్వే నంబర్ ధృవీకరణ", "chk_survey_number_validation_msg": "సర్వే నంబర్ సరైన ఫార్మాట్‌లో ఉంది.", "chk_internal_consistency_name": "అంతర్గత స్థిరత్వ తనిఖీ", "chk_internal_consistency_msg": "నిబంధనలలో ఎటువంటి వైరుధ్యాలు కనుగొనబడలేదు.", "chk_signature_detection_name": "సంతకం మరియు స్టాంప్ గుర్తింపు", "chk_signature_detection_msg": "స్కాన్ పత్రంలో సంతకాలు మరియు స్టాంపులు గుర్తించబడ్డాయి.", "show_confidence_heatmap": "కాన్ఫిడెన్స్ హీట్‌మ్యాప్ చూపించు", "hide_confidence_heatmap": "హీట్‌మ్యాప్ దాచు"}, "kn": {"nav_registry": "ನೋಂದಣಿ", "nav_dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "nav_new_scan": "ಹೊಸ ಸ್ಕ್ಯಾನ್", "nav_sealing": "ಡಿಜಿಟಲ್ ಮುದ್ರೆ", "nav_verify": "ಪರಿಶೀಲನೆ", "console_h1": "ಪರಿಶೀಲನಾ <em>ಕನ್ಸೋಲ್</em>", "lbl_record": "ದಾಖಲೆ ಸಂಖ್ಯೆ", "badge_extracted": "ಹೊರತೆಗೆಯಲಾಗಿದೆ", "badge_needs_review": "ಪರಿಶೀಲನೆ ಅಗತ್ಯವಿದೆ", "badge_ready_for_approval": "ಮುದ್ರೆಗೆ ಸಿದ್ಧ", "badge_approved": "ಅನುಮೋದಿಸಿ ಮುದ್ರೆ ಹಾಕಲಾಗಿದೆ", "badge_rejected": "ತಿರಸ್ಕರಿಸಲಾಗಿದೆ", "badge_fail": "ಪರಿಶೀಲನೆ ವಿಫಲ", "badge_duplicate": "ನಕಲಿ ದಾಖಲೆ", "step_scan": "ಸ್ಕ್ಯಾನ್", "step_machine": "ಯಂತ್ರ ತಪಾಸಣೆ", "step_clerk": "ಗುಮಾಸ್ತರ ಪರಿಶೀಲನೆ", "step_seal": "ಅಧಿಕಾರಿಯ ಮುದ್ರೆ", "lbl_mode": "ಮೋಡ್", "lbl_hardware": "ಯಂತ್ರಾಂಶ", "lbl_ocr": "OCR", "lbl_transit": "ರವಾನೆ", "lbl_total": "ಒಟ್ಟು ಸಮಯ", "lbl_passed": "ಯಶಸ್ವಿ", "lbl_warnings": "ಎಚ್ಚರಿಕೆಗಳು", "lbl_failed": "ವಿಫಲ", "sched_a_panel_title": "ಹಂತ A · ಸ್ವಯಂಚಾಲಿತ ಯಂತ್ರ ಪರಿಶೀಲನಾಪಟ್ಟಿ", "sched_a_sub": "ಸ್ವಯಂಚಾಲಿತ", "chk_duplicate_document_check_name": "ನೋಂದಣಿ ನಕಲು ಪರಿಶೀಲನೆ", "chk_duplicate_document_check_msg": "ಮುದ್ರಿತ ದಾಖಲೆಗಳೊಂದಿಗೆ ನಕಲು ಪರಿಶೀಲನೆ.", "chk_required_fields_name": "ಅಗತ್ಯವಿರುವ ದಾಖಲೆ ಕ್ಷೇತ್ರಗಳು", "chk_required_fields_msg": "ಎಲ್ಲಾ ಪ್ರಮುಖ ಕ್ಷೇತ್ರಗಳು ಲಭ್ಯವಿವೆ.", "chk_area_bounds_name": "ವಿಸ್ತೀರ್ಣ ಮಿತಿ ಪರಿಶೀಲನೆ", "chk_area_bounds_msg": "ಆಸ್ತಿ ವಿಸ್ತೀರ್ಣ ಮಾನ್ಯವಾಗಿದೆ.", "chk_date_order_name": "ದಿನಾಂಕಗಳ ಕ್ರಮಬದ್ಧತೆ ಪರಿಶೀಲನೆ", "chk_date_order_msg": "ದಾಖಲೆ ದಿನಾಂಕಗಳು ಸರಿಯಾದ ಕ್ರಮದಲ್ಲಿವೆ.", "chk_survey_format_name": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಪರಿಶೀಲನೆ", "chk_survey_format_msg": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಮಾದರಿ ಕಾನೂನುಬದ್ಧವಾಗಿದೆ.", "chk_geographic_consistency_name": "ಭೌಗೋಳಿಕ ತಾಳೆ ಪರಿಶೀಲನೆ", "chk_geographic_consistency_msg": "ರಾಜ್ಯ ಪ್ರಾಧಿಕಾರ: ಅಧಿಕೃತ ನೋಂದಣಿಯಿಂದ ದೃಢೀಕರಿಸಲಾಗಿದೆ.", "sched_b_panel_title": "ಹಂತ B · ಸಿಬ್ಬಂದಿ ಪರಿಶೀಲನೆ & ತಿದ್ದುಪಡಿ", "sched_b_sub": "ಇಲ್ಲಿಯೇ ಸರಿಪಡಿಸಿ", "clerk_instruction_note": "ಸ್ಕ್ಯಾನ್ ಮಾಡಿದ ಪ್ರತಿಯೊಂದಿಗೆ ತಾಳೆ ನೋಡಿ, ತಪ್ಪುಗಳನ್ನು ಸರಿಪಡಿಸಿ, ನಂತರ ಉಳಿಸಿ ಅಥವಾ ಅಧಿಕಾರಿಗೆ ಸಲ್ಲಿಸಿ.", "f_doc_type": "ದಾಖಲೆಯ ಪ್ರಕಾರ", "f_doc_no": "ದಾಖಲೆ ಸಂಖ್ಯೆ", "f_survey": "ಸರ್ವೇ ಸಂಖ್ಯೆ", "f_subsurvey": "ಉಪ-ಸರ್ವೇ ಸಂಖ್ಯೆ", "f_area": "ಆಸ್ತಿ ವಿಸ್ತೀರ್ಣ (ಚದರ ಗಜ)", "f_village": "ಗ್ರಾಮ", "f_mandal": "ಹೋಬಳಿ", "f_district": "ಜಿಲ್ಲೆ", "f_stamp_no": "ಮುದ್ರಾಂಕ ಸಂಖ್ಯೆ", "f_stamp_val": "ಮುದ್ರಾಂಕ ಮೌಲ್ಯ (₹)", "f_sold_to": "ಖರೀದಿದಾರರ ಹೆಸರು", "f_doc_date": "ದಾಖಲೆ ದಿನಾಂಕ", "f_exec_date": "ನೋಂದಣಿ ದಿನಾಂಕ", "f_parties": "ಪಕ್ಷಗಾರರ ವಿವರ (JSON)", "warn_officer_ok": "ಅಧಿಕಾರಿಯ ಅನುಮೋದನೆಯು ದಾಖಲೆಯನ್ನು ಅಂತಿಮಗೊಳಿಸಿ ಡಿಜಿಟಲ್ ಮುದ್ರೆ ಹಾಕುತ್ತದೆ.", "btn_save_corrections": "ತಿದ್ದುಪಡಿ ಉಳಿಸಿ", "btn_officer_approve_seal": "ಅಧಿಕಾರಿ ಅನುಮೋದನೆ & ಮುದ್ರೆ", "btn_officer_reject": "ಅಧಿಕಾರಿ ತಿರಸ್ಕಾರ", "ph_rej_reason": "ತಿರಸ್ಕಾರಕ್ಕೆ ಕಾರಣ (ಕಡ್ಡಾಯ)", "btn_view_cert_qr": "ಪ್ರಮಾಣಪತ್ರ & QR ವೀಕ್ಷಿಸಿ", "footer_title": "ವನ್‌ಭೂಮಿ · ಆಫ್‌ಲೈನ್ ನೋಂದಣಿ ಕನ್ಸೋಲ್", "footer_sub": "ಮಾರಾಟ ಪತ್ರಗಳು · ಒಪ್ಪಂದಗಳು · ಜಿಪಿಎ", "footer_cloud": "ಯಾವುದೇ ಕ್ಲೌಡ್ ಇಲ್ಲ. ಕಚೇರಿಯಿಂದ ಕೀಗಳು ಹೊರಹೋಗುವುದಿಲ್ಲ.", "chk_area_validation_name": "ವಿಸ್ತೀರ್ಣ ಮಿತಿ ಪರಿಶೀಲನೆ", "chk_area_validation_msg": "ಆಸ್ತಿ ವಿಸ್ತೀರ್ಣ ಮಾನ್ಯವಾಗಿದೆ.", "chk_date_validation_name": "ದಿನಾಂಕಗಳ ಕ್ರಮಬದ್ಧತೆ ಪರಿಶೀಲನೆ", "chk_date_validation_msg": "ದಾಖಲೆ ದಿನಾಂಕಗಳು ಸರಿಯಾದ ಕ್ರಮದಲ್ಲಿವೆ.", "chk_survey_number_validation_name": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಪರಿಶೀಲನೆ", "chk_survey_number_validation_msg": "ಸರ್ವೇ ಸಂಖ್ಯೆ ಮಾದರಿ ಕಾನೂನುಬದ್ಧವಾಗಿದೆ.", "chk_internal_consistency_name": "ಆಂತರಿಕ ಸುಸಂಗತತೆ ಪರಿಶೀಲನೆ", "chk_internal_consistency_msg": "ಷರತ್ತುಗಳಲ್ಲಿ ಯಾವುದೇ ವಿರೋಧಾಭಾಸಗಳು ಕಂಡುಬಂದಿಲ್ಲ.", "chk_signature_detection_name": "ಸಹಿ ಮತ್ತು ಮುದ್ರಾಂಕ ಪರಿಶೀಲನೆ", "chk_signature_detection_msg": "ಸ್ಕ್ಯಾನ್ ಪ್ರತಿಯಲ್ಲಿ ಸಹಿ ಮತ್ತು ಮುದ್ರಾಂಕಗಳು ದೃಢಪಟ್ಟಿವೆ.", "show_confidence_heatmap": "ಕಾನ್ಫಿಡೆನ್ಸ್ ಹೀಟ್‌ಮ್ಯಾಪ್ ತೋರಿಸಿ", "hide_confidence_heatmap": "ಹೀಟ್‌ಮ್ಯಾಪ್ ಮರೆಮಾಡಿ"}, "ta": {"nav_registry": "பதிவேடு", "nav_dashboard": "டாஷ்போர்டு", "nav_new_scan": "புதிய ஸ்கேன்", "nav_sealing": "டிஜிட்டல் முத்திரை", "nav_verify": "சரிபார்ப்பு", "console_h1": "சரிபார்ப்பு <em>கன்சோல்</em>", "lbl_record": "பதிவு எண்", "badge_extracted": "பிரித்தெடுக்கப்பட்டது", "badge_needs_review": "மதிப்பாய்வு தேவை", "badge_ready_for_approval": "முத்திரைக்கு தயார்", "badge_approved": "ஒப்புதல் அளிக்கப்பட்டு முத்திரையிடப்பட்டது", "badge_rejected": "நிராகரிக்கப்பட்டது", "badge_fail": "சரிபார்ப்பு தோல்வி", "badge_duplicate": "நகல் ஆவணம்", "step_scan": "ஸ்கேன்", "step_machine": "இயந்திர சரிபார்ப்பு", "step_clerk": "எழுத்தர் மதிப்பாய்வு", "step_seal": "அதிகாரி முத்திரை", "lbl_mode": "முறைமை", "lbl_hardware": "வன்பொருள்", "lbl_ocr": "OCR", "lbl_transit": "போக்குவரத்து", "lbl_total": "மொத்த நேரம்", "lbl_passed": "வெற்றி", "lbl_warnings": "எச்சரிக்கைகள்", "lbl_failed": "தோல்வி", "sched_a_panel_title": "அட்டவணை A · தானியங்கி இயந்திர சரிபார்ப்பு பட்டியல்", "sched_a_sub": "தானியங்கி", "chk_duplicate_document_check_name": "பதிவேடு நகல் சரிபார்ப்பு", "chk_duplicate_document_check_msg": "முத்திரையிடப்பட்ட பதிவேட்டுடன் நகல் சரிபார்ப்பு.", "chk_required_fields_name": "தேவையான ஆவணப் புலங்கள்", "chk_required_fields_msg": "அனைத்து முக்கிய புலங்களும் உள்ளன.", "chk_area_bounds_name": "நிலப் பரப்பளவு எல்லைச் சரிபார்ப்பு", "chk_area_bounds_msg": "பரப்பளவு செல்லுபடியாகும்.", "chk_date_order_name": "தேதி பகுப்பாய்வு & தர்க்கரீதியான வரிசை", "chk_date_order_msg": "ஆவணத் தேதிகள் சரியான வரிசையில் உள்ளன.", "chk_survey_format_name": "சர்வே எண் சரிபார்ப்பு", "chk_survey_format_msg": "சர்வே எண் வடிவம் சட்டப்பூர்வமானது.", "chk_geographic_consistency_name": "இடஞ்சார்ந்த அதிகாரப் பொருத்தம்", "chk_geographic_consistency_msg": "அரசு அதிகாரம்: அதிகாரப்பூர்வ பதிவேடு மூலம் உறுதிப்படுத்தப்பட்டது.", "sched_b_panel_title": "அட்டவணை B · எழுத்தர் மதிப்பாய்வு & திருத்தம்", "sched_b_sub": "இங்கேயே திருத்துக", "clerk_instruction_note": "ஸ்கேன் செய்யப்பட்ட ஆவணத்துடன் ஒப்பிட்டு பிழைகளைத் திருத்துக, பின்னர் சேமிக்கவும் அல்லது அதிகாரிக்கு சமர்ப்பிக்கவும்.", "f_doc_type": "ஆவண வகை", "f_doc_no": "ஆவண எண்", "f_survey": "சர்வே எண்", "f_subsurvey": "உட்பிரிவு சர்வே எண்", "f_area": "சொத்து பரப்பளவு (சதுர கெஜம்)", "f_village": "கிராமம்", "f_mandal": "மண்டலம்", "f_district": "மாவட்டம்", "f_stamp_no": "முத்திரைத்தாள் எண்", "f_stamp_val": "முத்திரை மதிப்பு (₹)", "f_sold_to": "வாங்குபவர் பெயர்", "f_doc_date": "ஆவண தேதி", "f_exec_date": "நிறைவேற்றப்பட்ட தேதி", "f_parties": "நபர்கள் (JSON)", "warn_officer_ok": "அதிகாரியின் ஒப்புதல் ஆவணத்தை உறுதிசெய்து டிஜிட்டல் முத்திரையிடுகிறது.", "btn_save_corrections": "திருத்தங்களை சேமிக்கவும்", "btn_officer_approve_seal": "அதிகாரி ஒப்புதல் & முத்திரை", "btn_officer_reject": "அதிகாரி நிராகரிப்பு", "ph_rej_reason": "நிராகரிப்புக்கான காரணம் (கட்டாயம்)", "btn_view_cert_qr": "சான்றிதழ் & QR பார்க்க", "footer_title": "ஒன்பூமி · ஆஃப்லைன் பதிவேடு கன்சோல்", "footer_sub": "விற்பனைப் பத்திரங்கள் · ஒப்பந்தங்கள் · ஜிபிஏ", "footer_cloud": "கிளவுட் இல்லை. விசைகள் அலுவலகத்தை விட்டு வெளியேறாது.", "chk_area_validation_name": "நிலப் பரப்பளவு எல்லைச் சரிபார்ப்பு", "chk_area_validation_msg": "பரப்பளவு செல்லுபடியாகும்.", "chk_date_validation_name": "தேதி பகுப்பாய்வு & தர்க்கரீதியான வரிசை", "chk_date_validation_msg": "ஆவணத் தேதிகள் சரியான வரிசையில் உள்ளன.", "chk_survey_number_validation_name": "சர்வே எண் சரிபார்ப்பு", "chk_survey_number_validation_msg": "சர்வே எண் வடிவம் சட்டப்பூர்வமானது.", "chk_internal_consistency_name": "உள் நிலைத்தன்மை சரிபார்ப்பு", "chk_internal_consistency_msg": "பத்திரப் பிரிவுகளில் முரண்பாடுகள் எதுவும் இல்லை.", "chk_signature_detection_name": "கையொப்பம் மற்றும் முத்திரை சரிபார்ப்பு", "chk_signature_detection_msg": "ஸ்கேன் செய்யப்பட்ட ஆவணத்தில் கையொப்பங்கள் மற்றும் முத்திரைகள் உறுதிசெய்யப்பட்டன.", "show_confidence_heatmap": "நம்பகத்தன்மை வெப்ப வரைபடத்தைக் காட்டு", "hide_confidence_heatmap": "வெப்ப வரைபடத்தை மறை"}};
 
 function applyConsoleLanguage(lang) {
   if (!CONSOLE_I18N[lang]) lang = 'en';
@@ -1913,6 +2114,266 @@ document.addEventListener('DOMContentLoaded', () => {
     a.click();
     URL.revokeObjectURL(u);
   }
+
+  /* ---------- Visual Confidence Heatmap Overlay ---------- */
+  function getOrCreateHeatmapTooltip() {
+    var t = document.getElementById('heatmapTooltip');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'heatmapTooltip';
+      t.className = 'heatmap-floating-tooltip';
+      t.style.display = 'none';
+      document.body.appendChild(t);
+    }
+    return t;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function showHeatmapTooltip(e, data) {
+    var t = getOrCreateHeatmapTooltip();
+    t.innerHTML =
+      '<div class="ht-header">' +
+        '<span class="ht-conf">' + data.confPct + ' <small style="font-size:10.5px; opacity:0.75; font-weight:normal;">(' + data.confRaw + ')</small></span>' +
+        '<span class="ht-badge ' + data.badgeClass + '">' + data.badge + '</span>' +
+      '</div>' +
+      '<div class="ht-row"><span class="ht-label">Language:</span><span class="ht-val">' + escapeHtml(data.lang) + '</span></div>' +
+      '<div class="ht-row"><span class="ht-label">Location:</span><span class="ht-val">Page ' + data.pageNo + ' · Line ' + data.lineNo + '</span></div>' +
+      (data.text ? '<div class="ht-text">“' + escapeHtml(data.text) + '”</div>' : '');
+    t.style.display = 'block';
+    moveHeatmapTooltip(e);
+  }
+
+  function moveHeatmapTooltip(e) {
+    var t = document.getElementById('heatmapTooltip');
+    if (!t || t.style.display === 'none') return;
+    var x = e.clientX + 16;
+    var y = e.clientY + 16;
+    var tw = t.offsetWidth || 240;
+    var th = t.offsetHeight || 100;
+    if (x + tw > window.innerWidth - 12) {
+      x = e.clientX - tw - 16;
+    }
+    if (y + th > window.innerHeight - 12) {
+      y = e.clientY - th - 16;
+    }
+    t.style.left = Math.max(8, x) + 'px';
+    t.style.top = Math.max(8, y) + 'px';
+  }
+
+  function hideHeatmapTooltip() {
+    var t = document.getElementById('heatmapTooltip');
+    if (t) t.style.display = 'none';
+  }
+
+  function initConfidenceHeatmap() {
+    var dataEl = document.getElementById('confidence_heatmap_data');
+    if (!dataEl) return;
+    var pagesData;
+    try {
+      pagesData = JSON.parse(dataEl.textContent);
+    } catch (err) {
+      return;
+    }
+    if (!pagesData || !pagesData.length) return;
+
+    var previewBody = document.querySelector('.preview-body');
+    if (!previewBody) return;
+    var imgElements = previewBody.querySelectorAll('img');
+    if (!imgElements.length) return;
+
+    var totalLines = 0, highCount = 0, medCount = 0, lowCount = 0;
+    pagesData.forEach(function(p) {
+      (p.lines || []).forEach(function(l) {
+        totalLines++;
+        var c = (typeof l.confidence === 'number') ? l.confidence : parseFloat(l.confidence || 0);
+        if (c >= 0.9) highCount++;
+        else if (c >= 0.6) medCount++;
+        else lowCount++;
+      });
+    });
+
+    var summaryBadge = document.getElementById('heatmapSummaryBadge');
+    if (summaryBadge && totalLines > 0) {
+      summaryBadge.textContent = totalLines + ' lines (' + highCount + ' High · ' + medCount + ' Amber · ' + lowCount + ' Low)';
+    }
+
+    imgElements.forEach(function(img, idx) {
+      var pageNum = idx + 1;
+      var parentTxt = (img.parentNode && img.parentNode.textContent) ? img.parentNode.textContent : '';
+      var m = parentTxt.match(/PAGE\\s+(\\d+)\\s+OF/i);
+      if (m) {
+        pageNum = parseInt(m[1], 10);
+      } else if (img.alt) {
+        var mAlt = img.alt.match(/(\\d+)/);
+        if (mAlt) pageNum = parseInt(mAlt[1], 10);
+      }
+
+      var pageObj = pagesData.find(function(p) { return p.page_number === pageNum; });
+      if (!pageObj && pagesData[idx]) pageObj = pagesData[idx];
+      if (!pageObj || !pageObj.lines || !pageObj.lines.length) return;
+
+      var wrapper = img.parentElement;
+      if (!wrapper.classList.contains('doc-page-heatmap-wrapper')) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'doc-page-heatmap-wrapper';
+        img.parentNode.insertBefore(wrapper, img);
+        wrapper.appendChild(img);
+      }
+
+      var existingSvg = wrapper.querySelector('.confidence-heatmap-overlay');
+      if (existingSvg) return;
+
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'confidence-heatmap-overlay');
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.style.display = 'none';
+
+      function setupViewBox() {
+        var nw = img.naturalWidth || img.width || 1200;
+        var nh = img.naturalHeight || img.height || 1600;
+        svg.setAttribute('viewBox', '0 0 ' + nw + ' ' + nh);
+      }
+      if (img.complete && img.naturalWidth > 0) {
+        setupViewBox();
+      } else {
+        img.addEventListener('load', setupViewBox);
+      }
+
+      pageObj.lines.forEach(function(line) {
+        var conf = (typeof line.confidence === 'number') ? line.confidence : parseFloat(line.confidence || 0);
+        var confClass = 'conf-low';
+        var confBadge = 'Low (<0.6)';
+        var badgeClass = 'low';
+        if (conf >= 0.9) {
+          confClass = 'conf-high';
+          confBadge = 'High (≥0.9)';
+          badgeClass = 'high';
+        } else if (conf >= 0.6) {
+          confClass = 'conf-med';
+          confBadge = 'Amber (0.6–0.9)';
+          badgeClass = 'med';
+        }
+
+        var shapeEl;
+        var polys = line.rec_polys;
+        if (Array.isArray(polys) && polys.length >= 4) {
+          shapeEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+          var ptsStr = '';
+          if (Array.isArray(polys[0])) {
+            ptsStr = polys.map(function(pt) { return pt[0] + ',' + pt[1]; }).join(' ');
+          } else {
+            for (var k = 0; k < polys.length; k += 2) {
+              ptsStr += (k > 0 ? ' ' : '') + polys[k] + ',' + polys[k+1];
+            }
+          }
+          shapeEl.setAttribute('points', ptsStr);
+        } else {
+          var bbox = line.bbox || [0, 0, 0, 0];
+          var x1 = bbox[0], y1 = bbox[1], x2 = bbox[2], y2 = bbox[3];
+          shapeEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          shapeEl.setAttribute('x', x1);
+          shapeEl.setAttribute('y', y1);
+          shapeEl.setAttribute('width', Math.max(2, x2 - x1));
+          shapeEl.setAttribute('height', Math.max(2, y2 - y1));
+          shapeEl.setAttribute('rx', '2');
+        }
+
+        shapeEl.setAttribute('class', 'heatmap-box ' + confClass);
+
+        var confPct = (conf * 100).toFixed(1) + '%';
+        var lang = (line.language && line.language !== 'Unknown') ? line.language : '';
+        var script = (line.script && line.script !== 'Unknown') ? line.script : '';
+        var langDisplay = lang ? (script ? lang + ' (' + script + ')' : lang) : 'Unknown / Multilingual';
+        var lineTxt = line.text || '';
+        var lineNo = line.line_number || '';
+
+        shapeEl.addEventListener('mouseenter', function(e) {
+          showHeatmapTooltip(e, {
+            confPct: confPct,
+            confRaw: conf.toFixed(4),
+            badge: confBadge,
+            badgeClass: badgeClass,
+            lang: langDisplay,
+            text: lineTxt,
+            lineNo: lineNo,
+            pageNo: pageObj.page_number || pageNum
+          });
+        });
+        shapeEl.addEventListener('mousemove', function(e) {
+          moveHeatmapTooltip(e);
+        });
+        shapeEl.addEventListener('mouseleave', function() {
+          hideHeatmapTooltip();
+        });
+
+        var titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        titleEl.textContent = 'Conf: ' + confPct + ' · Lang: ' + langDisplay + (lineTxt ? ' · "' + lineTxt + '"' : '');
+        shapeEl.appendChild(titleEl);
+
+        svg.appendChild(shapeEl);
+      });
+
+      wrapper.appendChild(svg);
+    });
+  }
+
+  function toggleConfidenceHeatmap() {
+    var overlays = document.querySelectorAll('.confidence-heatmap-overlay');
+    var legend = document.getElementById('heatmapLegendBar');
+    var btn = document.getElementById('btnToggleHeatmap');
+    var btnText = document.getElementById('btnHeatmapText');
+
+    if (!overlays.length) {
+      initConfidenceHeatmap();
+      overlays = document.querySelectorAll('.confidence-heatmap-overlay');
+    }
+    if (!overlays.length) return;
+
+    var isVisible = false;
+    for (var i = 0; i < overlays.length; i++) {
+      if (overlays[i].style.display !== 'none') {
+        isVisible = true;
+        break;
+      }
+    }
+
+    var nextState = isVisible ? 'none' : 'block';
+    overlays.forEach(function(o) {
+      o.style.display = nextState;
+    });
+    if (legend) {
+      legend.style.display = isVisible ? 'none' : 'flex';
+    }
+    if (btn) {
+      var lang = document.documentElement.lang || 'en';
+      var dict = (typeof CONSOLE_I18N !== 'undefined' && CONSOLE_I18N[lang]) ? CONSOLE_I18N[lang] : {};
+      var showTxt = dict['show_confidence_heatmap'] || 'Show confidence heatmap';
+      var hideTxt = dict['hide_confidence_heatmap'] || 'Hide confidence heatmap';
+      if (isVisible) {
+        btn.classList.remove('active');
+        if (btnText) btnText.textContent = showTxt;
+        hideHeatmapTooltip();
+      } else {
+        btn.classList.add('active');
+        if (btnText) btnText.textContent = hideTxt;
+      }
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    initConfidenceHeatmap();
+  });
+  window.addEventListener('load', function() {
+    initConfidenceHeatmap();
+  });
 </script>
 </body>
 </html>
@@ -2262,15 +2723,239 @@ def _checklist_panel(checks: list) -> str:
     """
 
 
-def _exhibit_panel(preview: str, caption: str) -> str:
+def _extract_heatmap_data(record: Optional[dict]) -> list:
+    if not record or not isinstance(record, dict):
+        return []
+    raw_ocr = (
+        record.get("raw_ocr")
+        or (record.get("document_payload") or {}).get("raw_ocr")
+        or (record.get("ocr_debug") or {}).get("raw_ocr")
+        or {}
+    )
+    pages = raw_ocr.get("pages", []) if isinstance(raw_ocr, dict) else []
+    heatmap_pages = []
+    for p in pages:
+        p_num = p.get("page_number", 1)
+        p_lines = []
+        for l in p.get("lines", []):
+            if not isinstance(l, dict):
+                continue
+            conf = l.get("confidence")
+            if conf is None:
+                conf = l.get("rec_score", 0.0)
+            try:
+                conf_val = float(conf)
+            except Exception:
+                conf_val = 0.0
+
+            bbox = l.get("bbox") or []
+            rec_polys = l.get("rec_polys") or l.get("polygon") or []
+            if not bbox and not rec_polys:
+                continue
+
+            p_lines.append({
+                "line_number": l.get("line_number", len(p_lines) + 1),
+                "text": str(l.get("text", "")),
+                "confidence": round(conf_val, 4),
+                "bbox": bbox,
+                "rec_polys": rec_polys,
+                "language": l.get("language") or "Unknown",
+                "script": l.get("script") or "Unknown",
+            })
+        heatmap_pages.append({
+            "page_number": p_num,
+            "lines": p_lines,
+        })
+    return heatmap_pages
+
+
+def get_api_docs_html() -> str:
+    """Renders the interactive Swagger UI API documentation page."""
+    spec_path = Path(__file__).parent / "openapi.json"
+    spec_json = "{}"
+    if spec_path.exists():
+        try:
+            spec_json = spec_path.read_text(encoding="utf-8")
+        except Exception:
+            pass
+
+    template = """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OneBhoomi Registry API Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Courier+Prime:wght@400;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #faf7f0; font-family: "Archivo", sans-serif; }
+    .topbar-header {
+      background: #1f1b16;
+      color: #f6f0e1;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #a6193c;
+    }
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .topbar-badge {
+      background: #a6193c;
+      color: #fff;
+      font-family: "Courier Prime", monospace;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .topbar-links a {
+      color: #dcd2b8;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      margin-left: 18px;
+      transition: color 0.2s;
+    }
+    .topbar-links a:hover { color: #fff; }
+    .swagger-ui .topbar { display: none; }
+    .swagger-ui { font-family: "Archivo", sans-serif; }
+    .swagger-ui .info .title { font-family: "Fraunces", Georgia, serif; color: #1f1b16; }
+    .auth-banner {
+      background: #fff;
+      border: 1.5px solid #d2c5b3;
+      border-left: 4px solid #2e6b4f;
+      margin: 20px auto 0 auto;
+      max-width: 1460px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border-radius: 4px;
+      font-size: 13.5px;
+      color: #221d17;
+      line-height: 1.5;
+    }
+    .auth-banner h4 {
+      margin: 0 0 6px 0;
+      color: #2e6b4f;
+      font-family: "Fraunces", serif;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .auth-banner code {
+      font-family: "Courier Prime", monospace;
+      background: #f4eee2;
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #7c1030;
+      font-size: 12.5px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar-header">
+    <div class="topbar-brand">
+      <span>OneBhoomi</span>
+      <span class="topbar-badge">API Documentation</span>
+    </div>
+    <div class="topbar-links">
+      <a href="/dashboard">← Operations Dashboard</a>
+      <a href="/clerk">Clerk Review</a>
+      <a href="/officer">Officer Seal</a>
+      <a href="/verify">Public Verification</a>
+    </div>
+  </header>
+  
+  <div class="auth-banner">
+    <h4>🔒 Authentication & Authorization Guide</h4>
+    <p>
+      OneBhoomi uses HTTP-only session cookies (<code>session_token</code>). 
+      To authenticate, submit credentials via <code>POST /auth/signin</code> with <code>username</code> and <code>password</code> 
+      (or quick demo switch via <code>POST /auth/choose-role</code> with <code>role=clerk|officer</code>). 
+      The server sets a secure <code>Set-Cookie: session_token=&lt;token&gt;</code> header.
+      Subsequent requests to protected routes (<code>/record</code>, <code>/dashboard</code>, <code>/clerk</code>, <code>/officer</code>, <code>/api/learning/feedback</code>, <code>/api/reset_registry</code>) 
+      must pass this cookie in the standard <code>Cookie: session_token=&lt;token&gt;</code> header. Public endpoints (<code>/api/docs</code>, <code>/verify</code>, <code>/auth/signin</code>, <code>/auth/signup</code>) 
+      can be accessed without authentication.
+    </p>
+  </div>
+
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      const spec = __SPEC_JSON__;
+      window.ui = SwaggerUIBundle({
+        spec: spec,
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "BaseLayout",
+        defaultModelsExpandDepth: 1,
+        defaultModelExpandDepth: 1,
+        docExpansion: "list"
+      });
+    };
+  </script>
+</body>
+</html>"""
+    return template.replace("__SPEC_JSON__", spec_json)
+
+
+def _exhibit_panel(preview: str, caption: str, record: Optional[dict] = None) -> str:
     cap = html.escape(caption or "scan copy")
+    heatmap_data = _extract_heatmap_data(record)
+    has_heatmap = bool(heatmap_data and any(p.get("lines") for p in heatmap_data))
+
+    toggle_btn = ""
+    legend_bar = ""
+    script_tag = ""
+    if has_heatmap:
+        toggle_btn = """
+        <button type="button" id="btnToggleHeatmap" class="btn-heatmap-toggle" onclick="toggleConfidenceHeatmap()" title="Toggle visual OCR confidence heatmap overlay">
+          <span class="heatmap-btn-dot"></span>
+          <span id="btnHeatmapText" data-i18n="show_confidence_heatmap">Show confidence heatmap</span>
+        </button>
+        """
+        legend_bar = """
+        <div id="heatmapLegendBar" class="heatmap-legend-bar" style="display: none;">
+          <span class="legend-title">OCR Confidence:</span>
+          <span class="legend-item"><span class="legend-chip legend-high"></span> &ge; 0.90 High</span>
+          <span class="legend-item"><span class="legend-chip legend-med"></span> 0.60 &ndash; 0.90 Amber</span>
+          <span class="legend-item"><span class="legend-chip legend-low"></span> &lt; 0.60 Low</span>
+          <span class="legend-count" id="heatmapSummaryBadge"></span>
+        </div>
+        """
+        script_tag = f'<script id="confidence_heatmap_data" type="application/json">{json.dumps(heatmap_data)}</script>'
+
     return f"""
     <section class="panel exhibit-panel rv">
-      <div class="tab"><span>Exhibit · Scan Copy</span><em>{cap}</em></div>
+      <div class="tab" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div><span>Exhibit · Scan Copy</span><em>{cap}</em></div>
+        {toggle_btn}
+      </div>
+      {legend_bar}
       <div class="preview-body">
         {preview}
         <div class="pdf-note" hidden>The scan copy is a PDF on file &mdash; its pages were stacked and read in full.</div>
       </div>
+      {script_tag}
     </section>
     """
 
@@ -3152,7 +3837,7 @@ def render_page(
             if preview:
                 body_parts.append(
                     '<div class="console-grid">'
-                    + '<div class="exhibit-col">' + _exhibit_panel(preview, preview_caption) + '</div>'
+                    + '<div class="exhibit-col">' + _exhibit_panel(preview, preview_caption, record=active_record) + '</div>'
                     + '<div class="clerk-col">' + _clerk_panel(active_record, message or "", role=role) + '</div>'
                     + '</div>'
                 )
@@ -3173,8 +3858,8 @@ def render_page(
                     + '</div>'
                 )
 
-        # 4. Activity & Audit Lifecycle Timeline (read-only panel below existing content on officer record view)
-        if role == "officer" and active_record:
+        # 4. Activity & Audit Lifecycle Timeline (read-only collapsible panel on /record view)
+        if active_record:
             body_parts.append(dashboard_view.render_activity_timeline(active_record))
 
         if payload and payload.strip() not in ("", "{}"):
@@ -3628,6 +4313,16 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Length", str(len(page)))
             self.end_headers()
             self.wfile.write(page)
+            return
+
+        # Interactive API Documentation: /api/docs
+        if parsed.path == "/api/docs":
+            docs_bytes = get_api_docs_html().encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(docs_bytes)))
+            self.end_headers()
+            self.wfile.write(docs_bytes)
             return
 
         # Authentication Gate: require valid session for all protected routes
@@ -4267,6 +4962,15 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                             message = "Document approved and sealed successfully."
                             if promoted > 0:
                                 message += f" ({promoted} correction(s) verified for adaptive learning)"
+
+                            # Post-seal notification hook (non-blocking)
+                            try:
+                                import notification_service
+                                notification_service.notify_record_sealed(record)
+                            except Exception as notif_err:
+                                logging.getLogger("LandExtractor").warning(
+                                    f"Notification hook failed for record {verification_id}: {notif_err}"
+                                )
                 elif action == "correct":
                     verification_service.save_record(record)
                     field_prov = record.get("field_provenance", {})

@@ -1,0 +1,898 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "OneBhoomi Land Digitization & Offline Cryptographic Registry API",
+    "version": "2.0.0",
+    "description": "### System Overview\nOneBhoomi is a production-grade, offline-first land deed digitization and cryptographic verification registry for Telangana and multi-state Indian land administration. It combines multilingual OCR (PaddleOCR English & Telugu with dynamic remote GPU acceleration), semantic field extraction, rule-based learned normalization, geographic authority validation (Survey, Mandal, District), duplicate deed detection, and RSA-PSS cryptographic document certification.\n\n### Authentication\nOneBhoomi uses HTTP-only session cookies for identity management and role-based access control (RBAC).\n\n- **Obtaining a Session:** A calling client authenticates by submitting credentials to `POST /auth/signin` with `username` and `password`, or selecting a pre-configured role via `POST /auth/choose-role` (`clerk`, `officer`, `citizen`).\n- **Session Header:** Upon successful sign-in, the server returns a `Set-Cookie: session_token=<token>; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800` header (configured via `SESSION_COOKIE_NAME`).\n- **Calling Protected Endpoints:** Calling clients must include this session token in the standard `Cookie` header (`Cookie: session_token=<token>`).\n- **Public Endpoints:** Public verification (`GET /verify`, `GET /`), health checks, static assets, and read-only raw OCR data (`GET /api/raw_ocr`) do not require authentication cookies.\n- **No External Auth Infrastructure:** All authentication is processed locally within the office registry console; no external cloud auth provider or third-party token exchange is needed.\n",
+    "contact": {
+      "name": "OneBhoomi Project Team",
+      "url": "https://github.com/saiujwal-hub/land-digitiztion"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8001",
+      "description": "Local Offline Registry Console Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session_token",
+        "description": "HTTP-only session cookie (`session_token`) set upon sign-in or role selection."
+      }
+    }
+  },
+  "paths": {
+    "/api/docs": {
+      "get": {
+        "summary": "Interactive API Documentation",
+        "description": "Serves the live, browsable Swagger UI documentation for all OneBhoomi endpoints.",
+        "tags": [
+          "Documentation"
+        ],
+        "responses": {
+          "200": {
+            "description": "Interactive HTML documentation page.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/raw_ocr": {
+      "get": {
+        "summary": "Retrieve Raw OCR Line & Bounding Box Data",
+        "description": "Returns raw, un-normalized OCR text lines, bounding box coordinates (`bbox` and `rec_polys`), line confidence scores (`rec_scores`), and script/language detection metadata for a specific verification record.",
+        "tags": [
+          "OCR & Inspection"
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "query",
+            "required": true,
+            "description": "UUID of the verification record.",
+            "schema": {
+              "type": "string",
+              "example": "99b07532-93d6-4c31-8917-35ca53819f23"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Raw OCR payload containing pages, lines, and bboxes.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "verification_id": "99b07532-93d6-4c31-8917-35ca53819f23",
+                  "status": "APPROVED",
+                  "raw_ocr": {
+                    "backend": "paddleocr-gpu-cloudflared",
+                    "model": "PP-OCRv4",
+                    "total_pages": 6,
+                    "pages": [
+                      {
+                        "page_number": 1,
+                        "line_count": 23,
+                        "avg_confidence": 0.884,
+                        "lines": [
+                          {
+                            "line_number": 1,
+                            "text": "12104",
+                            "confidence": 0.8944,
+                            "bbox": [
+                              896,
+                              55,
+                              970,
+                              84
+                            ],
+                            "language": "English",
+                            "script": "Latin"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing verification_id query parameter."
+          },
+          "404": {
+            "description": "Verification record not found."
+          }
+        }
+      }
+    },
+    "/api/learning/stats": {
+      "get": {
+        "summary": "OCR Self-Learning Correction Statistics",
+        "description": "Returns statistics from the adaptive OCR learning engine, including total correction rules generated, active rule counts, hit counts, and feedback breakdown.",
+        "tags": [
+          "Adaptive OCR Learning"
+        ],
+        "responses": {
+          "200": {
+            "description": "Adaptive learning statistics.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "total_feedback_entries": 42,
+                  "total_rules": 18,
+                  "active_rules": 16,
+                  "field_coverage": {
+                    "survey_number": 6,
+                    "village": 4,
+                    "mandal": 3,
+                    "document_type": 3
+                  },
+                  "total_rule_applications": 128
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/learning/rules": {
+      "get": {
+        "summary": "Retrieve Learned Field Normalization Rules",
+        "description": "Returns active OCR normalization and field correction rules generated from clerk reviews, optionally filtered by field name.",
+        "tags": [
+          "Adaptive OCR Learning"
+        ],
+        "parameters": [
+          {
+            "name": "field",
+            "in": "query",
+            "required": false,
+            "description": "Filter rules by field name (e.g. `survey_number`, `village`).",
+            "schema": {
+              "type": "string",
+              "example": "village"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of active learned correction rules.",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "rule_id": "rule_vil_001",
+                    "field": "village",
+                    "source_pattern": "Kondapurl",
+                    "replacement": "Kondapur",
+                    "confidence_threshold": 0.85,
+                    "hit_count": 14,
+                    "created_at": "2026-09-12T14:20:00Z"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/learning/feedback": {
+      "post": {
+        "summary": "Submit Clerk Correction Feedback",
+        "description": "Accepts clerk corrections on OCR-extracted fields to trigger dynamic self-learning rule synthesis.",
+        "tags": [
+          "Adaptive OCR Learning"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "verification_id": "99b07532-93d6-4c31-8917-35ca53819f23",
+                "field_name": "village",
+                "original_value": "Kondapurl",
+                "corrected_value": "Kondapur",
+                "role": "clerk"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Feedback recorded and rule generated successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "ok",
+                  "feedback": {
+                    "field_name": "village",
+                    "original_value": "Kondapurl",
+                    "corrected_value": "Kondapur",
+                    "rule_created": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON or missing required fields."
+          }
+        }
+      }
+    },
+    "/api/update_ocr_url": {
+      "post": {
+        "summary": "Update Remote GPU OCR Server Endpoint (JSON body)",
+        "description": "Configures the active Cloudflare tunnel URL pointing to the remote Kaggle/Colab GPU PaddleOCR inference server.",
+        "tags": [
+          "OCR Configuration"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "url": "https://acceptable-direct-ireland-enhance.trycloudflare.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Remote GPU OCR tunnel URL updated.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "ok",
+                  "url": "https://acceptable-direct-ireland-enhance.trycloudflare.com"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid url parameter."
+          }
+        }
+      }
+    },
+    "/set_ocr_url": {
+      "get": {
+        "summary": "Update Remote GPU OCR Server Endpoint (Query param)",
+        "description": "Convenience endpoint to configure the remote GPU OCR URL via query parameter.",
+        "tags": [
+          "OCR Configuration"
+        ],
+        "parameters": [
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "description": "New Cloudflare tunnel URL to Kaggle/Colab GPU.",
+            "schema": {
+              "type": "string",
+              "example": "https://acceptable-direct-ireland-enhance.trycloudflare.com"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "URL updated successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "ok",
+                  "url": "https://acceptable-direct-ireland-enhance.trycloudflare.com"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing url query parameter."
+          }
+        }
+      }
+    },
+    "/api/reset_registry": {
+      "get": {
+        "summary": "Reset Registry Database (GET)",
+        "description": "Wipes `verification_db.json` and resets the ledger for clean demonstration runs.",
+        "tags": [
+          "Administration"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registry wiped successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "ok",
+                  "message": "Registry cleared."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Reset Registry Database (POST)",
+        "description": "Wipes `verification_db.json` and resets the ledger for clean demonstration runs.",
+        "tags": [
+          "Administration"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registry wiped successfully.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "ok",
+                  "message": "Registry cleared."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/record": {
+      "get": {
+        "summary": "Schedule B Clerk Review Console & Split Viewer",
+        "description": "Renders the interactive two-column Schedule B clerk review console for a document record, including the document scan viewer with the visual confidence heatmap overlay, field editor, and provenance tags.",
+        "tags": [
+          "Review & Sealing"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "query",
+            "required": true,
+            "description": "UUID of the record to review.",
+            "schema": {
+              "type": "string",
+              "example": "99b07532-93d6-4c31-8917-35ca53819f23"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "description": "User role view (`clerk` or `officer`).",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "clerk",
+                "officer"
+              ],
+              "default": "clerk"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Schedule B verification console HTML.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Verification record not found."
+          }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "summary": "Operations Dashboard & Analytics Panel",
+        "description": "Renders the executive dashboard with real-time intake KPI counters, recent document activity logs, the Extraction Accuracy & Confidence Intelligence panel, and the State & District Progress breakdown.",
+        "tags": [
+          "Dashboard & Analytics"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operations dashboard HTML.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clerk": {
+      "get": {
+        "summary": "Clerk Review Intake Desk",
+        "description": "Renders the clerk intake workspace for uploading document scans or reviewing queue items.",
+        "tags": [
+          "Review & Sealing"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clerk intake portal HTML.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/officer": {
+      "get": {
+        "summary": "Officer Sealing & Verification Desk",
+        "description": "Renders the senior officer portal for cryptographic seal authorization, rejection docketing, and audit log inspection.",
+        "tags": [
+          "Review & Sealing"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Officer sealing portal HTML.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/new": {
+      "get": {
+        "summary": "New Scan Document Intake Desk",
+        "description": "Opens the scan copy upload desk for processing new deed images or multi-page PDFs.",
+        "tags": [
+          "Document Processing"
+        ],
+        "responses": {
+          "200": {
+            "description": "Scan intake desk HTML.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/extract": {
+      "post": {
+        "summary": "Process Document Scan or Perform Review Actions",
+        "description": "Multi-part form endpoint to process new deed scans (via local CPU or remote GPU OCR) or execute clerk actions (`save_corrections`, `approve_seal`, `reject`).",
+        "tags": [
+          "Document Processing"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "document_image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Scan copy file (JPG, PNG, or PDF)."
+                  },
+                  "processing_mode": {
+                    "type": "string",
+                    "enum": [
+                      "cpu",
+                      "gpu"
+                    ],
+                    "default": "gpu",
+                    "description": "OCR inference backend target."
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "extract",
+                      "save_corrections",
+                      "approve_seal",
+                      "reject"
+                    ],
+                    "description": "Action to perform on the verification record."
+                  },
+                  "verification_id": {
+                    "type": "string",
+                    "description": "Target record UUID for review actions."
+                  },
+                  "rejection_reason": {
+                    "type": "string",
+                    "description": "Mandatory justification if action is `reject`."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Processed verification record HTML console.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed multipart payload or missing file."
+          }
+        }
+      }
+    },
+    "/export_pdf": {
+      "get": {
+        "summary": "Export Cryptographically Certified Deed PDF",
+        "description": "Generates and streams a tamper-evident, sealed PDF certificate for an approved deed record with embedded RSA-PSS signature metadata and verification QR code.",
+        "tags": [
+          "Certification"
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "query",
+            "required": true,
+            "description": "UUID of the certified record.",
+            "schema": {
+              "type": "string",
+              "example": "99b07532-93d6-4c31-8917-35ca53819f23"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated certificate PDF file.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found or not yet approved."
+          }
+        }
+      }
+    },
+    "/verify": {
+      "get": {
+        "summary": "Public Document Verification & QR Verdict",
+        "description": "Public verification endpoint. Dynamically re-validates the cryptographic RSA-PSS signature against the canonical record payload and public key, stamping the validity verdict.",
+        "tags": [
+          "Public Verification"
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "query",
+            "required": true,
+            "description": "UUID of the certified deed record.",
+            "schema": {
+              "type": "string",
+              "example": "99b07532-93d6-4c31-8917-35ca53819f23"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public verification page with signature validation badge.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Verification record not found."
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Registry Home or Verification Gateway",
+        "description": "Root portal for the registry. If called with `?verification_id=...`, delegates directly to public signature verification; otherwise renders the main intake desk.",
+        "tags": [
+          "Public Verification"
+        ],
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "query",
+            "required": false,
+            "description": "Optional UUID to verify directly.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Home or Verification HTML view.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/signin": {
+      "get": {
+        "summary": "Sign-In Page UI",
+        "description": "Renders the login portal for clerks, officers, and citizen users.",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sign-in HTML page."
+          }
+        }
+      },
+      "post": {
+        "summary": "User Authentication & Session Issuance",
+        "description": "Authenticates user credentials and issues an HTTP-only session cookie (`onebhoomi_session`).",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "clerk_telangana"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "Registry@2026"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirects to dashboard or intended URL with Set-Cookie header.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "onebhoomi_session=<token>; Path=/; HttpOnly; SameSite=Lax",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials."
+          }
+        }
+      }
+    },
+    "/auth/signup": {
+      "get": {
+        "summary": "Sign-Up Page UI",
+        "description": "Renders the account registration form for new clerks, officers, and citizen registrants.",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sign-up HTML page."
+          }
+        }
+      },
+      "post": {
+        "summary": "Register New User Account",
+        "description": "Creates a new user account and starts a session.",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "clerk_khammam"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "StrongPassword!2026"
+                  },
+                  "full_name": {
+                    "type": "string",
+                    "example": "M. Satyanarayana"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "clerk",
+                      "officer",
+                      "citizen"
+                    ],
+                    "default": "clerk"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password",
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Account registered, redirects to dashboard with Set-Cookie."
+          },
+          "400": {
+            "description": "Username already taken or invalid inputs."
+          }
+        }
+      }
+    },
+    "/auth/choose-role": {
+      "get": {
+        "summary": "Quick Role Selection UI",
+        "description": "Renders quick demo role switcher.",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "Choose role HTML page."
+          }
+        }
+      },
+      "post": {
+        "summary": "Quick Role Selection & Session Switch",
+        "description": "Instantly provisions a demo session for the selected role (`clerk`, `officer`, `citizen`) and sets the session cookie.",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "clerk",
+                      "officer",
+                      "citizen"
+                    ]
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "302": {
+            "description": "Redirects with active session cookie for chosen role."
+          }
+        }
+      }
+    },
+    "/auth/signout": {
+      "get": {
+        "summary": "Sign Out & Terminate Session",
+        "description": "Invalidates the active session and clears the `onebhoomi_session` cookie.",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "302": {
+            "description": "Session cleared, redirects to /auth/signin.",
+            "headers": {
+              "Set-Cookie": {
+                "description": "onebhoomi_session=; Path=/; Max-Age=0",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
