@@ -87,7 +87,7 @@ def get_public_web_tunnel() -> str:
 # =====================================================================
 # Kaggle / Colab OCR Tunnel Configuration
 # =====================================================================
-COLAB_OCR_URL = "https://implies-representations-lab-terminal.trycloudflare.com"
+COLAB_OCR_URL = "https://acceptable-direct-ireland-enhance.trycloudflare.com"
 
 
 def get_colab_url() -> str:
@@ -2199,6 +2199,19 @@ def _upload_stage(
             </select>
             <p class="mode-note">{html.escape(mode_note)}</p>
           </div>
+          <div class="mode-row" style="margin-top: 10px;">
+            <label class="field-label" for="document_language">Document Primary Language</label>
+            <select name="document_language" id="document_language">
+              <option value="en" selected>English (Default · Latin Script)</option>
+              <option value="hi">हिंदी · Hindi (Devanagari)</option>
+              <option value="te">తెలుగు · Telugu (Official Deeds)</option>
+              <option value="kn">ಕನ್ನಡ · Kannada (Revenue Records)</option>
+              <option value="ta">தமிழ் · Tamil (Registration Deeds)</option>
+              <option value="mr">मराठी · Marathi (Devanagari)</option>
+              <option value="ur">اردو · Urdu (Perso-Arabic Script)</option>
+            </select>
+            <p class="mode-note">PaddleOCR + TrOCR multi-language recognition models</p>
+          </div>
           <div class="submit-row">
             <p class="submit-note">Next · checklist → clerk review → seal</p>
             <button type="submit" class="btn btn-primary btn-xl">Process Extraction</button>
@@ -3873,7 +3886,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             return
 
         # Dedicated New Scan & Document Intake desk (with persistent sidebar)
-        if parsed.path in {"/new", "/desk", "/upload"}:
+        if parsed.path in {"/new", "/desk", "/upload", "/new_scan"}:
             page = dashboard_view.render_new_scan(
                 host_name=host_name,
                 colab_url=get_colab_url(),
@@ -4065,6 +4078,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
         filename = "uploaded_image"
         colab_url = get_colab_url()
         processing_mode = "gpu" if colab_url else "cpu"
+        document_language = "en"
 
         # Action fields parsing
         action = None
@@ -4091,6 +4105,10 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 mode_str = val.decode("utf-8", errors="ignore").strip()
                 if mode_str:
                     processing_mode = mode_str
+            elif 'name="document_language"' in header_str or 'name="lang"' in header_str:
+                lang_str = val.decode("utf-8", errors="ignore").strip().lower()
+                if lang_str in ("en", "hi", "te", "kn", "ta", "mr", "ur", "auto"):
+                    document_language = lang_str
             elif 'name="colab_url"' in header_str:
                 url_str = val.decode("utf-8", errors="ignore").strip()
                 if url_str:
@@ -4425,7 +4443,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                             resp = requests.post(
                                 ocr_url,
                                 files={"image": (f"page_{p_idx}.jpg", send_bytes, "image/jpeg")},
-                                data={"page_number": str(p_idx), "lang": "en"},
+                                data={"page_number": str(p_idx), "lang": document_language},
                                 timeout=60,
                             )
                             if resp.status_code != 200:
@@ -4490,7 +4508,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                                             resp_top = requests.post(
                                                 ocr_url,
                                                 files={"image": ("top.jpg", top_enc.tobytes(), "image/jpeg")},
-                                                data={"page_number": str(page_idx), "lang": "en"},
+                                                data={"page_number": str(page_idx), "lang": document_language},
                                                 timeout=10,
                                             )
                                             if resp_top.status_code == 200:
@@ -4560,10 +4578,20 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                         upload_files = None
 
                     if upload_files is not None:
-                        ocr_resp = requests.post(ocr_url, files=upload_files, timeout=45)
+                        ocr_resp = requests.post(
+                            ocr_url,
+                            files=upload_files,
+                            data={"page_number": "1", "lang": document_language},
+                            timeout=45,
+                        )
                     else:
                         with open(temp_path, "rb") as f:
-                            ocr_resp = requests.post(ocr_url, files={"image": f}, timeout=45)
+                            ocr_resp = requests.post(
+                                ocr_url,
+                                files={"image": f},
+                                data={"page_number": "1", "lang": document_language},
+                                timeout=45,
+                            )
 
                     t_net_end = perf_counter()
                     total_request_time = (t_net_end - t_net_start) * 1000
@@ -4664,6 +4692,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 <div class="docket rv in">
                   <span><b data-i18n="lbl_mode">Mode</b> {mode_label}</span>
                   <span><b data-i18n="lbl_hardware">Hardware</b> {html.escape(str(gpu_name))}</span>
+                  <span><b>Language</b> {html.escape(document_language.upper())}</span>
                   <span><b data-i18n="lbl_ocr">OCR</b> {ocr_time_ms:.2f} ms</span>
                   <span><b data-i18n="lbl_transit">Transit</b> {network_time_ms:.2f} ms</span>
                   <span><b data-i18n="lbl_total">Total</b> {total_time_ms:.2f} ms</span>
@@ -4671,7 +4700,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 """
             else:
                 t_total_start = perf_counter()
-                result = extract_land_document(temp_path)
+                result = extract_land_document(temp_path, lang=document_language)
                 total_time_ms = (perf_counter() - t_total_start) * 1000
 
                 ocr_time_ms = result.get("profiling_ms", {}).get(
@@ -4681,6 +4710,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 timing_info = f"""
                 <div class="docket rv in">
                   <span><b>Mode</b> Local CPU · PaddleOCR</span>
+                  <span><b>Language</b> {html.escape(document_language.upper())}</span>
                   <span><b>OCR</b> {ocr_time_ms:.2f} ms</span>
                   <span><b>Total</b> {total_time_ms:.2f} ms</span>
                 </div>
@@ -4696,6 +4726,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 uploaded_by_user_id=current_user_id,
             )
             record["filename"] = filename
+            record["document_language"] = document_language
+            record["ocr_language"] = document_language
             record["raw_ocr"] = result.get("raw_ocr")
             record["field_provenance"] = result.get("field_provenance", {})
             verification_service.save_record(record)
