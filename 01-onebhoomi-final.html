@@ -129,11 +129,25 @@
     letter-spacing: normal;
   }
   
-  /* Font fallbacks for Indic languages */
-  html[lang="hi"] body, html[lang="hi"] p, html[lang="hi"] .lede, html[lang="hi"] span, html[lang="hi"] a { font-family: "Noto Sans Devanagari", var(--sans); }
-  html[lang="te"] body, html[lang="te"] p, html[lang="te"] .lede, html[lang="te"] span, html[lang="te"] a { font-family: "Noto Sans Telugu", var(--sans); }
-  html[lang="kn"] body, html[lang="kn"] p, html[lang="kn"] .lede, html[lang="kn"] span, html[lang="kn"] a { font-family: "Noto Sans Kannada", var(--sans); }
-  html[lang="ta"] body, html[lang="ta"] p, html[lang="ta"] .lede, html[lang="ta"] span, html[lang="ta"] a { font-family: "Noto Sans Tamil", var(--sans); }
+  /* Font fallbacks & optical size equalizer for Indic languages */
+  html[lang="hi"] body, html[lang="hi"] p, html[lang="hi"] span, html[lang="hi"] a, html[lang="hi"] button, html[lang="hi"] th, html[lang="hi"] td, html[lang="hi"] label, html[lang="hi"] div {
+    font-family: "Noto Sans Devanagari", var(--sans), sans-serif;
+  }
+  html[lang="te"] body, html[lang="te"] p, html[lang="te"] span, html[lang="te"] a, html[lang="te"] button, html[lang="te"] th, html[lang="te"] td, html[lang="te"] label, html[lang="te"] div {
+    font-family: "Noto Sans Telugu", var(--sans), sans-serif;
+  }
+  html[lang="kn"] body, html[lang="kn"] p, html[lang="kn"] span, html[lang="kn"] a, html[lang="kn"] button, html[lang="kn"] th, html[lang="kn"] td, html[lang="kn"] label, html[lang="kn"] div {
+    font-family: "Noto Sans Kannada", var(--sans), sans-serif;
+  }
+  html[lang="ta"] body, html[lang="ta"] p, html[lang="ta"] span, html[lang="ta"] a, html[lang="ta"] button, html[lang="ta"] th, html[lang="ta"] td, html[lang="ta"] label, html[lang="ta"] div {
+    font-family: "Noto Sans Tamil", var(--sans), sans-serif;
+  }
+
+  /* Reset letter-spacing for Indic scripts so spacing matches English positioning without breaking font sizing */
+  html[lang]:not([lang="en"]) *,
+  html[lang]:not([lang="en"]) ::placeholder {
+    letter-spacing: normal !important;
+  }
 
   header{border-bottom:3px double var(--rule)}
   .reg-bar{
@@ -142,15 +156,16 @@
   }
   .brand{
     display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--ink);
-    white-space:nowrap;flex-shrink:0;
+    white-space:nowrap;flex-shrink:0;text-align:left;
   }
+  .brand img { display:block; height:64px; width:auto; }
   .brand b{
     font-family:var(--serif);font-weight:900;font-size:26px;letter-spacing:.04em;
-    white-space:nowrap;
+    white-space:nowrap;text-align:left;
   }
   .brand span{
     font-family:var(--type);font-size:11px;letter-spacing:.14em;color:var(--stamp);
-    text-transform:uppercase;white-space:nowrap;display:inline-block;
+    text-transform:uppercase;white-space:nowrap;display:inline-block;text-align:left;
   }
   nav{
     display:flex;gap:28px;align-items:center;white-space:nowrap;
@@ -414,7 +429,7 @@
 
 <header>
   <div class="wrap reg-bar">
-    <a class="brand" href="#top" style="display:inline-flex; align-items:center; text-decoration:none;">
+    <a class="brand" href="/" style="display:inline-flex; align-items:center; text-decoration:none;">
       <img src="/logo.png?v=20260904d" alt="OneBhoomi" style="height:64px; width:auto; display:block; mix-blend-mode:multiply; filter:contrast(1.02);">
     </a>
 
@@ -440,8 +455,9 @@
           <option value="ta">தமிழ் (Tamil)</option>
         </select>
       </div>
-      <a class="btn btn-ghost btn-head" href="/auth/signin" id="headerSignInBtn" style="padding:10px 18px; border:1.5px solid var(--stamp); color:var(--stamp); text-transform:uppercase; letter-spacing:.14em; font-weight:700;">Sign In</a>
-      <a class="btn btn-primary btn-head" href="/dashboard" data-i18n="nav_dashboard">Go to Dashboard</a>
+      <div id="headerAuthContainer" style="display:inline-flex; align-items:center; gap:10px;">
+        <a class="btn btn-primary btn-head" href="/auth/signin" id="headerSignInBtn" data-i18n="nav_signin" style="padding:10px 18px; font-weight:700;">Sign In</a>
+      </div>
     </div>
 </header>
 
@@ -453,7 +469,7 @@
       <h1 data-i18n="hero_h1">The deed becomes <em>data.</em><br>The data stays <em>provable.</em></h1>
       <p class="lede" data-i18n="hero_lede">OneBhoomi reads sale deeds, agreements of sale and GPAs straight off the scanner — offline — turns them into checked, clerk-corrected records, and seals each one with an RSA-PSS signature your office owns.</p>
       <div class="acts">
-        <a class="btn btn-primary" href="/auth/signin" style="display:inline-flex; align-items:center; gap:8px;">
+        <a class="btn btn-primary" href="/auth/signin" id="heroAuthBtn" style="display:inline-flex; align-items:center; gap:8px;">
           <span>Official Sign In</span> &rarr;
         </a>
         <a class="btn btn-ghost" href="#workflow" data-i18n="hero_act_stages">See the three stages</a>

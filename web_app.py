@@ -87,7 +87,7 @@ def get_public_web_tunnel() -> str:
 # =====================================================================
 # Kaggle / Colab OCR Tunnel Configuration
 # =====================================================================
-COLAB_OCR_URL = "https://acceptable-direct-ireland-enhance.trycloudflare.com"
+COLAB_OCR_URL = "https://suppose-cambridge-funeral-interview.trycloudflare.com"
 
 
 def get_colab_url() -> str:
@@ -415,10 +415,25 @@ HTML_PAGE = Template("""<!doctype html>
       font-weight: 500;
       padding: 6px 10px;
     }
-    html[lang="hi"] body, html[lang="hi"] p, html[lang="hi"] span, html[lang="hi"] a { font-family: "Noto Sans Devanagari", var(--sans); }
-    html[lang="te"] body, html[lang="te"] p, html[lang="te"] span, html[lang="te"] a { font-family: "Noto Sans Telugu", var(--sans); }
-    html[lang="kn"] body, html[lang="kn"] p, html[lang="kn"] span, html[lang="kn"] a { font-family: "Noto Sans Kannada", var(--sans); }
-    html[lang="ta"] body, html[lang="ta"] p, html[lang="ta"] span, html[lang="ta"] a { font-family: "Noto Sans Tamil", var(--sans); }
+    /* Font fallbacks & optical size equalizer for Indic languages */
+    html[lang="hi"] body, html[lang="hi"] p, html[lang="hi"] span, html[lang="hi"] a, html[lang="hi"] button, html[lang="hi"] th, html[lang="hi"] td, html[lang="hi"] label, html[lang="hi"] div {
+      font-family: "Noto Sans Devanagari", var(--sans), sans-serif;
+    }
+    html[lang="te"] body, html[lang="te"] p, html[lang="te"] span, html[lang="te"] a, html[lang="te"] button, html[lang="te"] th, html[lang="te"] td, html[lang="te"] label, html[lang="te"] div {
+      font-family: "Noto Sans Telugu", var(--sans), sans-serif;
+    }
+    html[lang="kn"] body, html[lang="kn"] p, html[lang="kn"] span, html[lang="kn"] a, html[lang="kn"] button, html[lang="kn"] th, html[lang="kn"] td, html[lang="kn"] label, html[lang="kn"] div {
+      font-family: "Noto Sans Kannada", var(--sans), sans-serif;
+    }
+    html[lang="ta"] body, html[lang="ta"] p, html[lang="ta"] span, html[lang="ta"] a, html[lang="ta"] button, html[lang="ta"] th, html[lang="ta"] td, html[lang="ta"] label, html[lang="ta"] div {
+      font-family: "Noto Sans Tamil", var(--sans), sans-serif;
+    }
+
+    /* Reset letter-spacing for Indic scripts so spacing matches English positioning without breaking font sizing */
+    html[lang]:not([lang="en"]) *,
+    html[lang]:not([lang="en"]) ::placeholder {
+      letter-spacing: normal !important;
+    }
     *{margin:0;padding:0;box-sizing:border-box}
     html{scroll-behavior:smooth}
     body{
@@ -1396,20 +1411,6 @@ HTML_PAGE = Template("""<!doctype html>
       <a href="/#sealing" data-i18n="nav_sealing">Sealing</a>
       <a href="/#verify" data-i18n="nav_verify">Verify</a>
     </nav>
-    <div class="lang-picker" title="Change Language">
-            <svg class="lang-svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;stroke:var(--stamp);fill:none;flex-shrink:0;display:inline-block;vertical-align:middle;">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-        </svg>
-            <select id="langSelect" class="lang-dropdown" aria-label="Select Language">
-              <option value="en" selected>English</option>
-              <option value="hi">हिंदी (Hindi)</option>
-              <option value="te">తెలుగు (Telugu)</option>
-              <option value="kn">ಕನ್ನಡ (Kannada)</option>
-              <option value="ta">தமிழ் (Tamil)</option>
-            </select>
-    </div>
     <span class="reg-no">$reg_no</span>
   </div>
 </header>
@@ -2801,7 +2802,7 @@ def get_api_docs_html() -> str:
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Courier+Prime:wght@400;700&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&family=Courier+Prime:wght@400;700&family=Archivo:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { margin: 0; background: #faf7f0; font-family: "Archivo", sans-serif; }
     .topbar-header {
@@ -3227,7 +3228,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
 
     if is_approved:
         approved_at = record.get("approved_at", "Certified")
-        if role == "clerk":
+        if role != "officer":
             action_buttons = f"""
             <div class="action-panel">
               <p class="warnbox ok" style="border-left-color:var(--green)">
@@ -3260,7 +3261,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
         dup_matched = (dup_info or {}).get("matched_record_id", "")
         dup_sealed = (dup_info or {}).get("sealed_at", "Certified")
         dup_reason = (dup_info or {}).get("match_reason", "Identical document")
-        if role == "clerk":
+        if role != "officer":
             action_buttons = f"""
             <div class="action-panel">
               <p class="warnbox stop" style="border-left-color:var(--stamp); background:rgba(166,25,60,0.06);">
@@ -3299,7 +3300,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
     elif is_rejected:
         rejected_at = record.get("rejected_at", "On file")
         rej_reason = record.get("rejection_reason", "No reason provided")
-        if role == "clerk":
+        if role != "officer":
             action_buttons = f"""
             <div class="action-panel">
               <p class="warnbox stop">
@@ -3319,8 +3320,20 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
               <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled}>Re-Approve &amp; Seal</button>
             </div>
             """
-    elif role == "clerk":
-        if is_clerk_submitted:
+    elif role == "officer":
+        action_buttons = f"""
+        <div class="action-panel">
+          {warn}
+          <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled} data-i18n="btn_officer_approve_seal">Officer Approve &amp; Seal</button>
+          <div class="reject-group">
+            <input type="text" name="rejection_reason" id="rejection_reason" placeholder="Rejection reason (required)" data-i18n-ph="ph_rej_reason" aria-label="Rejection reason">
+            <button type="submit" name="action" value="reject" class="btn btn-outline-red"
+              onclick="if(!document.getElementById('rejection_reason').value.trim()) {{ alert('Please provide a rejection reason.'); return false; }}">Officer Reject</button>
+          </div>
+        </div>
+        """
+    else:
+        if is_clerk_submitted or current_status == "READY_FOR_APPROVAL":
             action_buttons = f"""
             <div class="action-panel">
               <p class="warnbox ok" style="border-left-color:var(--gold); background:rgba(217,119,6,0.06);">
@@ -3336,34 +3349,9 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
             <div class="action-panel">
               {warn}
               <button type="submit" name="action" value="correct" class="btn btn-primary" data-i18n="btn_save_corrections">Save Corrections</button>
-              <button type="submit" name="action" value="submit_to_officer" class="btn btn-green" {submit_disabled} title="{submit_title}">Submit to Officer</button>
+              <button type="submit" name="action" value="submit_to_officer" class="btn btn-green" {submit_disabled} title="{submit_title}">Submit for Officer Approval</button>
             </div>
             """
-    elif role == "officer":
-        action_buttons = f"""
-        <div class="action-panel">
-          {warn}
-          <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled} data-i18n="btn_officer_approve_seal">Officer Approve &amp; Seal</button>
-          <div class="reject-group">
-            <input type="text" name="rejection_reason" id="rejection_reason" placeholder="Rejection reason (required)" data-i18n-ph="ph_rej_reason" aria-label="Rejection reason">
-            <button type="submit" name="action" value="reject" class="btn btn-outline-red"
-              onclick="if(!document.getElementById('rejection_reason').value.trim()) {{ alert('Please provide a rejection reason.'); return false; }}">Officer Reject</button>
-          </div>
-        </div>
-        """
-    else:
-        action_buttons = f"""
-        <div class="action-panel">
-          {warn}
-          <button type="submit" name="action" value="correct" class="btn btn-ghost">Save Corrections</button>
-          <button type="submit" name="action" value="approve" class="btn btn-green" {approve_disabled} data-i18n="btn_officer_approve_seal">Officer Approve &amp; Seal</button>
-          <div class="reject-group">
-            <input type="text" name="rejection_reason" id="rejection_reason" placeholder="Rejection reason (required)" data-i18n-ph="ph_rej_reason" aria-label="Rejection reason">
-            <button type="submit" name="action" value="reject" class="btn btn-outline-red"
-              onclick="if(!document.getElementById('rejection_reason').value.trim()) {{ alert('Please provide a rejection reason.'); return false; }}">Officer Reject</button>
-          </div>
-        </div>
-        """
 
     blocked = ""
     if is_not_land_doc:
@@ -3397,6 +3385,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
         {note_markup}
         <form action="/extract" method="post" enctype="multipart/form-data" autocomplete="off">
           <input type="hidden" name="verification_id" value="{html.escape(rec_id)}">
+          <input type="hidden" name="role" value="{html.escape(role)}">
           <div class="editor-grid">
             <div class="editor-field">
               <label for="f_doc_type" data-i18n="f_doc_type">Document Type</label>
@@ -3475,7 +3464,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
     """
 
 
-def _cert_panel(record: dict, host_name: str) -> str:
+def _cert_panel(record: dict, host_name: str, role: str = "clerk") -> str:
     rec_id = record["verification_id"]
     payload_data = record["document_payload"]
     prop = payload_data.get("property", {}) or {}
@@ -3520,53 +3509,27 @@ def _cert_panel(record: dict, host_name: str) -> str:
     raw_doc_no = payload_data.get("document_number") or ""
     default_pin = "".join(c for c in raw_doc_no if c.isalnum()) or "1234"
 
-    return f"""
-    <section class="panel cert rv">
-      <div class="tab t-green"><span>Schedule C · Certificate of Seal</span><em>{html.escape(record.get('approved_at') or '')}</em></div>
-      <div class="cert-body">
-        <div>
-          <div class="fact"><b>Verification ID</b><span class="v" style="font-family:var(--type);font-weight:400;">{html.escape(rec_id)}</span></div>
-          <div class="fact"><b>Document Type</b><span class="v">{html.escape(payload_data.get('document_type') or '')}</span></div>
-          <div class="fact"><b>Document Number</b><span class="v">{html.escape(payload_data.get('document_number') or '')}</span></div>
-          <div class="fact"><b>Survey Number</b><span class="v">{html.escape(str(prop.get('survey_number') or ''))}</span></div>
-          <div class="fact"><b>Area</b><span class="v">{html.escape(str(prop.get('area') or ''))}</span></div>
-          <div class="fact"><b>Village</b><span class="v">{html.escape(prop.get('village') or '')}</span></div>
-          <div class="fact"><b>District</b><span class="v">{html.escape(prop.get('district') or '')}</span></div>
-          <div class="fact"><b>Document Date</b><span class="v">{html.escape(payload_data.get('document_date') or '')}</span></div>
-          <div class="fact"><b>Execution Date</b><span class="v">{html.escape(payload_data.get('execution_date') or '')}</span></div>
-          <div class="fact"><b>Parties</b><ul>{parties_rows}</ul></div>
-
-          <p class="crypto-h">Cryptographic Security</p>
-          <p class="crypto-line"><strong>Algorithm:</strong> RSA-PSS / SHA-256, keypair held in <span style="font-family:var(--type);">verification_keys/</span></p>
-          {sig_state}
-        </div>
-
-        <div class="seal-side">
-          <div class="seal-wrap">
-            <svg class="big-seal" viewBox="0 0 340 340" aria-hidden="true">
-              <g fill="none" stroke="#C9A227">
-                <circle cx="170" cy="170" r="160" stroke-width="3"/>
-                <circle cx="170" cy="170" r="150" stroke-width="1.2" stroke-dasharray="4 6"/>
-                <circle cx="170" cy="170" r="120" stroke-width="2"/>
-                <circle cx="170" cy="170" r="112" stroke-width="1" stroke-dasharray="2 4"/>
-                <circle cx="170" cy="170" r="74" stroke-width="1.4"/>
-              </g>
-              <path id="certSealTop" d="M 170 170 m -134 0 a 134 134 0 1 1 268 0" fill="none"/>
-              <path id="certSealBot" d="M 170 170 m -134 0 a 134 134 0 1 0 268 0" fill="none"/>
-              <text font-family="Courier Prime, monospace" font-size="15" letter-spacing="6" fill="#C9A227">
-                <textPath href="#certSealTop" startOffset="6%">CANONICAL · SHA-256</textPath>
-              </text>
-              <text font-family="Courier Prime, monospace" font-size="15" letter-spacing="6" fill="#C9A227">
-                <textPath href="#certSealBot" startOffset="15%">RSA-PSS · 2048 · LOCAL</textPath>
-              </text>
-              <g fill="#C9A227">
-                <circle cx="170" cy="110" r="4"/><circle cx="230" cy="170" r="4"/>
-                <circle cx="170" cy="230" r="4"/><circle cx="110" cy="170" r="4"/>
-              </g>
-            </svg>
-            <div class="seal-center"><b>Sealed</b><span>Immutably on file</span></div>
+    # Only show QR verification and locked PDF export download to users, not to the officer
+    if role == "officer":
+        qr_and_export_html = """
+        <div style="margin-top:24px; padding:18px; background:var(--paper-deep); border:1px solid var(--border); border-radius:4px; text-align:center;">
+          <div style="font-size:13.5px; font-weight:700; color:#059669; margin-bottom:6px;">
+            ✓ Certified &amp; Digitally Sealed by Officer
           </div>
-
+          <p style="font-size:12px; color:var(--ink-soft); line-height:1.45; margin:0;">
+            Cryptographic signature committed to ledger. Official locked PDF &amp; QR verification access is provisioned for the applicant citizen.
+          </p>
+        </div>
+        """
+        cert_actions_html = """
+        <div class="cert-actions">
+          <a class="btn btn-primary" style="background:#059669; border-color:#047857; color:#fff;" href="/officer">🏛️ Return to Officer Queue</a>
+          <a class="btn btn-ghost" href="/officer#sealedSection">View Sealed Registry Ledger</a>
+        </div>
+        """
+        pdf_lock_modal_html = ""
+    else:
+        qr_and_export_html = f"""
           <div class="qrbox">{qr_markup}</div>
           <p class="qrurl"><a href="{html.escape(verify_url)}" target="_blank">{html.escape(verify_url)}</a></p>
           <p class="qr-hint">Scan from any phone on the same office network: the page re-checks the signature locally, offline.</p>
@@ -3585,17 +3548,17 @@ def _cert_panel(record: dict, host_name: str) -> str:
               📥 Direct Download (Lock PIN: {html.escape(default_pin)})
             </a>
           </div>
-        </div>
-
+        """
+        cert_actions_html = f"""
         <div class="cert-actions">
           <button type="button" class="btn btn-seal-lock" onclick="openPdfLockModal('{html.escape(rec_id)}', '{html.escape(default_pin)}')">
             🔒 Export PDF with Lock
           </button>
           <a class="btn btn-ghost" href="{html.escape(verify_url)}" target="_blank">Open Public Verification Page</a>
-          <a class="btn btn-primary" href="/dashboard">Process New Document</a>
+          <a class="btn btn-primary" href="/user">Back to Digitization Desk</a>
         </div>
-      </div>
-
+        """
+        pdf_lock_modal_html = f"""
       <!-- PDF Lock Modal -->
       <div id="pdfLockModal" class="lock-modal-backdrop" onclick="if(event.target===this) closePdfLockModal()">
         <div class="lock-modal-card">
@@ -3664,6 +3627,62 @@ def _cert_panel(record: dict, host_name: str) -> str:
           }}, 100);
         }}
       </script>
+      """
+
+    return f"""
+    <section class="panel cert rv">
+      <div class="tab t-green"><span>Schedule C · Certificate of Seal</span><em>{html.escape(record.get('approved_at') or '')}</em></div>
+      <div class="cert-body">
+        <div>
+          <div class="fact"><b>Verification ID</b><span class="v" style="font-family:var(--type);font-weight:400;">{html.escape(rec_id)}</span></div>
+          <div class="fact"><b>Document Type</b><span class="v">{html.escape(payload_data.get('document_type') or '')}</span></div>
+          <div class="fact"><b>Document Number</b><span class="v">{html.escape(payload_data.get('document_number') or '')}</span></div>
+          <div class="fact"><b>Survey Number</b><span class="v">{html.escape(str(prop.get('survey_number') or ''))}</span></div>
+          <div class="fact"><b>Area</b><span class="v">{html.escape(str(prop.get('area') or ''))}</span></div>
+          <div class="fact"><b>Village</b><span class="v">{html.escape(prop.get('village') or '')}</span></div>
+          <div class="fact"><b>District</b><span class="v">{html.escape(prop.get('district') or '')}</span></div>
+          <div class="fact"><b>Document Date</b><span class="v">{html.escape(payload_data.get('document_date') or '')}</span></div>
+          <div class="fact"><b>Execution Date</b><span class="v">{html.escape(payload_data.get('execution_date') or '')}</span></div>
+          <div class="fact"><b>Parties</b><ul>{parties_rows}</ul></div>
+
+          <p class="crypto-h">Cryptographic Security</p>
+          <p class="crypto-line"><strong>Algorithm:</strong> RSA-PSS / SHA-256, keypair held in <span style="font-family:var(--type);">verification_keys/</span></p>
+          {sig_state}
+        </div>
+
+        <div class="seal-side">
+          <div class="seal-wrap">
+            <svg class="big-seal" viewBox="0 0 340 340" aria-hidden="true">
+              <g fill="none" stroke="#C9A227">
+                <circle cx="170" cy="170" r="160" stroke-width="3"/>
+                <circle cx="170" cy="170" r="150" stroke-width="1.2" stroke-dasharray="4 6"/>
+                <circle cx="170" cy="170" r="120" stroke-width="2"/>
+                <circle cx="170" cy="170" r="112" stroke-width="1" stroke-dasharray="2 4"/>
+                <circle cx="170" cy="170" r="74" stroke-width="1.4"/>
+              </g>
+              <path id="certSealTop" d="M 170 170 m -134 0 a 134 134 0 1 1 268 0" fill="none"/>
+              <path id="certSealBot" d="M 170 170 m -134 0 a 134 134 0 1 0 268 0" fill="none"/>
+              <text font-family="Courier Prime, monospace" font-size="15" letter-spacing="6" fill="#C9A227">
+                <textPath href="#certSealTop" startOffset="6%">CANONICAL · SHA-256</textPath>
+              </text>
+              <text font-family="Courier Prime, monospace" font-size="15" letter-spacing="6" fill="#C9A227">
+                <textPath href="#certSealBot" startOffset="15%">RSA-PSS · 2048 · LOCAL</textPath>
+              </text>
+              <g fill="#C9A227">
+                <circle cx="170" cy="110" r="4"/><circle cx="230" cy="170" r="4"/>
+                <circle cx="170" cy="230" r="4"/><circle cx="110" cy="170" r="4"/>
+              </g>
+            </svg>
+            <div class="seal-center"><b>Sealed</b><span>Immutably on file</span></div>
+          </div>
+
+          {qr_and_export_html}
+        </div>
+
+        {cert_actions_html}
+      </div>
+
+      {pdf_lock_modal_html}
     </section>
     """
 
@@ -3819,7 +3838,7 @@ def render_page(
 
         body_parts = []
         if status == "APPROVED":
-            body_parts.append(_cert_panel(active_record, host_name))
+            body_parts.append(_cert_panel(active_record, host_name, role=role))
         elif status == "REJECTED":
             body_parts.append(_rejected_panel(active_record))
         else:
@@ -4073,20 +4092,6 @@ def render_verification_view(record: dict, sig_valid: bool) -> bytes:
 
 
         <div style="display:flex; align-items:center; gap:10px;">
-          <div class="lang-picker" title="Change Language">
-            <svg class="lang-svg" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;stroke:var(--stamp);fill:none;flex-shrink:0;display:inline-block;vertical-align:middle;">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-        </svg>
-            <select id="langSelect" class="lang-dropdown" aria-label="Select Language">
-              <option value="en" selected>English</option>
-              <option value="hi">हिंदी (Hindi)</option>
-              <option value="te">తెలుగు (Telugu)</option>
-              <option value="kn">ಕನ್ನಡ (Kannada)</option>
-              <option value="ta">தமிழ் (Tamil)</option>
-            </select>
-          </div>
           <span class="reg-no">RECORD NO. {html.escape(rec_id[:8].upper())}</span>
         </div>
       </div>
@@ -4297,15 +4302,30 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 if current_user:
                     user_name = html.escape(current_user.get("name") or current_user.get("email") or "User")
                     auth_indicator = (
+                        f'<div id="headerAuthContainer" style="display:inline-flex; align-items:center; gap:12px;">'
                         f'<span class="user-status-indicator" style="display:inline-flex; align-items:center; gap:8px; font-family:var(--sans); font-size:12.5px; color:var(--ink); white-space:nowrap;">'
                         f'Signed in as <strong style="color:var(--ink); font-weight:700;">{user_name}</strong>'
                         f'<span style="color:var(--ink-soft); opacity:0.6;">&middot;</span>'
                         f'<a href="/auth/signout" style="color:var(--stamp); font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:.08em; text-decoration:none;">Sign Out</a>'
                         f'</span>'
+                        f'<a class="btn btn-primary btn-head" href="/dashboard" id="headerDashboardBtn" data-i18n="nav_dashboard">Go to Dashboard</a>'
+                        f'</div>'
                     )
                     content_str = re.sub(
-                        r'<a\s+[^>]*id="headerSignInBtn"[^>]*>.*?</a>',
+                        r'<div\s+[^>]*id="headerAuthContainer"[^>]*>.*?</div>',
                         auth_indicator,
+                        content_str,
+                        count=1,
+                        flags=re.DOTALL,
+                    )
+                    hero_dashboard_btn = (
+                        f'<a class="btn btn-primary" href="/dashboard" id="heroAuthBtn" style="display:inline-flex; align-items:center; gap:8px;">'
+                        f'<span>Go to Dashboard</span> &rarr;'
+                        f'</a>'
+                    )
+                    content_str = re.sub(
+                        r'<a\s+[^>]*id="heroAuthBtn"[^>]*>.*?</a>',
+                        hero_dashboard_btn,
                         content_str,
                         count=1,
                         flags=re.DOTALL,
@@ -4349,17 +4369,27 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
         self.current_user = current_user
         self.user_role = current_user.get("role")
 
-        # New Role-Gated Route: /clerk
-        if parsed.path == "/clerk":
-            if self.user_role != "clerk":
-                self.send_error(HTTPStatus.FORBIDDEN, "Access Denied: Clerk role required.")
+        # Role-Gated Route: User Dashboard (/user, /user/dashboard, /clerk)
+        if parsed.path in {"/user", "/user/dashboard", "/clerk"}:
+            if self.user_role == "officer":
+                self.send_response(HTTPStatus.SEE_OTHER)
+                self.send_header("Location", "/officer")
+                self.end_headers()
+                return
+            if self.user_role not in {"user", "clerk"}:
+                self.send_error(HTTPStatus.FORBIDDEN, "Access Denied: User role required.")
+                return
+            if parsed.path == "/clerk":
+                self.send_response(HTTPStatus.SEE_OTHER)
+                self.send_header("Location", "/user")
+                self.end_headers()
                 return
             colab_url = get_colab_url()
-            page_bytes = dashboard_view.render_clerk_dashboard(
+            page_bytes = dashboard_view.render_user_dashboard(
                 user_id=self.current_user.get("user_id"),
                 host_name=host_name,
                 colab_url=colab_url,
-                user_name=self.current_user.get("name", "Clerk"),
+                user_name=self.current_user.get("name", "User"),
             )
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -4368,8 +4398,13 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             self.wfile.write(page_bytes)
             return
 
-        # New Role-Gated Route: /officer
-        if parsed.path == "/officer":
+        # Role-Gated Route: Officer Dashboard (/officer, /officer/dashboard)
+        if parsed.path in {"/officer", "/officer/dashboard"}:
+            if self.user_role in {"user", "clerk"}:
+                self.send_response(HTTPStatus.SEE_OTHER)
+                self.send_header("Location", "/user")
+                self.end_headers()
+                return
             if self.user_role != "officer":
                 self.send_error(HTTPStatus.FORBIDDEN, "Access Denied: Officer role required.")
                 return
@@ -4565,23 +4600,27 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        # Dashboard View: Clean, professional operations portal with sidebar & stats
-        if parsed.path == "/dashboard":
-            page = dashboard_view.render_dashboard(
-                host_name=host_name,
-                colab_url=get_colab_url(),
-            )
-            self.send_response(HTTPStatus.OK)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
-            self.send_header("Pragma", "no-cache")
-            self.send_header("Content-Length", str(len(page)))
+        # Dashboard View: Role-gated redirect (/dashboard -> /user or /officer)
+        if parsed.path in {"/dashboard", "/dashboard/"}:
+            if not self.current_user:
+                self.send_response(HTTPStatus.SEE_OTHER)
+                self.send_header("Location", "/auth/signin")
+                self.end_headers()
+                return
+            token = accounts_store.extract_session_token_from_request(self)
+            dest = auth_service._get_role_destination_for_session(token)
+            self.send_response(HTTPStatus.SEE_OTHER)
+            self.send_header("Location", dest)
             self.end_headers()
-            self.wfile.write(page)
             return
 
         # Dedicated New Scan & Document Intake desk (with persistent sidebar)
         if parsed.path in {"/new", "/desk", "/upload", "/new_scan"}:
+            if self.user_role == "officer":
+                self.send_response(HTTPStatus.SEE_OTHER)
+                self.send_header("Location", "/officer")
+                self.end_headers()
+                return
             page = dashboard_view.render_new_scan(
                 host_name=host_name,
                 colab_url=get_colab_url(),
@@ -4870,6 +4909,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             # 3. Clerk submits verified record to officer queue
             elif action == "submit_to_officer":
                 record["clerk_submitted"] = True
+                record["status"] = "READY_FOR_APPROVAL"
                 record["submitted_at"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
                 verification_service.save_record(record)
                 message = "Document submitted to Officer approval queue successfully."
@@ -5030,7 +5070,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 get_preview_html(verification_id)
                 or f"<p><strong>Active Verification Record:</strong> {verification_id}</p>"
             )
-            role = getattr(self, "user_role", None) or "clerk"
+            role = form_fields.get("role") or getattr(self, "user_role", None) or "clerk"
             page = render_page(
                 payload=payload_str,
                 message=message,

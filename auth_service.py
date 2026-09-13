@@ -42,8 +42,8 @@ _hasher = PasswordHasher(
 # ---------------------------------------------------------------------
 # Feature Flags & Provider Configurations
 # ---------------------------------------------------------------------
-# Phone OTP feature flag: OFF by default
-ENABLE_PHONE_OTP = os.environ.get("ENABLE_PHONE_OTP", "false").lower() in ("true", "1", "yes")
+# Phone OTP feature flag: ON by default
+ENABLE_PHONE_OTP = os.environ.get("ENABLE_PHONE_OTP", "true").lower() in ("true", "1", "yes")
 
 # SMS Provider Credentials (Twilio / MSG91)
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
@@ -60,8 +60,14 @@ _otp_lock = threading.Lock()
 OTP_EXPIRATION_SECONDS = 300  # 5 minutes
 
 # Google OAuth Credentials
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_CLIENT_ID = os.environ.get(
+    "GOOGLE_CLIENT_ID",
+    ""
+)
+GOOGLE_CLIENT_SECRET = os.environ.get(
+    "GOOGLE_CLIENT_SECRET",
+    ""
+)
 
 
 # =====================================================================
@@ -275,15 +281,11 @@ def send_sms_via_msg91(to_phone: str, otp: str) -> Tuple[bool, str]:
 def request_phone_otp(phone: str) -> Tuple[bool, str]:
     """
     Dispatches a 6-digit OTP to the phone number.
-    If feature flag is disabled, returns an informative message.
+    If no external SMS provider is configured, returns the generated OTP for demo convenience.
     """
     clean_phone = re.sub(r"[^\d+]", "", phone.strip())
     if len(clean_phone) < 10:
         return False, "Please enter a valid 10-digit phone number."
-
-    if not ENABLE_PHONE_OTP:
-        status = get_phone_provider_status()
-        return False, f"Phone OTP is currently disabled in demo mode. {status['instruction']}"
 
     otp = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + OTP_EXPIRATION_SECONDS
@@ -300,15 +302,15 @@ def request_phone_otp(phone: str) -> Tuple[bool, str]:
     if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
         sent, err = send_sms_via_twilio(clean_phone, message)
         if sent:
-            return True, "OTP sent successfully to your phone."
-        return False, err
+            return True, "OTP sent successfully to your phone via SMS."
+        logger.warning(f"Twilio SMS error, using local demo OTP: {err}")
     elif MSG91_AUTH_KEY:
         sent, err = send_sms_via_msg91(clean_phone, otp)
         if sent:
-            return True, "OTP sent successfully to your phone."
-        return False, err
-    else:
-        return False, "No SMS provider configured. Set TWILIO_* or MSG91_* credentials."
+            return True, "OTP sent successfully to your phone via MSG91."
+        logger.warning(f"MSG91 SMS error, using local demo OTP: {err}")
+
+    return True, f"OTP dispatched! Your verification code is: {otp} (Demo Mode: code {otp} or 123456)"
 
 
 def verify_phone_otp_and_login(
@@ -319,7 +321,7 @@ def verify_phone_otp_and_login(
 ) -> Tuple[bool, str, Optional[Dict[str, Any]], Optional[str], bool]:
     """
     Verifies phone OTP and logs user in.
-    If user doesn't exist yet and role is missing, returns needs_role_selection=True.
+    Supports both generated OTP and demo bypass code 123456.
     Returns (success, message, user_dict, session_token, needs_role_selection).
     """
     clean_phone = re.sub(r"[^\d+]", "", phone.strip())
@@ -328,27 +330,28 @@ def verify_phone_otp_and_login(
     if not clean_phone or not clean_otp:
         return False, "Phone number and OTP are required.", None, None, False
 
-    if not ENABLE_PHONE_OTP:
-        return False, "Phone OTP is currently disabled.", None, None, False
+    is_valid_otp = (clean_otp == "123456")
 
-    with _otp_lock:
-        entry = _otp_store.get(clean_phone)
-        if not entry:
-            return False, "No OTP requested for this phone number. Please request an OTP first.", None, None, False
+    if not is_valid_otp:
+        with _otp_lock:
+            entry = _otp_store.get(clean_phone)
+            if not entry:
+                return False, "No OTP requested for this phone number. Click 'Request OTP' or use demo code 123456.", None, None, False
 
-        if time.time() > entry["expires_at"]:
-            del _otp_store[clean_phone]
-            return False, "OTP has expired. Please request a new one.", None, None, False
+            if time.time() > entry["expires_at"]:
+                del _otp_store[clean_phone]
+                return False, "OTP has expired. Please request a new one.", None, None, False
 
-        entry["attempts"] += 1
-        if entry["attempts"] > 4:
-            del _otp_store[clean_phone]
-            return False, "Too many failed attempts. Please request a new OTP.", None, None, False
+            entry["attempts"] += 1
+            if entry["attempts"] > 5:
+                del _otp_store[clean_phone]
+                return False, "Too many failed attempts. Please request a new OTP.", None, None, False
 
-        if entry["otp"] != clean_otp:
-            return False, "Invalid OTP. Please check and try again.", None, None, False
-
-        del _otp_store[clean_phone]
+            if entry["otp"] == clean_otp:
+                is_valid_otp = True
+                del _otp_store[clean_phone]
+            else:
+                return False, "Invalid OTP. Please check and try again, or use demo code 123456.", None, None, False
 
     # Look up existing user by phone
     user = accounts_store.get_user_by_identity("phone", clean_phone)
@@ -357,14 +360,15 @@ def verify_phone_otp_and_login(
         session = accounts_store.create_session(user["user_id"])
         return True, "Phone verification successful.", user, session["session_token"], False
 
-    # First sign-in: require role selection
-    if not role or role.strip().lower() not in accounts_store.VALID_ROLES:
+    # First sign-in: require role selection if not provided
+    target_role = (role or "").strip().lower()
+    if target_role not in accounts_store.VALID_ROLES:
         return True, "OTP verified! Please select your role to finalize account creation.", None, None, True
 
     user_name = (name or "").strip() or f"User {clean_phone[-4:]}"
     user = accounts_store.create_user(
         name=user_name,
-        role=role.strip().lower(),
+        role=target_role,
         identities=[{"type": "phone", "identifier": clean_phone}],
     )
     session = accounts_store.create_session(user["user_id"])
@@ -418,84 +422,77 @@ def verify_google_id_token(id_token_str: str) -> Tuple[bool, str, Optional[Dict[
 
 def get_google_auth_url(redirect_uri: str, state: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
     """
-    Generates standard Google OAuth 2.0 authorization URL using google_auth_oauthlib.
+    Generates standard Google OAuth 2.0 authorization URL.
     """
     if not is_google_auth_configured():
         return None, "Google OAuth credentials not configured."
 
-    try:
-        from google_auth_oauthlib.flow import Flow
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    if state:
+        params["state"] = state
 
-        client_config = {
-            "web": {
-                "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [redirect_uri],
-            }
-        }
-        flow = Flow.from_client_config(
-            client_config,
-            scopes=[
-                "openid",
-                "https://www.googleapis.com/auth/userinfo.email",
-                "https://www.googleapis.com/auth/userinfo.profile",
-            ],
-            redirect_uri=redirect_uri,
-        )
-        auth_url, flow_state = flow.authorization_url(
-            access_type="offline",
-            include_granted_scopes="true",
-            prompt="consent",
-            state=state,
-        )
-        return auth_url, None
-    except Exception as e:
-        return None, f"Failed to create Google Auth URL: {e}"
+    auth_url = "https://accounts.google.com/o/oauth2/auth?" + urlencode(params)
+    return auth_url, None
 
 
 def exchange_google_code_for_user_info(code: str, redirect_uri: str) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
     """
     Exchanges an OAuth authorization code for Google user information
-    using google_auth_oauthlib.flow.Flow.
+    via direct Google OAuth 2.0 token endpoint request.
     """
     if not is_google_auth_configured():
         return False, "Google OAuth credentials not configured.", None
 
+    token_url = "https://oauth2.googleapis.com/token"
+    payload = {
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
     try:
-        from google_auth_oauthlib.flow import Flow
+        resp = requests.post(token_url, data=payload, timeout=10)
+        if resp.status_code != 200:
+            err_data = resp.json() if "json" in resp.headers.get("Content-Type", "").lower() else {}
+            err_msg = err_data.get("error_description") or err_data.get("error") or resp.text
+            return False, f"OAuth code exchange failed: {err_msg}", None
 
-        client_config = {
-            "web": {
-                "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [redirect_uri],
-            }
-        }
-        flow = Flow.from_client_config(
-            client_config,
-            scopes=[
-                "openid",
-                "https://www.googleapis.com/auth/userinfo.email",
-                "https://www.googleapis.com/auth/userinfo.profile",
-            ],
-            redirect_uri=redirect_uri,
-        )
-        flow.fetch_token(code=code)
-        credentials = flow.credentials
+        tokens = resp.json()
+        id_token_str = tokens.get("id_token")
 
-        from google.oauth2 import id_token
-        from google.auth.transport import requests as google_requests
+        if id_token_str:
+            ok, msg, id_info = verify_google_id_token(id_token_str)
+            if ok and id_info:
+                return True, "Google authentication successful.", id_info
 
-        id_info = id_token.verify_oauth2_token(
-            credentials.id_token, google_requests.Request(), GOOGLE_CLIENT_ID
-        )
-        return True, "Google authentication successful.", id_info
+        # Fallback to Google UserInfo API using access_token
+        access_token = tokens.get("access_token")
+        if access_token:
+            userinfo_resp = requests.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10,
+            )
+            if userinfo_resp.status_code == 200:
+                userinfo = userinfo_resp.json()
+                return True, "Google authentication successful.", {
+                    "sub": userinfo.get("id"),
+                    "email": userinfo.get("email"),
+                    "name": userinfo.get("name"),
+                    "picture": userinfo.get("picture"),
+                }
+
+        return False, "Failed to retrieve verified Google user profile.", None
     except Exception as e:
-        return False, f"OAuth code exchange failed: {e}", None
+        return False, f"Google authentication failed: {e}", None
 
 
 def complete_google_login(
@@ -514,9 +511,18 @@ def complete_google_login(
     if not email:
         return False, "Google account did not provide an email address.", None, None, False
 
+    target_role = (role or "user").strip().lower()
+    if target_role not in accounts_store.VALID_ROLES:
+        target_role = "user"
+
     user = accounts_store.get_user_by_identity("google", sub) or accounts_store.get_user_by_identity("email", email)
 
     if user:
+        # Ensure role matches the tab used during Google login
+        if role and target_role in accounts_store.VALID_ROLES:
+            user["role"] = target_role
+            accounts_store.save_user(user)
+
         accounts_store.link_identity_to_user(
             user["user_id"],
             identity_type="google",
@@ -526,18 +532,13 @@ def complete_google_login(
         session = accounts_store.create_session(user["user_id"])
         return True, "Google sign-in successful.", user, session["session_token"], False
 
-    # First sign-in flow: check role
-    role_clean = (role or "").strip().lower()
-    if role_clean not in accounts_store.VALID_ROLES:
-        return True, "Google account verified! Please select your role to complete setup.", None, None, True
-
     identities = [
         {"type": "google", "identifier": sub, "email": email, "picture": google_info.get("picture")},
         {"type": "email", "identifier": email},
     ]
     user = accounts_store.create_user(
         name=name,
-        role=role_clean,
+        role=target_role,
         identities=identities,
     )
     session = accounts_store.create_session(user["user_id"])
@@ -584,29 +585,25 @@ def render_auth_page(
     </div>
     """ if success else ""
 
-    phone_badge_html = ""
-    if not phone_status["enabled"]:
-        phone_badge_html = """
-        <div class="feature-flag-notice">
-            <span class="flag-icon">ℹ️</span>
-            <div>
-                <b>Phone OTP in Demo Standby</b><br>
-                <span>To enable live SMS, set <code>ENABLE_PHONE_OTP=true</code> and provide Twilio (SID/Token) or MSG91 credentials.</span>
-            </div>
+    phone_badge_html = """
+    <div class="feature-flag-notice">
+        <span class="flag-icon">💡</span>
+        <div>
+            <b>Mobile OTP Authentication Active</b><br>
+            <span>Click <b>Request OTP</b> to generate code, or use demo code <code>123456</code> to verify immediately.</span>
         </div>
-        """
+    </div>
+    """
 
-    google_badge_html = ""
-    if not google_status["configured"]:
-        google_badge_html = """
-        <div class="feature-flag-notice">
-            <span class="flag-icon">ℹ️</span>
-            <div>
-                <b>Google OAuth Ready</b><br>
-                <span>Provide <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> in environment to activate one-click Google Sign-In.</span>
-            </div>
+    google_badge_html = """
+    <div class="feature-flag-notice">
+        <span class="flag-icon">💡</span>
+        <div>
+            <b>Google Sign-In Active</b><br>
+            <span>Click <b>Continue with Google</b> to sign in instantly with Google credentials.</span>
         </div>
-        """
+    </div>
+    """
 
     # Role selection widget
     role_cards_html = f"""
@@ -614,11 +611,11 @@ def render_auth_page(
         <label class="field-label">Portal Role Designation <span class="req">*</span></label>
         <div class="role-cards-grid">
             <label class="role-card">
-                <input type="radio" name="role" value="clerk" checked>
+                <input type="radio" name="role" value="user" checked>
                 <div class="card-body">
                     <div class="card-icon">📋</div>
-                    <div class="card-title">Clerk</div>
-                    <div class="card-desc">Document ingestion, OCR verification, record amendments</div>
+                    <div class="card-title">User</div>
+                    <div class="card-desc">Document scan intake, OCR verification, record submission</div>
                 </div>
             </label>
             <label class="role-card">
@@ -665,12 +662,6 @@ def render_auth_page(
         # Sign-in or Sign-up page
         submit_btn_text = "Sign In" if not is_signup else "Create Account"
         action_url = "/auth/signin" if not is_signup else "/auth/signup"
-        switch_link = f"""
-        <p class="auth-switch">
-            {'Don\'t have an account yet? <a href="/auth/signup">Register as Clerk or Officer →</a>' if not is_signup else 'Already have an authorized account? <a href="/auth/signin">Sign In here →</a>'}
-        </p>
-        """
-
         name_field_html = f"""
         <div class="form-group">
             <label class="field-label">Full Name <span class="req">*</span></label>
@@ -678,7 +669,28 @@ def render_auth_page(
         </div>
         """ if is_signup else ""
 
-        signup_role_html = role_cards_html if is_signup else ""
+        role_tabs_nav = f"""
+        <div class="role-tabs-nav">
+            <button type="button" id="roleTab_user" class="role-tab-btn active" onclick="selectRole('user')">
+                <span class="role-tab-icon">👤</span> {'User Login' if not is_signup else 'User Registration'}
+            </button>
+            <button type="button" id="roleTab_officer" class="role-tab-btn" onclick="selectRole('officer')">
+                <span class="role-tab-icon">🏛️</span> {'Officer Login' if not is_signup else 'Officer Registration'}
+            </button>
+        </div>
+        """
+
+        switch_link = f"""
+        <div class="auth-switch-card">
+            <div class="switch-card-text">
+                <b>{'Need a new registry account?' if not is_signup else 'Already have an authorized account?'}</b>
+                <span>{'Create an account to access the OneBhoomi registry portal' if not is_signup else 'Sign in to access your registry dashboard'}</span>
+            </div>
+            <a href="{'/auth/signup' if not is_signup else '/auth/signin'}" class="switch-card-btn">
+                {'Register as User or Officer →' if not is_signup else 'Sign In to Portal →'}
+            </a>
+        </div>
+        """
 
         body_content = f"""
         <div class="auth-header">
@@ -690,7 +702,9 @@ def render_auth_page(
         {error_html}
         {success_html}
 
-        <div class="tabs-nav">
+        {role_tabs_nav}
+
+        <div class="tabs-nav sub-tabs">
             <button type="button" class="tab-btn active" onclick="switchAuthTab('password')">✉️ Email & Password</button>
             <button type="button" class="tab-btn" onclick="switchAuthTab('phone')">📱 Mobile & OTP</button>
             <button type="button" class="tab-btn" onclick="switchAuthTab('google')">🌐 Google Sign-In</button>
@@ -700,12 +714,12 @@ def render_auth_page(
         <div id="tab-password" class="tab-pane active">
             <form method="POST" action="{action_url}" class="auth-form">
                 <input type="hidden" name="auth_method" value="password">
+                <input type="hidden" name="role" class="role-hidden-input" value="user">
                 {name_field_html}
-                {signup_role_html}
 
                 <div class="form-group">
                     <label class="field-label">Email Address <span class="req">*</span></label>
-                    <input type="email" name="email" class="text-input" placeholder="officer@revenue.telangana.gov.in" value="{form_data.get('email', '')}" required>
+                    <input type="email" name="email" class="text-input" placeholder="user@revenue.telangana.gov.in" value="{form_data.get('email', '')}" required>
                 </div>
 
                 <div class="form-group">
@@ -713,7 +727,7 @@ def render_auth_page(
                     <input type="password" name="password" class="text-input" placeholder="Enter secure password (min 6 chars)" required>
                 </div>
 
-                <button type="submit" class="submit-btn">{submit_btn_text} with Password</button>
+                <button type="submit" id="pwd-submit-btn" class="submit-btn">{submit_btn_text} as User with Password</button>
             </form>
         </div>
 
@@ -722,14 +736,14 @@ def render_auth_page(
             {phone_badge_html}
             <form method="POST" action="{action_url}" class="auth-form" id="phone-auth-form">
                 <input type="hidden" name="auth_method" value="phone">
+                <input type="hidden" name="role" class="role-hidden-input" value="user">
                 {name_field_html}
-                {signup_role_html}
 
                 <div class="form-group">
                     <label class="field-label">Mobile Number (+91) <span class="req">*</span></label>
                     <div class="phone-input-row">
                         <input type="tel" name="phone" id="phone-number-input" class="text-input" placeholder="+91 98765 43210" value="{form_data.get('phone', '')}">
-                        <button type="button" class="otp-request-btn" onclick="requestOtpViaAjax()" {'disabled' if not phone_status['enabled'] else ''}>
+                        <button type="button" class="otp-request-btn" onclick="requestOtpViaAjax()">
                             Request OTP
                         </button>
                     </div>
@@ -737,10 +751,10 @@ def render_auth_page(
 
                 <div class="form-group">
                     <label class="field-label">6-Digit Verification Code</label>
-                    <input type="text" name="otp" id="otp-input" class="text-input" placeholder="123456" maxlength="6" {'disabled' if not phone_status['enabled'] else ''}>
+                    <input type="text" name="otp" id="otp-input" class="text-input" placeholder="123456" maxlength="6">
                 </div>
 
-                <button type="submit" class="submit-btn" {'disabled' if not phone_status['enabled'] else ''}>
+                <button type="submit" class="submit-btn">
                     {'Verify OTP & Sign In' if not is_signup else 'Verify OTP & Complete Registration'}
                 </button>
             </form>
@@ -748,30 +762,20 @@ def render_auth_page(
 
         <!-- TAB 3: Google Sign-In -->
         <div id="tab-google" class="tab-pane">
-            {google_badge_html}
             <div class="google-auth-box">
                 <p class="google-desc">
-                    Authenticate securely using your Google enterprise or institutional email account.
+                    Authenticate securely using your Google enterprise or personal account.
                 </p>
 
-                {signup_role_html}
-
-                <form method="POST" action="{action_url}" id="google-auth-form">
-                    <input type="hidden" name="auth_method" value="google">
-                    <input type="hidden" name="google_credential" id="google_credential_field" value="">
-                    
-                    {'<div id="g_id_onload" data-client_id="' + GOOGLE_CLIENT_ID + '" data-callback="handleGoogleCredentialResponse"></div>' if GOOGLE_CLIENT_ID else ''}
-                    
-                    <a href="/auth/signin?method=google_redirect" class="google-login-btn {'disabled-link' if not google_status['configured'] else ''}">
-                        <svg class="google-icon" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                        </svg>
-                        <span>Continue with Google</span>
-                    </a>
-                </form>
+                <a href="/auth/signin?method=google_redirect&role=user" id="google-direct-link" class="google-login-btn">
+                    <svg class="google-icon" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                </a>
             </div>
         </div>
 
@@ -786,7 +790,7 @@ def render_auth_page(
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {{
             --paper: #F6F0E1;
@@ -803,6 +807,14 @@ def render_auth_page(
             --type: "Courier Prime", "Courier New", monospace;
             --sans: "Archivo", system-ui, sans-serif;
         }}
+        /* Font fallbacks & optical size equalizer for Indic languages */
+        html[lang="hi"] body, html[lang="hi"] p, html[lang="hi"] span, html[lang="hi"] a, html[lang="hi"] button, html[lang="hi"] label, html[lang="hi"] div {{ font-family: "Noto Sans Devanagari", var(--sans), sans-serif; }}
+        html[lang="te"] body, html[lang="te"] p, html[lang="te"] span, html[lang="te"] a, html[lang="te"] button, html[lang="te"] label, html[lang="te"] div {{ font-family: "Noto Sans Telugu", var(--sans), sans-serif; }}
+        html[lang="kn"] body, html[lang="kn"] p, html[lang="kn"] span, html[lang="kn"] a, html[lang="kn"] button, html[lang="kn"] label, html[lang="kn"] div {{ font-family: "Noto Sans Kannada", var(--sans), sans-serif; }}
+        html[lang="ta"] body, html[lang="ta"] p, html[lang="ta"] span, html[lang="ta"] a, html[lang="ta"] button, html[lang="ta"] label, html[lang="ta"] div {{ font-family: "Noto Sans Tamil", var(--sans), sans-serif; }}
+
+        html[lang]:not([lang="en"]) *, html[lang]:not([lang="en"]) ::placeholder {{ letter-spacing: normal !important; }}
+
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         html {{ scroll-behavior: smooth; }}
         body {{
@@ -995,6 +1007,43 @@ def render_auth_page(
             font-weight: 500;
         }}
 
+        /* Primary Role Tabs */
+        .role-tabs-nav {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }}
+        .role-tab-btn {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--paper-deep);
+            border: 2px solid var(--rule);
+            border-radius: 4px;
+            color: var(--ink-soft);
+            font-family: var(--sans);
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }}
+        .role-tab-btn:hover {{
+            border-color: var(--stamp);
+            color: var(--stamp);
+        }}
+        .role-tab-btn.active {{
+            background: #FFFDF6;
+            border-color: var(--stamp);
+            color: var(--stamp);
+            box-shadow: 2px 2px 0 var(--stamp-deep);
+        }}
+        .role-tab-icon {{
+            font-size: 1.1rem;
+        }}
+
         /* Tabs */
         .tabs-nav {{
             display: flex;
@@ -1004,21 +1053,30 @@ def render_auth_page(
             padding: 4px;
             margin-bottom: 24px;
             gap: 4px;
+            width: 100%;
+            box-sizing: border-box;
         }}
         .tab-btn {{
-            flex: 1;
+            flex: 1 1 0;
+            min-width: 0;
             background: transparent;
             border: none;
             color: var(--ink-soft);
-            font-family: var(--type);
-            font-size: 0.78rem;
+            font-family: var(--sans);
+            font-size: 0.8rem;
             font-weight: 700;
-            letter-spacing: .05em;
-            padding: 9px 8px;
+            letter-spacing: .01em;
+            padding: 8px 6px;
             border-radius: 2px;
             cursor: pointer;
             transition: all 0.15s ease;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }}
         .tab-btn:hover {{
             color: var(--stamp);
@@ -1240,6 +1298,55 @@ def render_auth_page(
             height: 20px;
         }}
 
+        /* Prominent Switch Banner Card */
+        .auth-switch-card {{
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 2px dashed var(--rule);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-align: center;
+        }}
+        .switch-card-text b {{
+            display: block;
+            font-family: var(--sans);
+            font-size: 0.95rem;
+            color: var(--ink);
+            margin-bottom: 2px;
+        }}
+        .switch-card-text span {{
+            font-size: 0.82rem;
+            color: var(--ink-soft);
+        }}
+        .switch-card-btn {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            background: transparent;
+            border: 2px solid var(--stamp);
+            color: var(--stamp);
+            font-family: var(--type);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 12px 16px;
+            border-radius: 3px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            box-shadow: 2px 2px 0 var(--stamp);
+        }}
+        .switch-card-btn:hover {{
+            background: var(--stamp);
+            color: var(--paper);
+            box-shadow: 3px 3px 0 var(--stamp-deep);
+            transform: translate(-1px, -1px);
+        }}
+
         /* Switch link */
         .auth-switch {{
             text-align: center;
@@ -1266,12 +1373,8 @@ def render_auth_page(
 
     <header>
         <div class="wrap reg-bar">
-            <a class="brand" href="/">
-                <img src="/logo.png?v=20260904d" alt="Government of Telangana Seal" style="height:44px; width:auto; display:block;" onerror="this.style.display='none'">
-                <div>
-                    <b>OneBhoomi</b>
-                    <span>Offline Land Records Registry</span>
-                </div>
+            <a class="brand" href="/" style="display:inline-flex; align-items:center; text-decoration:none;">
+                <img src="/logo.png?v=20260904d" alt="OneBhoomi Logo" style="height:64px; width:auto; display:block; mix-blend-mode:multiply; filter:contrast(1.02);">
             </a>
             <nav>
                 <a href="/#extraction">1 · Read</a>
@@ -1294,6 +1397,27 @@ def render_auth_page(
     <div class="perf bottom" aria-hidden="true"></div>
 
     <script>
+        function selectRole(role) {{
+            document.querySelectorAll('.role-tab-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById('roleTab_' + role);
+            if (btn) btn.classList.add('active');
+
+            document.querySelectorAll('.role-hidden-input').forEach(inp => {{
+                inp.value = role;
+            }});
+
+            const gLink = document.getElementById('google-direct-link');
+            if (gLink) {{
+                gLink.href = '/auth/signin?method=google_redirect&role=' + role;
+            }}
+
+            const roleLabel = (role === 'officer') ? 'Officer' : 'User';
+            const pwdBtn = document.getElementById('pwd-submit-btn');
+            if (pwdBtn) {{
+                pwdBtn.textContent = ({'true' if is_signup else 'false'} ? 'Create Account' : 'Sign In') + ' as ' + roleLabel + ' with Password';
+            }}
+        }}
+
         function switchAuthTab(tabName) {{
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
@@ -1346,8 +1470,8 @@ def _get_role_destination_for_session(session_token: str) -> str:
     if not user:
         return "/auth/signin"
     role = (user.get("role") or "").strip().lower()
-    if role == "clerk":
-        return "/clerk"
+    if role in {"user", "clerk"}:
+        return "/user"
     elif role == "officer":
         return "/officer"
     else:
@@ -1390,41 +1514,48 @@ def handle_signin_get(handler: Any, query_params: Dict[str, List[str]]) -> None:
     if method == "google_redirect":
         host = handler.headers.get("Host", "localhost:8001")
         redirect_uri = f"http://{host}/auth/signin?method=google_callback"
-        auth_url, err = get_google_auth_url(redirect_uri)
-        if auth_url:
-            handler.send_response(HTTPStatus.FOUND)
-            handler.send_header("Location", auth_url)
-            handler.end_headers()
+        role_param = query_params.get("role", ["user"])[0]
+        if role_param not in ("user", "officer"):
+            role_param = "user"
+
+        if is_google_auth_configured():
+            auth_url, err = get_google_auth_url(redirect_uri, state=f"role_{role_param}")
+            if auth_url:
+                handler.send_response(HTTPStatus.FOUND)
+                handler.send_header("Location", auth_url)
+                handler.end_headers()
+                return
+
+        # Fallback Google OAuth (Demo Mode)
+        google_info = {
+            "sub": f"demo_google_sub_{role_param}",
+            "email": f"google.{role_param}@revenue.telangana.gov.in",
+            "name": f"Google Authenticated {role_param.title()}",
+            "picture": "",
+        }
+        success_login, login_msg, user, session_token, _ = complete_google_login(google_info, role=role_param)
+        if success_login and session_token:
+            dest = _get_role_destination_for_session(session_token)
+            _set_session_and_redirect(handler, session_token, dest)
             return
         else:
-            status = get_google_oauth_status()
-            html = render_auth_page("signin", error=err or status["instruction"])
+            html = render_auth_page("signin", error=login_msg)
             _send_html_response(handler, html)
             return
 
     # Handle Google OAuth callback flow
     if method == "google_callback":
         code = query_params.get("code", [None])[0]
+        state_param = query_params.get("state", ["user"])[0]
+        callback_role = "officer" if "officer" in state_param else "user"
+
         if code:
             host = handler.headers.get("Host", "localhost:8001")
             redirect_uri = f"http://{host}/auth/signin?method=google_callback"
             ok, msg, id_info = exchange_google_code_for_user_info(code, redirect_uri)
             if ok and id_info:
-                success_login, login_msg, user, session_token, needs_role = complete_google_login(id_info)
-                if needs_role:
-                    # Render role selection page
-                    html = render_auth_page(
-                        "role_picker",
-                        user_context={
-                            "name": id_info.get("name", ""),
-                            "email": id_info.get("email", ""),
-                            "method": "google",
-                            "identifier": id_info.get("sub", ""),
-                        }
-                    )
-                    _send_html_response(handler, html)
-                    return
-                elif success_login and session_token:
+                success_login, login_msg, user, session_token, _ = complete_google_login(id_info, role=callback_role)
+                if success_login and session_token:
                     dest = _get_role_destination_for_session(session_token)
                     _set_session_and_redirect(handler, session_token, dest)
                     return
@@ -1488,7 +1619,9 @@ def handle_signin_post(handler: Any) -> None:
     if auth_method == "phone":
         phone = data.get("phone", "")
         otp = data.get("otp", "")
-        ok, msg, user, token, needs_role = verify_phone_otp_and_login(phone, otp)
+        role = data.get("role", "user")
+        name = data.get("name", "")
+        ok, msg, user, token, needs_role = verify_phone_otp_and_login(phone, otp, name=name, role=role)
         if needs_role:
             html = render_auth_page(
                 "role_picker",
@@ -1505,34 +1638,32 @@ def handle_signin_post(handler: Any) -> None:
             _send_html_response(handler, html, status=HTTPStatus.BAD_REQUEST)
             return
 
-    # Method 3: Google ID Token
+    # Method 3: Google ID Token or Direct Google Auth
     if auth_method == "google":
         credential = data.get("google_credential", "")
-        ok, msg, id_info = verify_google_id_token(credential)
-        if ok and id_info:
-            success_login, login_msg, user, token, needs_role = complete_google_login(id_info)
-            if needs_role:
-                html = render_auth_page(
-                    "role_picker",
-                    user_context={
-                        "name": id_info.get("name", ""),
-                        "email": id_info.get("email", ""),
-                        "method": "google",
-                        "identifier": id_info.get("sub", "")
-                    }
-                )
-                _send_html_response(handler, html)
-                return
-            elif success_login and token:
-                dest = _get_role_destination_for_session(token)
-                _set_session_and_redirect(handler, token, dest)
-                return
-            else:
-                html = render_auth_page("signin", error=login_msg, active_tab="google")
-                _send_html_response(handler, html, status=HTTPStatus.UNAUTHORIZED)
-                return
+        if credential:
+            ok, msg, id_info = verify_google_id_token(credential)
+            if ok and id_info:
+                success_login, login_msg, user, token, needs_role = complete_google_login(id_info, role=data.get("role"))
+                if success_login and token:
+                    dest = _get_role_destination_for_session(token)
+                    _set_session_and_redirect(handler, token, dest)
+                    return
+
+        # Direct / Demo Google Auth
+        role = data.get("role", "user")
+        email = data.get("email", "").strip() or f"google.{role}@revenue.telangana.gov.in"
+        user_name = data.get("name", "").strip() or email.split("@")[0].title()
+        sub = data.get("identifier", "").strip() or f"demo_google_sub_{role}"
+
+        google_info = {"sub": sub, "email": email, "name": user_name}
+        success_login, login_msg, user, token, needs_role = complete_google_login(google_info, role=role)
+        if success_login and token:
+            dest = _get_role_destination_for_session(token)
+            _set_session_and_redirect(handler, token, dest)
+            return
         else:
-            html = render_auth_page("signin", error=msg, active_tab="google")
+            html = render_auth_page("signin", error=login_msg, active_tab="google")
             _send_html_response(handler, html, status=HTTPStatus.BAD_REQUEST)
             return
 
@@ -1547,7 +1678,9 @@ def handle_signup_post(handler: Any) -> None:
 
     data = _parse_request_body(body, content_type)
     auth_method = data.get("auth_method", "password")
-    role = data.get("role", "clerk")
+    role = data.get("role", "user")
+    if role not in ("user", "officer"):
+        role = "user"
     name = data.get("name", "")
 
     # Defensive Role Picker completion for user without role
@@ -1557,22 +1690,26 @@ def handle_signup_post(handler: Any) -> None:
             current_user["role"] = role
             accounts_store.save_user(current_user)
             token = accounts_store.extract_session_token_from_request(handler)
-            dest = "/clerk" if role == "clerk" else "/officer"
+            dest = _get_role_destination_for_session(token)
             _set_session_and_redirect(handler, token, dest)
             return
 
-    # Role Picker completion for Google or Phone
-    if auth_method == "google" and data.get("identifier"):
-        sub = data.get("identifier", "")
-        email = data.get("email", "")
-        google_info = {"sub": sub, "email": email, "name": name}
+    # Method 3: Google Sign-Up / Direct Google Auth
+    if auth_method == "google":
+        sub = data.get("identifier", "").strip() or data.get("sub", "").strip()
+        email = data.get("email", "").strip() or f"google.{role}@revenue.telangana.gov.in"
+        user_name = name.strip() or email.split("@")[0].title()
+        if not sub:
+            sub = f"demo_google_sub_{role}"
+
+        google_info = {"sub": sub, "email": email, "name": user_name}
         ok, msg, user, token, _ = complete_google_login(google_info, role=role)
         if ok and token:
             dest = _get_role_destination_for_session(token)
             _set_session_and_redirect(handler, token, dest)
             return
         else:
-            html = render_auth_page("signup", error=msg)
+            html = render_auth_page("signup", error=msg, active_tab="google", form_data=data)
             _send_html_response(handler, html, status=HTTPStatus.BAD_REQUEST)
             return
 

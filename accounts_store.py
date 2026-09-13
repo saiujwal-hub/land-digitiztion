@@ -13,7 +13,7 @@ SESSIONS_DB_PATH = Path(os.environ.get("SESSIONS_DB_PATH", "sessions_db.json"))
 
 SESSION_COOKIE_NAME = "session_token"
 DEFAULT_SESSION_DURATION_DAYS = 7
-VALID_ROLES = {"clerk", "officer"}
+VALID_ROLES = {"user", "officer"}
 
 _users_lock = threading.RLock()
 _sessions_lock = threading.RLock()
