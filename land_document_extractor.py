@@ -1776,7 +1776,7 @@ def run_remote_ocr_page_image(
     return lines, raw_text, timings
 
 
-def _run_paddle_ocr_impl(image_path: str) -> tuple[list[OCRLine], str, dict[str, float]]:
+def _run_paddle_ocr_impl(image_path: str, lang: str = "auto") -> tuple[list[OCRLine], str, dict[str, float]]:
     t_read = perf_counter()
     image = cv2.imread(image_path)
     if image is None:
@@ -1787,7 +1787,7 @@ def _run_paddle_ocr_impl(image_path: str) -> tuple[list[OCRLine], str, dict[str,
     if image is None:
         raise ValueError(f"Unable to read image file: {image_path}")
 
-    return run_paddle_ocr_page_image(image, page_num=1)
+    return run_paddle_ocr_page_image(image, page_num=1, lang=lang)
 
 
 def _extract_stamp_metadata(lines: list[OCRLine], full_text: str) -> dict[str, Any]:
@@ -1861,8 +1861,8 @@ def _extract_stamp_metadata(lines: list[OCRLine], full_text: str) -> dict[str, A
     return metadata
 
 
-def run_paddle_ocr(image_path: str) -> tuple[list[OCRLine], str, dict[str, float]]:
-    return _run_paddle_ocr_impl(image_path)
+def run_paddle_ocr(image_path: str, lang: str = "auto") -> tuple[list[OCRLine], str, dict[str, float]]:
+    return _run_paddle_ocr_impl(image_path, lang=lang)
 
 
 def extract_survey_information(text: str) -> tuple[str | None, str | None, str | None, str | None]:
@@ -2230,7 +2230,7 @@ def extract_land_document_from_lines(
     return output
 
 
-def extract_land_document(file_path: str) -> dict[str, Any]:
+def extract_land_document(file_path: str, lang: str = "auto") -> dict[str, Any]:
     t0 = perf_counter()
     is_pdf = file_path.lower().endswith(".pdf")
     if not is_pdf and os.path.exists(file_path):
@@ -2268,7 +2268,7 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
             elif page_idx == len(pdf):
                 p_type = "registration_plan"
 
-            p_lines, p_raw, p_timings = run_paddle_ocr_page_image(img_bgr, page_num=page_idx, page_type=p_type)
+            p_lines, p_raw, p_timings = run_paddle_ocr_page_image(img_bgr, page_num=page_idx, page_type=p_type, lang=lang)
             p_prep = p_timings.get("preprocessing") or {}
             page_prep_summaries.append(p_prep)
             if p_timings.get("model_name"):
@@ -2279,7 +2279,7 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
                 try:
                     h, w = img_bgr.shape[:2]
                     header_crop = img_bgr[int(h * 0.052) : int(h * 0.125), int(w * 0.03) : int(w * 0.58)]
-                    c_lines, c_raw, _ = run_paddle_ocr_page_image(header_crop, page_num=page_idx, page_type="registration_plan")
+                    c_lines, c_raw, _ = run_paddle_ocr_page_image(header_crop, page_num=page_idx, page_type="registration_plan", lang=lang)
                     p_lines.extend(c_lines)
                     p_raw = p_raw + "\n" + c_raw
                 except Exception:
@@ -2301,7 +2301,7 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
             model=last_model_name,
         )
         full_raw_text = "\n\n".join(all_raw_texts)
-        ocr_timings = {"ocr_total_ms": total_ocr_ms, "ocr_backend": "local_cpu", "model_name": last_model_name}
+        ocr_timings = {"ocr_total_ms": total_ocr_ms, "ocr_backend": "local_cpu", "model_name": last_model_name, "requested_language": lang}
         result = extract_land_document_from_lines(all_lines, full_raw_text, file_path, timings=ocr_timings, raw_ocr=multi_raw_ocr)
         result["raw_ocr"] = multi_raw_ocr
         result["preprocessing"] = page_prep_summaries
@@ -2309,7 +2309,7 @@ def extract_land_document(file_path: str) -> dict[str, Any]:
         result["profiling_ms"]["pipeline_total_ms"] = round((perf_counter() - t0) * 1000, 3)
         return result
     else:
-        lines, raw_text, ocr_timings = run_paddle_ocr(file_path)
+        lines, raw_text, ocr_timings = run_paddle_ocr(file_path, lang=lang)
         single_prep = ocr_timings.get("preprocessing") or {}
         single_model = ocr_timings.get("model_name") or "PaddleOCR (PP-OCRv6 CPU)"
         single_raw_ocr = build_raw_ocr_payload(

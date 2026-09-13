@@ -962,16 +962,27 @@ def main():
         print("!" * 75 + "\n")
         sys.exit(1)
 
-    # 3. Start Flask Thread
+    # 3. Pre-load TrOCR Handwriting Model (Pre-downloaded initially for written text)
+    print("\n[STARTUP] Pre-downloading and initializing TrOCR handwriting model...")
+    try:
+        htr_model, htr_proc, htr_err = get_gpu_htr_model()
+        if htr_model is not None:
+            print("✓ TrOCR handwriting model pre-downloaded and active on GPU!")
+        else:
+            print(f"⚠️ TrOCR preload note: {htr_err}")
+    except Exception as exc:
+        print(f"⚠️ TrOCR preload exception: {exc}")
+
+    # 4. Start Flask Thread
     threading.Thread(target=run_flask, daemon=True).start()
     time.sleep(2)
     print("✓ Flask server running on port 5000.")
 
-    # 4. Start Tunnel & Broadcast
+    # 5. Start Tunnel & Broadcast
     public_url = expose_port(5000)
     broadcast_url(public_url, note="Server Ready")
 
-    # 5. 12-Hour Supervisor Loop
+    # 6. 12-Hour Supervisor Loop
     deadline = time.time() + (MAX_RUNTIME_HOURS * 3600)
     print("\n" + "=" * 70)
     print(" 🚀 KAGGLE 12-HOUR HEADLESS OCR BACKEND IS RUNNING")

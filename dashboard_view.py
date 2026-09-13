@@ -462,7 +462,7 @@ DASHBOARD_CSS = """
     }
 
     .config-grid{
-      display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;
+      display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:16px;margin-bottom:28px;
     }
     @media(max-width:768px){.config-grid{grid-template-columns:1fr}}
 
@@ -2609,7 +2609,7 @@ def render_new_scan(host_name: str = "localhost:8001", colab_url: str = "", mess
             </div>
           </div>
 
-          <!-- OCR Engine & Execution Settings -->
+          <!-- OCR Engine, Document Language & Execution Settings -->
           <div class="config-grid">
             <div class="config-box">
               <div class="config-box-title" data-i18n="ocr_engine_title">OCR Processing Engine</div>
@@ -2618,6 +2618,22 @@ def render_new_scan(host_name: str = "localhost:8001", colab_url: str = "", mess
                 <option value="cpu" {cpu_selected}>🐢 Local CPU (PaddleOCR on this machine)</option>
               </select>
               <div class="config-note">{html.escape(mode_note)}</div>
+            </div>
+
+            <div class="config-box">
+              <div class="config-box-title" data-i18n="doc_language_title">Document Primary Language</div>
+              <select name="document_language" id="document_language" class="select-mode">
+                <option value="en" selected>English (Default · Latin Script)</option>
+                <option value="hi">हिंदी · Hindi (Devanagari)</option>
+                <option value="te">తెలుగు · Telugu (Official Deeds)</option>
+                <option value="kn">ಕನ್ನಡ · Kannada (Revenue Records)</option>
+                <option value="ta">தமிழ் · Tamil (Registration Deeds)</option>
+                <option value="mr">मराठी · Marathi (Devanagari)</option>
+                <option value="ur">اردو · Urdu (Perso-Arabic Script)</option>
+              </select>
+              <div class="config-note" data-i18n="doc_language_note">
+                Select deed language. English numbers (0–9), survey codes, and dates are recognized across all languages.
+              </div>
             </div>
 
             <div class="config-box">
