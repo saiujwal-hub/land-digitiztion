@@ -3377,7 +3377,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
         if not is_locked_for_clerk:
             btn_apply = """
             <button type="button" class="btn btn-primary" onclick="applyAllNeuralNLP()" style="background:#4f46e5; border-color:#4338ca; padding:6px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-              ⚡ Review & Apply AI Suggestions
+              Review & Apply AI Suggestions
             </button>
             """
 
@@ -3385,7 +3385,6 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
         <div class="neural-nlp-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(79,70,229,0.05), rgba(124,58,237,0.03)); border: 1px solid rgba(124,58,237,0.25); border-radius: 6px; padding: 14px 18px;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 20px;">🧠</span>
               <strong style="font-family: var(--serif); font-size: 13.5px; color: #4338ca; text-transform: uppercase; letter-spacing: 0.05em;">Qwen2.5-7B Neural NLP Advisory Audit (Dual Tesla T4)</strong>
               <span style="background: #e0e7ff; color: #3730a3; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">GPU ONLINE</span>
             </div>
