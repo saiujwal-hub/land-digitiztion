@@ -117,7 +117,7 @@ flowchart TD
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/saiujwal-hub/land-digitiztion.git
+git clone https://github.com/yuvanreddy404/onebhoomiv2.git
 cd "one bhoomi sih final"
 
 # 2. Activate your virtual environment (Windows example)
@@ -198,3 +198,12 @@ OneBhoomi is strictly designed for government compliance and citizen data protec
 - **No External Cloud Dependency**: OCR, validation, GIS indexing, and cryptographic signing run locally.
 - **Air-Gapped Key Custody**: RSA private signing keys are generated inside `verification_keys/` on first startup and never leave the local registry machine.
 - **Cryptographic Tamper-Evidence**: Any post-certification tampering with record facts invalidates the RSA-PSS signature verification.
+
+---
+
+## 👥 Contributors
+
+- **[Meesala Sai Ujwal](https://github.com/saiujwal-hub)** ([@saiujwal-hub](https://github.com/saiujwal-hub))
+- **[Samarth](https://github.com/Samarth7887)** ([@Samarth7887](https://github.com/Samarth7887))
+- **[Yuvan Reddy](https://github.com/yuvanreddy404)** ([@yuvanreddy404](https://github.com/yuvanreddy404))
+

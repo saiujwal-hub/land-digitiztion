@@ -318,10 +318,13 @@ class TestOCRLearningService(unittest.TestCase):
     # Requirement 13: API cannot directly create verified feedback
     # -----------------------------------------------------------------------
     def test_13_api_cannot_directly_create_verified_feedback(self):
-        from web_app import LandExtractorHandler
+        from web_app import LandExtractorHandler, accounts_store
+        accounts_store.get_current_user = MagicMock(return_value={"user_id": "test_user", "role": "clerk"})
 
         handler = LandExtractorHandler.__new__(LandExtractorHandler)
         handler.path = "/api/learning/feedback"
+        handler.current_user = {"user_id": "test_user", "role": "clerk"}
+        handler.user_role = "clerk"
 
         # Attacker attempts auto_approve: true over HTTP
         payload_bytes = json.dumps({
@@ -333,7 +336,14 @@ class TestOCRLearningService(unittest.TestCase):
             "auto_approve": True,
         }).encode("utf-8")
 
-        handler.headers = {"Content-Length": str(len(payload_bytes))}
+        handler.current_user = {"user_id": "test_user", "role": "clerk"}
+        handler.user_role = "clerk"
+        handler.headers = {
+            "Content-Length": str(len(payload_bytes)),
+            "content-length": str(len(payload_bytes)),
+            "Content-Type": "application/json",
+            "content-type": "application/json",
+        }
         handler.rfile = io.BytesIO(payload_bytes)
         handler.wfile = io.BytesIO()
         handler.send_response = MagicMock()

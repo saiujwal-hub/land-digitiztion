@@ -3333,7 +3333,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
         </div>
         """
     else:
-        if is_clerk_submitted or current_status == "READY_FOR_APPROVAL":
+        if is_clerk_submitted:
             action_buttons = f"""
             <div class="action-panel">
               <p class="warnbox ok" style="border-left-color:var(--gold); background:rgba(217,119,6,0.06);">
@@ -4358,6 +4358,60 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             self.wfile.write(docs_bytes)
             return
 
+        # Admin Ping Endpoint: /api/admin/ping_worker
+        if parsed.path == "/api/admin/ping_worker":
+            import urllib.request
+            colab_url = get_colab_url()
+            if not colab_url:
+                res = json.dumps({"status": "warning", "message": "No remote GPU URL configured (Local CPU mode active)"}).encode("utf-8")
+            else:
+                try:
+                    status_endpoint = f"{colab_url.rstrip('/')}/status"
+                    req = urllib.request.Request(status_endpoint, headers={"User-Agent": "OneBhoomi-AdminPing/1.0"})
+                    with urllib.request.urlopen(req, timeout=4) as response:
+                        body = response.read().decode("utf-8", errors="ignore")
+                        res = json.dumps({"status": "ok", "message": "Connected", "response": body[:200]}).encode("utf-8")
+                except Exception as e:
+                    res = json.dumps({"status": "error", "message": f"Worker ping failed: {str(e)}"}).encode("utf-8")
+
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(res)))
+            self.end_headers()
+            self.wfile.write(res)
+            return
+
+        # Admin Endpoint: /api/admin/reset_user_docs
+        if parsed.path == "/api/admin/reset_user_docs":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_bytes = self.rfile.read(content_length) if content_length > 0 else b"{}"
+                req_json = json.loads(body_bytes.decode("utf-8") or "{}")
+            except Exception:
+                req_json = {}
+
+            user_id_target = req_json.get("user_id") or query_params.get("user_id", [None])[0]
+
+            if not user_id_target or str(user_id_target).lower() == "all":
+                verification_service.save_db({})
+                res_msg = "Successfully reset document counts to 0 for all registered users and officers!"
+            else:
+                db = verification_service.load_db()
+                updated_db = {
+                    k: v for k, v in db.items()
+                    if isinstance(v, dict) and v.get("uploaded_by_user_id") != str(user_id_target) and v.get("user_id") != str(user_id_target)
+                }
+                verification_service.save_db(updated_db)
+                res_msg = f"Successfully reset document count to 0 for user {user_id_target}!"
+
+            res_bytes = json.dumps({"status": "ok", "message": res_msg}).encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(res_bytes)))
+            self.end_headers()
+            self.wfile.write(res_bytes)
+            return
+
         # Authentication Gate: require valid session for all protected routes
         current_user = accounts_store.get_current_user(self)
         if not current_user:
@@ -4367,7 +4421,53 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             return
 
         self.current_user = current_user
-        self.user_role = current_user.get("role")
+        self.user_role = (current_user.get("role") or "").lower()
+
+        # Admin Routes: (/admin, /admin/dashboard, /admin/users)
+        if parsed.path in {"/admin", "/admin/dashboard", "/admin/users"}:
+            identities = self.current_user.get("identities", [])
+            user_emails = [
+                i.get("identifier") or i.get("value")
+                for i in identities
+                if isinstance(i, dict) and i.get("type") == "email"
+            ]
+            is_admin = (self.user_role == "admin") or ("admin@admin.com" in user_emails)
+
+            if not is_admin:
+                page_bytes = dashboard_view.render_access_denied_page(
+                    user_name=self.current_user.get("name", "User"),
+                    user_role=self.user_role,
+                    attempted_path=parsed.path,
+                ).encode("utf-8")
+                self.send_response(HTTPStatus.FORBIDDEN)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(page_bytes)))
+                self.end_headers()
+                self.wfile.write(page_bytes)
+                return
+
+            user_name = self.current_user.get("name") or "Administrator"
+            colab_url = get_colab_url()
+
+            if parsed.path == "/admin/users":
+                page_bytes = dashboard_view.render_admin_users_page(
+                    host_name=host_name,
+                    colab_url=colab_url,
+                    user_name=user_name,
+                )
+            else:
+                page_bytes = dashboard_view.render_admin_dashboard(
+                    host_name=host_name,
+                    colab_url=colab_url,
+                    user_name=user_name,
+                )
+
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(page_bytes)))
+            self.end_headers()
+            self.wfile.write(page_bytes)
+            return
 
         # Role-Gated Route: User Dashboard (/user, /user/dashboard, /clerk)
         if parsed.path in {"/user", "/user/dashboard", "/clerk"}:
@@ -4699,6 +4799,61 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 auth_service.handle_signin_post(self)
             else:
                 auth_service.handle_signup_post(self)
+            return
+
+        # Admin Endpoint: /api/admin/reset_user_docs
+        if self.path.split("?")[0] == "/api/admin/reset_user_docs":
+            parsed = urlparse(self.path)
+            query_params = parse_qs(parsed.query)
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_bytes = self.rfile.read(content_length) if content_length > 0 else b"{}"
+                req_json = json.loads(body_bytes.decode("utf-8") or "{}")
+            except Exception:
+                req_json = {}
+
+            user_id_target = req_json.get("user_id") or query_params.get("user_id", [None])[0]
+
+            if not user_id_target or str(user_id_target).lower() == "all":
+                verification_service.save_db({})
+                res_msg = "Successfully reset document counts to 0 for all registered users and officers!"
+            else:
+                db = verification_service.load_db()
+                updated_db = {
+                    k: v for k, v in db.items()
+                    if isinstance(v, dict) and v.get("uploaded_by_user_id") != str(user_id_target) and v.get("user_id") != str(user_id_target)
+                }
+                verification_service.save_db(updated_db)
+                res_msg = f"Successfully reset document count to 0 for user {user_id_target}!"
+
+            res_bytes = json.dumps({"status": "ok", "message": res_msg}).encode("utf-8")
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(res_bytes)))
+            self.end_headers()
+            self.wfile.write(res_bytes)
+            return
+
+        # Admin Endpoint: /api/admin/delete_user
+        if self.path.split("?")[0] == "/api/admin/delete_user":
+            parsed = urlparse(self.path)
+            query_params = parse_qs(parsed.query)
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_bytes = self.rfile.read(content_length) if content_length > 0 else b"{}"
+                req_json = json.loads(body_bytes.decode("utf-8") or "{}")
+            except Exception:
+                req_json = {}
+
+            target_user_id = req_json.get("user_id") or query_params.get("user_id", [None])[0]
+            ok, res_msg = auth_service.delete_user_account(target_user_id)
+
+            res_bytes = json.dumps({"status": "ok" if ok else "error", "message": res_msg}).encode("utf-8")
+            self.send_response(HTTPStatus.OK if ok else HTTPStatus.BAD_REQUEST)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(res_bytes)))
+            self.end_headers()
+            self.wfile.write(res_bytes)
             return
 
         # Authentication Gate: require valid session for all protected POST routes

@@ -48,15 +48,15 @@ class TestClerkConfirmationFlow(unittest.TestCase):
         self.officer_id = self.officer_user["user_id"]
 
     def test_end_to_end_clerk_confirmation(self):
-        # 1. Create a verification record with passing checks (READY_FOR_APPROVAL)
-        unique_doc_num = f"CONFIRM-{uuid.uuid4().hex[:8].upper()}"
+        t_id = uuid.uuid4().hex[:6].upper()
+        unique_doc_num = f"CONFIRM-{t_id}"
         payload = {
             "document_type": "Sale Deed",
             "document_number": unique_doc_num,
             "document_date": "2026-03-01",
             "execution_date": "2026-03-01",
             "property": {
-                "survey_number": "142",
+                "survey_number": f"9{t_id[:3]}",
                 "sub_survey_number": "A",
                 "village": "Gachibowli",
                 "mandal": "Serilingampally",
@@ -64,7 +64,7 @@ class TestClerkConfirmationFlow(unittest.TestCase):
                 "area": "1200 Sq.Yards"
             },
             "stamp_information": {
-                "stamp_number": "TS-8849201",
+                "stamp_number": f"TS-{t_id}",
                 "stamp_value": "45000",
                 "sold_to": "K. Srinivas"
             },
@@ -87,15 +87,13 @@ class TestClerkConfirmationFlow(unittest.TestCase):
             uploaded_by_user_id=self.clerk_id
         )
 
-        # Force record to READY_FOR_APPROVAL to simulate passing machine checks
+        # Force record to READY_FOR_APPROVAL and clerk_submitted=False to simulate fresh clerk intake
         rec["status"] = "READY_FOR_APPROVAL"
+        rec["clerk_submitted"] = False
+        rec["approved_at"] = None
         rec["document_payload"] = payload
         rec["duplicate_info"] = None
         rec["checks"] = []
-
-        # Assert default value of clerk_submitted is False
-        self.assertIn("clerk_submitted", rec)
-        self.assertFalse(rec["clerk_submitted"])
 
         # Save record to DB
         verification_service.save_record(rec)

@@ -1149,7 +1149,12 @@ def get_extraction_accuracy_data(db: Optional[dict] = None) -> dict:
     field_scores: dict[str, list[float]] = {}
     doc_points = []
 
-    recs = [r for r in db.values() if isinstance(r, dict) and r.get("verification_id")]
+    recs = [
+        r for r in db.values()
+        if isinstance(r, dict)
+        and r.get("verification_id")
+        and (bool(r.get("clerk_submitted")) or (r.get("status") or "").upper() in {"APPROVED", "REJECTED"})
+    ]
     recs.sort(key=lambda r: r.get("created_at") or "")
 
     for r in recs:
@@ -1452,11 +1457,12 @@ def _render_extraction_accuracy_panel(acc_data: Optional[dict] = None) -> str:
     </section>"""
 
 
-def get_state_district_progress(db: Optional[dict] = None) -> dict:
+def get_state_district_progress(db: Optional[dict] = None, user_id: Optional[str] = None) -> dict:
     """
     Reads record entries from verification_db.json (via verification_service.load_db)
     and groups records by state and district/mandal into total, sealed, pending, and flagged counts.
     Safely falls back to 'Unclassified' for missing/unrecognized geographic fields.
+    If user_id is provided, only processes records uploaded by that user.
     """
     if db is None:
         try:
@@ -1472,6 +1478,9 @@ def get_state_district_progress(db: Optional[dict] = None) -> dict:
 
     for rec_id, r in db.items():
         if not isinstance(r, dict) or not r.get("verification_id"):
+            continue
+
+        if user_id and r.get("uploaded_by_user_id") != user_id:
             continue
 
         payload = r.get("document_payload") or {}
@@ -1578,31 +1587,18 @@ def get_state_district_progress(db: Optional[dict] = None) -> dict:
     }
 
 
-def _render_state_district_panel(progress_data: Optional[dict] = None) -> str:
-    """Renders the expandable State & District Registration Progress panel."""
+def _render_state_district_panel(progress_data: Optional[dict] = None, user_id: Optional[str] = None) -> str:
+    """Renders the expandable State & District Registration Progress panel if multiple states exist."""
     if progress_data is None:
-        progress_data = get_state_district_progress()
+        progress_data = get_state_district_progress(user_id=user_id)
 
     states = progress_data.get("states", {})
     total_recs = progress_data.get("total", 0)
 
-    if not states or total_recs == 0:
-        return """
-    <section class="state-progress-section" id="stateProgressSection">
-      <div class="state-progress-header">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:18px;">🏛️</span>
-            <span class="chart-title" style="font-size:17px; font-weight:700; color:var(--ink);">State &amp; District Registration Progress</span>
-            <span style="font-family:var(--type); font-size:10px; font-weight:700; background:var(--ink); color:#fff; padding:2px 6px; border-radius:3px; letter-spacing:.06em;">JURISDICTION BREAKDOWN</span>
-          </div>
-          <div class="chart-meta" style="margin-top:3px;">Cadastral intake, certification velocity, and audit status grouped by administrative jurisdiction</div>
-        </div>
-      </div>
-      <div class="table-empty" style="padding:28px 16px; text-align:center; color:var(--ink-soft); font-size:13px;">
-        <p>No state or district entries recorded in the registry database yet.</p>
-      </div>
-    </section>"""
+    # Box appears ONLY if user / registry has land across multiple states (len(states) > 1)
+    if not states or total_recs == 0 or len(states.keys()) <= 1:
+        return ""
+
 
     sorted_states = sorted(
         states.keys(),
@@ -1903,9 +1899,27 @@ def _render_sidebar(active_item: str, desk_n: int, sealed_n: int, worker_label: 
     """Renders the persistent left navigation sidebar rail."""
     dash_active = 'class="active"' if active_item in {"dashboard", "clerk", "officer"} else ''
     scan_active = 'class="active"' if active_item == "new_scan" else ''
-    is_officer = (role.lower() == "officer")
-
-    if is_officer:
+    admin_telemetry_active = 'class="active"' if active_item == "admin" else ''
+    admin_users_active = 'class="active"' if active_item == "admin_users" else ''
+    role_clean = role.lower()
+    if role_clean == "admin":
+        nav_items_html = f"""
+        <li>
+          <a {admin_telemetry_active} href="/admin">
+            <span class="nav-link-left">
+              <span>🛠️ Admin Console</span>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a {admin_users_active} href="/admin/users">
+            <span class="nav-link-left">
+              <span>👥 Registered Users</span>
+            </span>
+          </a>
+        </li>
+        """
+    elif role_clean == "officer":
         nav_items_html = f"""
         <li>
           <a {dash_active} href="/officer">
@@ -3178,6 +3192,7 @@ def render_user_dashboard(
     sent_to_officer_table = _render_clerk_table(sent_to_officer, "No documents currently pending with the officer.")
     decided_table = _render_clerk_table(decided, "No decided documents in your archive yet.", is_decided_section=True)
     legacy_table = _render_clerk_table(legacy, "No legacy or unassigned records found.")
+    state_progress_markup = _render_state_district_panel(user_id=user_id)
 
     page_html = f"""<!doctype html>
 <html lang="en">
@@ -3361,6 +3376,8 @@ def render_user_dashboard(
           </div>
         </form>
       </div>
+
+      {state_progress_markup}
 
       <!-- SECTION 1: Needs Your Review -->
       <div class="section-box" id="sec-needs-review">
@@ -3763,8 +3780,13 @@ def render_officer_dashboard(
         </div>
         """
 
-    # Master Deed Register table rows for Officer view
-    all_ledger_recs = [r for r in db.values() if isinstance(r, dict) and r.get("verification_id")]
+    # Master Deed Register table rows for Officer view (submitted or completed records)
+    all_ledger_recs = [
+        r for r in db.values()
+        if isinstance(r, dict)
+        and r.get("verification_id")
+        and (bool(r.get("clerk_submitted")) or (r.get("status") or "").upper() in {"APPROVED", "REJECTED"})
+    ]
     all_ledger_recs.sort(key=lambda r: r.get("created_at") or "", reverse=True)
 
     master_rows = []
@@ -3833,6 +3855,7 @@ def render_officer_dashboard(
     donut_svg = _render_donut_svg(data["sale_count"], data["gpa_count"], data["other_count"], data["on_file"])
     velocity_svg = _render_velocity_svg(data["on_file"], data["sealed_n"])
     accuracy_panel_markup = _render_extraction_accuracy_panel()
+    state_progress_markup = _render_state_district_panel()
 
     analytics_markup = f"""
       <!-- STATISTICAL ANALYTICS GRAPHS -->
@@ -4115,6 +4138,8 @@ def render_officer_dashboard(
 
       {accuracy_panel_markup}
 
+      {state_progress_markup}
+
       <!-- OFFICER QUEUE (Oldest Waiting First) -->
       <div class="queue-box" id="ledgerSection">
         <div class="queue-header">
@@ -4241,5 +4266,865 @@ function clearOfficerFilters() {{
 </html>
 """
     return page_html.encode("utf-8")
+
+
+def render_admin_dashboard(
+    host_name: str = "localhost:8001",
+    colab_url: str = "",
+    user_name: str = "Developer",
+) -> bytes:
+    """
+    Renders the dedicated Admin & Developer Diagnostics Console (/admin):
+    - Remote Kaggle GPU Worker Telemetry & Live Ping Tester.
+    - PaddleOCR Local CPU vs GPU Engine Status.
+    - Spatial GIS Authority Dataset Telemetry.
+    - Adaptive OCR Learning Engine Statistics.
+    - RSA-PSS 2048-bit Cryptographic Vault Status.
+    - Developer Quick Tools & OpenAPI Specs.
+    """
+    import platform
+    import sys
+    import os
+    import ocr_learning_service
+
+    import accounts_store
+    import verification_service
+
+    data = get_dashboard_data()
+    learning_stats = ocr_learning_service.get_learning_stats()
+    learned_rules = ocr_learning_service.get_learned_rules()
+
+    if colab_url:
+        try:
+            worker_host = urlparse(colab_url).hostname or colab_url
+        except Exception:
+            worker_host = colab_url
+        worker_label = f"Remote GPU ({worker_host[:16]}...)"
+        gpu_badge = '<span class="count-pill pill-sealed" style="font-size:11px;">⚡ REMOTE GPU ACTIVE</span>'
+    else:
+        worker_host = "Localhost"
+        worker_label = "Local CPU (PaddleOCR)"
+        gpu_badge = '<span class="count-pill pill-pending" style="font-size:11px;">💻 LOCAL CPU FALLBACK</span>'
+
+    sidebar_html = _render_sidebar("admin", data["desk_n"], data["sealed_n"], worker_label, role="admin")
+
+    fields_imp = learning_stats.get("fields_improved", [])
+    fields_str = ", ".join(fields_imp[:6]) if fields_imp else "None yet (accrues on officer approvals)"
+
+    page_html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneBhoomi — Admin &amp; Developer Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    {DASHBOARD_CSS}
+    .admin-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 20px;
+      margin-bottom: 28px;
+    }}
+    .admin-card {{
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      padding: 22px;
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }}
+    .admin-card-head {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--rule-soft);
+      margin-bottom: 14px;
+    }}
+    .admin-card-title {{
+      font-family: var(--serif);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }}
+    .admin-kv-list {{
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }}
+    .admin-kv-row {{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed var(--rule-soft);
+    }}
+    .admin-kv-key {{
+      color: var(--ink-soft);
+      font-weight: 500;
+    }}
+    .admin-kv-val {{
+      font-family: var(--type);
+      font-weight: 700;
+      color: var(--ink);
+    }}
+    .ping-box {{
+      background: var(--paper-deep);
+      border: 1px solid var(--rule);
+      border-radius: 3px;
+      padding: 12px;
+      margin-top: 14px;
+    }}
+  </style>
+</head>
+<body>
+
+<div class="security-bg"></div>
+
+<div class="app-layout">
+  {sidebar_html}
+
+  <main class="dash-content">
+    <div class="main-inner">
+      
+      <!-- Top Header -->
+      <div class="top-action-bar">
+        <div class="header-left">
+          <div style="font-family:var(--type); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--stamp); font-weight:700; margin-bottom:4px;">
+            🛠️ TECHNICAL DIAGNOSTICS &amp; SYSTEM TELEMETRY
+          </div>
+          <h1>Developer &amp; Admin <em>Console</em></h1>
+          <div class="header-tagline">
+            System diagnostics, Kaggle remote GPU worker connectivity, spatial GIS datasets, adaptive OCR learning &amp; cryptographic controls.
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="date-badge">⚙️ Host: {html.escape(host_name)}</div>
+          <a href="/api/docs" target="_blank" class="btn btn-primary">Swagger OpenAPI &rarr;</a>
+        </div>
+      </div>
+
+      <!-- ADMIN DIAGNOSTICS GRID -->
+      <div class="admin-grid">
+
+        <!-- CARD 1: Remote Kaggle GPU OCR Worker -->
+        <div class="admin-card">
+          <div>
+            <div class="admin-card-head">
+              <div class="admin-card-title"><span>⚡</span> Remote GPU Worker Status</div>
+              {gpu_badge}
+            </div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Configured Tunnel URL</span>
+                <span class="admin-kv-val" style="font-size:11px;">{html.escape(colab_url or 'None (Local CPU)')}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Remote Host</span>
+                <span class="admin-kv-val">{html.escape(worker_host)}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Acceleration Model</span>
+                <span class="admin-kv-val">NVIDIA T4 / P100 (PyTorch GPU)</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Encrypted Tunnel</span>
+                <span class="admin-kv-val">HTTPS / Cloudflare / Ngrok</span>
+              </div>
+            </div>
+
+            <div class="ping-box">
+              <div style="font-size:12px; font-weight:700; margin-bottom:6px; color:var(--ink);">Live Remote Worker Ping Tester</div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="pingGpuWorker()">Ping Worker &rarr;</button>
+                <span id="pingResult" style="font-family:var(--type); font-size:11px; color:var(--ink-soft);">Click to check latency</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--rule-soft);">
+            <div style="font-size:11.5px; font-weight:700; color:var(--ink); margin-bottom:6px;">⚡ Connect New Kaggle / Ngrok GPU Worker:</div>
+            <form onsubmit="updateGpuUrl(event)" style="display:flex; gap:8px; flex-wrap:wrap;">
+              <input type="url" id="adminGpuUrlInput" class="search-input" style="flex:1; min-width:200px; font-size:12px; padding:7px 10px;" placeholder="https://xxxx.ngrok-free.app or trycloudflare.com" value="{html.escape(colab_url)}">
+              <button type="submit" id="saveGpuBtn" class="btn btn-primary btn-sm" style="padding:7px 14px; white-space:nowrap;">Save &amp; Activate GPU OCR &rarr;</button>
+              <button type="button" class="btn btn-ghost btn-sm" onclick="clearGpuUrl()" style="padding:7px 10px; color:var(--stamp); border-color:var(--rule);" title="Reset to local CPU PaddleOCR mode">Reset to CPU</button>
+            </form>
+            <div id="gpuSaveNotice" style="display:none; font-family:var(--type); font-size:11px; margin-top:8px; padding:6px 10px; border-radius:3px; background:#e6f4ea; color:#137333; border:1px solid #a8dab5;"></div>
+          </div>
+        </div>
+
+        <!-- CARD 2: OCR Engine & Preprocessing Stack -->
+        <div class="admin-card">
+          <div>
+            <div class="admin-card-head">
+              <div class="admin-card-title"><span>📷</span> OCR Engine &amp; Preprocessing</div>
+              <span class="count-pill pill-sealed" style="font-size:11px;">PADDLEOCR V4/V6</span>
+            </div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Local CPU Engine</span>
+                <span class="admin-kv-val">PaddleOCR (PP-OCRv6 CPU)</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Multilingual Support</span>
+                <span class="admin-kv-val">English (en) · Telugu (te) · Hindi (hi)</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Adaptive Contrast</span>
+                <span class="admin-kv-val">CLAHE Denoised</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Geometric Alignment</span>
+                <span class="admin-kv-val">Hough Line Deskewing (+-15&deg;)</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Cadastral Vector Protection</span>
+                <span class="admin-kv-val">Grayscale Protection (No Erosion)</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); margin-top:14px; background:var(--paper-deep); padding:8px 10px; border-radius:3px;">
+            ℹ️ Scanned document pages pass through multi-variant quality evaluation before field extraction.
+          </div>
+        </div>
+
+        <!-- CARD 3: Spatial GIS Authority Engine -->
+        <div class="admin-card">
+          <div>
+            <div class="admin-card-head">
+              <div class="admin-card-title"><span>🗺️</span> Spatial GIS Authority Datasets</div>
+              <span class="count-pill pill-sealed" style="font-size:11px;">OFFLINE GIS LOADED</span>
+            </div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Telangana Authority</span>
+                <span class="admin-kv-val">TGRAC Official Remote Sensing Datasets</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Karnataka Authority</span>
+                <span class="admin-kv-val">DataMeet Open Maps Boundary Polygons</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Spatial Resolution Match</span>
+                <span class="admin-kv-val">{data['gis_rate']} Resolved</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Geographic Validation</span>
+                <span class="admin-kv-val">State &rarr; District &rarr; Mandal Hierarchy</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Offline GeoJSON Cache</span>
+                <span class="admin-kv-val">Gzip Polygon Features Active</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); margin-top:14px; background:var(--paper-deep); padding:8px 10px; border-radius:3px;">
+            ℹ️ Resolves extracted village &amp; mandal names against official state cadastral polygons offline.
+          </div>
+        </div>
+
+        <!-- CARD 4: Adaptive OCR Learning Intelligence -->
+        <div class="admin-card">
+          <div>
+            <div class="admin-card-head">
+              <div class="admin-card-title"><span>🧠</span> Adaptive OCR Learning Stats</div>
+              <span class="count-pill pill-sealed" style="font-size:11px;">ACTIVE LEARNING</span>
+            </div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Total Corrections Recorded</span>
+                <span class="admin-kv-val">{learning_stats.get('total_feedback_count', 0)}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Officer Verified Corrections</span>
+                <span class="admin-kv-val">{learning_stats.get('verified_feedback_count', 0)}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Learned Normalization Rules</span>
+                <span class="admin-kv-val">{learning_stats.get('learned_rules_count', len(learned_rules))}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Improved Fields</span>
+                <span class="admin-kv-val" style="font-size:11px;">{html.escape(fields_str)}</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); margin-top:14px; background:var(--paper-deep); padding:8px 10px; border-radius:3px;">
+            ℹ️ Every officer approval reinforces OCR post-processing dictionaries for future extractions.
+          </div>
+        </div>
+
+        <!-- CARD 5: Cryptographic Vault Integrity -->
+        <div class="admin-card">
+          <div>
+            <div class="admin-card-head">
+              <div class="admin-card-title"><span>🛡️</span> Cryptographic RSA-PSS Vault</div>
+              <span class="count-pill pill-sealed" style="font-size:11px;">RSA-2048 ACTIVE</span>
+            </div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Signature Algorithm</span>
+                <span class="admin-kv-val">RSA-PSS (2048-bit) + MGF1</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Digest Function</span>
+                <span class="admin-kv-val">SHA-256 Canonical JSON</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Keypair Storage</span>
+                <span class="admin-kv-val">Local Air-Gapped Key Store</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Tamper Detection</span>
+                <span class="admin-kv-val">Offline Verification Active</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); margin-top:14px; background:var(--paper-deep); padding:8px 10px; border-radius:3px;">
+            ℹ️ Zero third-party cloud trust. Signatures remain verifiable locally on offline LAN networks.
+          </div>
+        </div>
+
+        <!-- CARD 6: System Hardware & Python Environment -->
+        <div class="admin-card">
+          <div>
+            <div class="admin-card-head">
+              <div class="admin-card-title"><span>💻</span> System Environment</div>
+              <span class="count-pill pill-sealed" style="font-size:11px;">AIR-GAPPED SYSTEM</span>
+            </div>
+            <div class="admin-kv-list">
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Python Runtime</span>
+                <span class="admin-kv-val">{sys.version.split()[0]}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Operating System</span>
+                <span class="admin-kv-val">{platform.system()} ({platform.machine()})</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Process PID</span>
+                <span class="admin-kv-val">{os.getpid()}</span>
+              </div>
+              <div class="admin-kv-row">
+                <span class="admin-kv-key">Cloud Dependency</span>
+                <span class="admin-kv-val" style="color:var(--green);">0 Cloud Calls (100% Offline)</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-family:var(--type); font-size:10.5px; color:var(--ink-soft); margin-top:14px; background:var(--paper-deep); padding:8px 10px; border-radius:3px;">
+            ℹ️ Full compliance with Indian land administration air-gapped security guidelines.
+          </div>
+        </div>
+
+      </div>
+
+
+
+      <!-- QUICK DEVELOPER ACTIONS & OPENAPI SPEC -->
+      <div class="queue-box" style="background:#ffffff; border:1px solid var(--rule); border-radius:4px; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--rule-soft);">
+          <div>
+            <span style="font-family:var(--serif); font-size:18px; font-weight:700; color:var(--ink);">📖 Developer API Documentation &amp; Testing Tools</span>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">Built-in interactive OpenAPI 3.0 specification &amp; administrative inspection endpoints</div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <a href="/api/docs" target="_blank" class="btn btn-primary btn-sm">Interactive Swagger UI &rarr;</a>
+            <a href="/openapi.json" target="_blank" class="btn btn-ghost btn-sm">OpenAPI JSON</a>
+            <a href="/openapi.yaml" target="_blank" class="btn btn-ghost btn-sm">OpenAPI YAML</a>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:12px; font-family:var(--type); font-size:11.5px;">
+          <div style="background:var(--paper-deep); padding:10px 12px; border-radius:3px;">
+            <b>POST /extract</b> &middot; Intake &amp; multi-page OCR parsing
+          </div>
+          <div style="background:var(--paper-deep); padding:10px 12px; border-radius:3px;">
+            <b>POST /record/save</b> &middot; Save clerk corrected fields
+          </div>
+          <div style="background:var(--paper-deep); padding:10px 12px; border-radius:3px;">
+            <b>POST /record/approve</b> &middot; Officer approval &amp; RSA seal
+          </div>
+          <div style="background:var(--paper-deep); padding:10px 12px; border-radius:3px;">
+            <b>GET /verify</b> &middot; Public offline QR certificate validation
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <footer class="dash-footer">
+      <div class="main-inner" style="padding-top:0; padding-bottom:0;">
+        <div class="dash-footer-wrap">
+          <div><b>OneBhoomi Registry Console</b> · Developer &amp; Admin Panel</div>
+          <div>100% Air-Gapped &amp; Immutable · Zero cloud dependencies · Host: <code>{html.escape(host_name)}</code></div>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+{DASHBOARD_JS}
+
+async function pingGpuWorker() {{
+  const resEl = document.getElementById('pingResult');
+  if (!resEl) return;
+  resEl.innerHTML = '<span style="color:var(--ink);">Pinging worker...</span>';
+  const start = performance.now();
+  try {{
+    const res = await fetch('/api/admin/ping_worker');
+    const elapsed = Math.round(performance.now() - start);
+    if (res.ok) {{
+      const json = await res.json();
+      if (json.status === 'ok') {{
+        resEl.innerHTML = `<span style="color:var(--green); font-weight:700;">✓ Connected (${{elapsed}}ms latency)</span>`;
+      }} else {{
+        resEl.innerHTML = `<span style="color:var(--amber); font-weight:700;">⚠️ ${{json.message || 'Worker reachable with warning'}}</span>`;
+      }}
+    }} else {{
+      resEl.innerHTML = `<span style="color:var(--stamp); font-weight:700;">❌ Worker Unreachable (${{res.status}})</span>`;
+    }}
+  }} catch(e) {{
+    resEl.innerHTML = `<span style="color:var(--stamp); font-weight:700;">❌ Network Error: ${{e.message}}</span>`;
+  }}
+}}
+
+async function updateGpuUrl(e) {{
+  e.preventDefault();
+  const input = document.getElementById('adminGpuUrlInput');
+  const btn = document.getElementById('saveGpuBtn');
+  const notice = document.getElementById('gpuSaveNotice');
+  if (!input) return;
+  const newUrl = input.value.trim();
+
+  if (btn) {{
+    btn.disabled = true;
+    btn.innerText = 'Activating GPU...';
+  }}
+
+  try {{
+    const res = await fetch('/set_ocr_url?url=' + encodeURIComponent(newUrl));
+    if (res.ok) {{
+      if (notice) {{
+        notice.style.display = 'block';
+        notice.innerHTML = '<b>✓ Kaggle GPU OCR URL activated!</b> Refreshing system status...';
+      }}
+      await pingGpuWorker();
+      setTimeout(() => {{
+        window.location.reload();
+      }}, 600);
+    }} else {{
+      alert('Failed to update GPU URL.');
+      if (btn) {{
+        btn.disabled = false;
+        btn.innerText = 'Save & Activate GPU OCR →';
+      }}
+    }}
+  }} catch(err) {{
+    alert('Error updating URL: ' + err.message);
+    if (btn) {{
+      btn.disabled = false;
+      btn.innerText = 'Save & Activate GPU OCR →';
+    }}
+  }}
+}}
+
+async function clearGpuUrl() {{
+  const input = document.getElementById('adminGpuUrlInput');
+  if (input) input.value = '';
+  const notice = document.getElementById('gpuSaveNotice');
+  try {{
+    const res = await fetch('/set_ocr_url?url=');
+    if (res.ok) {{
+      if (notice) {{
+        notice.style.display = 'block';
+        notice.innerHTML = '<b>✓ Switched to Local CPU PaddleOCR mode.</b> Refreshing...';
+      }}
+      setTimeout(() => {{
+        window.location.reload();
+      }}, 600);
+    }}
+  }} catch(err) {{
+    alert('Error resetting URL: ' + err.message);
+  }}
+}}
+
+async function resetUserDocs(userId, userLabel) {{
+  if (!confirm(`Are you sure you want to reset document count to 0 for ${{userLabel}}?`)) {{
+    return;
+  }}
+  try {{
+    const res = await fetch('/api/admin/reset_user_docs', {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json' }},
+      body: JSON.stringify({{ user_id: userId }})
+    }});
+    if (res.ok) {{
+      const json = await res.json();
+      alert(json.message || 'Document counts reset to 0 successfully!');
+      window.location.reload();
+    }} else {{
+      alert('Failed to reset document counts.');
+    }}
+  }} catch(e) {{
+    alert('Error resetting documents: ' + e.message);
+  }}
+}}
+</script>
+</body>
+</html>
+""".encode("utf-8")
+    return page_html
+
+
+def render_access_denied_page(user_name: str, user_role: str, attempted_path: str = "/admin") -> str:
+    """Renders a modern 403 Forbidden page when a regular user or officer attempts to access /admin."""
+    dest_url = "/officer" if (user_role or "").lower() == "officer" else "/user"
+    role_label = (user_role or "User").title()
+    
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>403 Access Denied — OneBhoomi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Archivo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    {DASHBOARD_CSS}
+    body {{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--paper-warm);
+      margin: 0;
+      font-family: var(--type);
+    }}
+    .forbidden-card {{
+      max-width: 520px;
+      width: 90%;
+      background: var(--paper);
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+      text-align: center;
+    }}
+    .shield-icon {{
+      font-size: 56px;
+      margin-bottom: 16px;
+    }}
+    h1 {{
+      font-family: var(--type-display);
+      font-size: 26px;
+      color: var(--stamp);
+      margin: 0 0 12px;
+    }}
+    p {{
+      color: var(--ink-soft);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }}
+    .role-badge {{
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: var(--rule-soft);
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 12px;
+      margin-bottom: 20px;
+    }}
+  </style>
+</head>
+<body>
+  <div class="forbidden-card">
+    <div class="shield-icon">🔒</div>
+    <h1>403 Restricted Access</h1>
+    <div class="role-badge">Logged in as: {html.escape(user_name)} ({html.escape(role_label)})</div>
+    <p>The Developer &amp; Admin Console (<code>{html.escape(attempted_path)}</code>) is restricted exclusively to System Administrators (<b>admin@admin.com</b>). Users and Officers are not authorized to view technical console diagnostics.</p>
+    <a href="{dest_url}" class="btn btn-primary" style="display:inline-block; padding:10px 24px; text-decoration:none; background:var(--stamp); color:#fff; border-radius:6px; font-weight:600;">
+      Return to My Dashboard
+    </a>
+  </div>
+</body>
+</html>"""
+
+
+def render_admin_users_page(
+    host_name: str = "localhost:8001",
+    colab_url: str = "",
+    user_name: str = "Administrator",
+) -> bytes:
+    """
+    Renders the dedicated /admin/users page displaying all registered users, officers,
+    clerks, their primary identities, uploaded deed counts, document reset controls,
+    and user deletion capability.
+    """
+    import accounts_store
+    import verification_service
+
+    data = get_dashboard_data()
+    users_db = accounts_store.load_users_db()
+
+    try:
+        verif_db = verification_service.load_db()
+    except Exception:
+        verif_db = {}
+
+    if colab_url and colab_url.strip():
+        try:
+            worker_host = urlparse(colab_url).hostname or colab_url
+        except Exception:
+            worker_host = colab_url
+        worker_label = f"Remote GPU ({worker_host[:16]}...)"
+    else:
+        worker_label = "Local CPU (PaddleOCR)"
+
+    sidebar_html = _render_sidebar("admin_users", data["desk_n"], data["sealed_n"], worker_label, role="admin")
+
+    user_rows = []
+    officer_count = 0
+    clerk_count = 0
+    regular_user_count = 0
+    admin_count = 0
+
+    sorted_users = sorted(
+        users_db.values(),
+        key=lambda u: u.get("created_at") or "",
+        reverse=True
+    )
+
+    for i, u in enumerate(sorted_users, start=1):
+        uid = u.get("user_id", "")
+        uname = u.get("name") or "Unnamed User"
+        urole = str(u.get("role") or "user").lower()
+        created_str = _fmt_date(u.get("created_at") or "")
+
+        if urole == "admin":
+            admin_count += 1
+            role_badge = '<span class="count-pill pill-sealed" style="font-size:10.5px; background:#0f172a; color:#fff; border-color:#0f172a;">🛡️ ADMIN</span>'
+        elif urole == "officer":
+            officer_count += 1
+            role_badge = '<span class="count-pill pill-sealed" style="font-size:10.5px;">🏛️ OFFICER</span>'
+        elif urole == "clerk":
+            clerk_count += 1
+            role_badge = '<span class="count-pill pill-pending" style="font-size:10.5px;">✍️ CLERK</span>'
+        else:
+            regular_user_count += 1
+            role_badge = '<span class="count-pill pill-total" style="font-size:10.5px;">👤 USER</span>'
+
+        idents = u.get("identities", [])
+        ident_label = "—"
+        if isinstance(idents, list) and idents:
+            primary = idents[0]
+            if isinstance(primary, dict):
+                ident_label = primary.get("identifier") or primary.get("value") or "—"
+            elif isinstance(primary, str):
+                ident_label = primary
+
+        u_docs = [
+            r for r in verif_db.values()
+            if isinstance(r, dict) and (str(r.get("uploaded_by_user_id")) == str(uid) or str(r.get("user_id")) == str(uid))
+        ]
+        u_doc_n = len(u_docs)
+        doc_badge = f'<span class="count-pill {"pill-sealed" if u_doc_n > 0 else "pill-total"}" style="font-size:11px;">{u_doc_n} deed{"s" if u_doc_n != 1 else ""}</span>'
+
+        is_master_admin = (uid == "usr_admin_master" or ident_label.lower() == "admin@admin.com" or urole == "admin")
+
+        if is_master_admin:
+            action_buttons = '<span class="count-pill pill-sealed" style="font-size:10.5px; background:#e2e8f0; color:#334155;">Protected Master Admin</span>'
+        else:
+            action_buttons = f"""
+            <div style="display:flex; gap:6px; align-items:center;">
+              <button type="button" class="btn btn-ghost btn-sm" style="color:var(--stamp); border-color:var(--rule); padding:4px 8px; font-size:10.5px;" onclick="resetUserDocs('{html.escape(uid)}', '{html.escape(uname)}')">
+                Reset Docs (0)
+              </button>
+              <button type="button" class="btn btn-sm" style="background:#dc2626; border-color:#b91c1c; color:#ffffff; padding:4px 8px; font-size:10.5px; font-weight:600; cursor:pointer;" onclick="deleteUser('{html.escape(uid)}', '{html.escape(uname)}', '{html.escape(urole)}')">
+                🗑️ Delete User
+              </button>
+            </div>
+            """
+
+        user_rows.append(f"""
+        <tr class="data-row">
+          <td class="td-sl">{i}</td>
+          <td>
+            <div style="font-family:var(--type); font-weight:700; font-size:11.5px; color:var(--ink);">{html.escape(uid)}</div>
+            <div style="font-size:11px; color:var(--ink-soft);">{html.escape(created_str)}</div>
+          </td>
+          <td><b>{html.escape(uname)}</b></td>
+          <td>{role_badge}</td>
+          <td><code style="font-size:11px;">{html.escape(ident_label)}</code></td>
+          <td>{doc_badge}</td>
+          <td>{action_buttons}</td>
+        </tr>
+        """)
+
+    if user_rows:
+        user_table_html = f"""
+        <table class="master-ledger">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>User ID &amp; Registered</th>
+              <th>Full Name</th>
+              <th>Role</th>
+              <th>Primary Identity</th>
+              <th>Uploaded Deeds</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {''.join(user_rows)}
+          </tbody>
+        </table>
+        """
+    else:
+        user_table_html = """
+        <div style="padding:24px; text-align:center; color:var(--ink-soft); font-style:italic;">
+          No registered system users or officers found in database.
+        </div>
+        """
+
+    page_html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneBhoomi — Registered User &amp; Officer Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    {DASHBOARD_CSS}
+  </style>
+</head>
+<body>
+
+<div class="security-bg"></div>
+
+<div class="app-layout">
+  {sidebar_html}
+
+  <main class="dash-content">
+    <div class="main-inner">
+
+      <!-- Top Header -->
+      <div class="top-action-bar">
+        <div class="header-left">
+          <div style="font-family:var(--type); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--stamp); font-weight:700; margin-bottom:4px;">
+            👥 REGISTERED USER &amp; OFFICER MANAGEMENT
+          </div>
+          <h1>System Accounts <em>Directory</em></h1>
+          <div class="header-tagline">
+            Manage registered citizen users, clerks, verification officers, document count resets, and user deletions.
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="date-badge">⚙️ Host: {html.escape(host_name)}</div>
+          <a href="/api/docs" target="_blank" class="btn btn-primary">Swagger OpenAPI &rarr;</a>
+        </div>
+      </div>
+
+      <!-- REGISTERED USERS & OFFICERS ROSTER -->
+      <div class="queue-box" id="usersRosterSection" style="margin-bottom:28px;">
+        <div class="queue-header" style="background:#f8fafc; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div class="queue-title">
+              <span>👥 Registered System Users &amp; Officer Roster</span>
+              <span class="queue-badge-count" style="background:#0f172a;">{len(users_db)} Total Accounts</span>
+            </div>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">
+              Registered citizen users, clerks, and verification officers &middot; {officer_count} Officers &middot; {clerk_count} Clerks &middot; {regular_user_count} Citizens &middot; {admin_count} Admins
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <button type="button" class="btn btn-primary btn-sm" style="background:var(--stamp); border-color:var(--stamp-deep);" onclick="resetUserDocs('all', 'ALL Users &amp; Officers')">
+              ⚠️ Reset All Document Counts to 0
+            </button>
+          </div>
+        </div>
+        <div class="queue-table-scroll">
+          {user_table_html}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <footer class="dash-footer">
+      <div class="main-inner" style="padding-top:0; padding-bottom:0;">
+        <div class="dash-footer-wrap">
+          <div><b>OneBhoomi Registry Console</b> &middot; User Management</div>
+          <div>100% Air-Gapped &amp; Immutable &middot; Zero cloud dependencies &middot; Host: <code>{html.escape(host_name)}</code></div>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+{DASHBOARD_JS}
+
+async function resetUserDocs(userId, userLabel) {{
+  if (!confirm(`Are you sure you want to reset document count to 0 for ${{userLabel}}?`)) {{
+    return;
+  }}
+  try {{
+    const res = await fetch('/api/admin/reset_user_docs', {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json' }},
+      body: JSON.stringify({{ user_id: userId }})
+    }});
+    if (res.ok) {{
+      const json = await res.json();
+      alert(json.message || 'Document counts reset to 0 successfully!');
+      window.location.reload();
+    }} else {{
+      alert('Failed to reset document counts.');
+    }}
+  }} catch(e) {{
+    alert('Error resetting documents: ' + e.message);
+  }}
+}}
+
+async function deleteUser(userId, userName, userRole) {{
+  if (!confirm(`⚠️ ARE YOU SURE YOU WANT TO PERMANENTLY DELETE USER "${{userName}}" (${{userId}})?\n\nThis action cannot be undone. It will remove their user account, credentials, active sessions, and uploaded land records permanently.`)) {{
+    return;
+  }}
+  try {{
+    const res = await fetch('/api/admin/delete_user', {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json' }},
+      body: JSON.stringify({{ user_id: userId }})
+    }});
+    const json = await res.json();
+    if (res.ok && json.status === 'ok') {{
+      alert(json.message || 'User deleted successfully!');
+      window.location.reload();
+    }} else {{
+      alert('Failed to delete user: ' + (json.message || res.statusText));
+    }}
+  }} catch(e) {{
+    alert('Error deleting user: ' + e.message);
+  }}
+}}
+</script>
+</body>
+</html>
+""".encode("utf-8")
+    return page_html
 
 

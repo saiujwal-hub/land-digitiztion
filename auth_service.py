@@ -118,6 +118,121 @@ def verify_password(hashed: str, plain_password: str) -> bool:
         return False
 
 
+def ensure_admin_account() -> Dict[str, Any]:
+    """
+    Ensures that the default administrator account (admin@admin.com / admin123)
+    exists in users_db.json and auth_credentials.json with role 'admin'.
+    """
+    admin_email = "admin@admin.com"
+    admin_pass = "admin123"
+
+    admin_user = accounts_store.get_user_by_identity("email", admin_email)
+    if not admin_user:
+        admin_user = {
+            "user_id": "usr_admin_master",
+            "name": "System Administrator",
+            "role": "admin",
+            "identities": [{"type": "email", "identifier": admin_email}],
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+        accounts_store.save_user(admin_user)
+    else:
+        if admin_user.get("role") != "admin":
+            admin_user["role"] = "admin"
+            accounts_store.save_user(admin_user)
+
+    creds_key = f"email:{admin_email}"
+    creds = load_credentials_db()
+    if creds_key not in creds or not verify_password(creds[creds_key].get("password_hash", ""), admin_pass):
+        creds[creds_key] = {
+            "user_id": admin_user["user_id"],
+            "password_hash": hash_password(admin_pass),
+            "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+        save_credentials_db(creds)
+    return admin_user
+
+
+# Seed default admin account
+try:
+    ensure_admin_account()
+except Exception as _admin_err:
+    logger.warning(f"Could not auto-seed admin account: {_admin_err}")
+
+
+def delete_user_account(user_id: str) -> Tuple[bool, str]:
+    """
+    Completely deletes a user account, their credentials, active sessions,
+    and uploaded documents from the system.
+    Returns (success, message).
+    """
+    if not user_id:
+        return False, "User ID is required."
+
+    user = accounts_store.get_user(user_id)
+    if not user:
+        return False, f"User '{user_id}' not found."
+
+    # Do not allow deleting master admin
+    identities = user.get("identities", [])
+    user_emails = [
+        i.get("identifier") or i.get("value")
+        for i in identities
+        if isinstance(i, dict) and i.get("type") == "email"
+    ]
+    if user_id == "usr_admin_master" or "admin@admin.com" in user_emails or user.get("role") == "admin":
+        return False, "The master administrator account (admin@admin.com) cannot be deleted."
+
+    user_name = user.get("name") or user_id
+
+    # 1. Remove from users_db.json
+    with accounts_store._users_lock:
+        users = accounts_store.load_users_db()
+        if user_id in users:
+            del users[user_id]
+            accounts_store.save_users_db(users)
+
+    # 2. Remove credentials from auth_credentials.json
+    with _creds_lock:
+        creds = load_credentials_db()
+        keys_to_del = []
+        for k, v in creds.items():
+            if isinstance(v, dict) and v.get("user_id") == user_id:
+                keys_to_del.append(k)
+        for email in user_emails:
+            if email and f"email:{email.lower()}" in creds:
+                keys_to_del.append(f"email:{email.lower()}")
+        for k in set(keys_to_del):
+            if k in creds:
+                del creds[k]
+        save_credentials_db(creds)
+
+    # 3. Remove active sessions from sessions_db.json
+    with accounts_store._sessions_lock:
+        sessions = accounts_store.load_sessions_db()
+        s_keys_to_del = [
+            st for st, s in sessions.items()
+            if isinstance(s, dict) and s.get("user_id") == user_id
+        ]
+        for st in s_keys_to_del:
+            del sessions[st]
+        accounts_store.save_sessions_db(sessions)
+
+    # 4. Remove uploaded documents from verification_db.json
+    try:
+        import verification_service
+        db = verification_service.load_db()
+        updated_db = {
+            k: v for k, v in db.items()
+            if isinstance(v, dict) and str(v.get("uploaded_by_user_id")) != str(user_id) and str(v.get("user_id")) != str(user_id)
+        }
+        verification_service.save_db(updated_db)
+    except Exception as _e:
+        logger.warning(f"Could not purge documents for user {user_id}: {_e}")
+
+    return True, f"Successfully deleted user '{user_name}' ({user_id}) and purged all associated data."
+
+
 def register_email_password(
     email: str,
     password: str,
@@ -1474,6 +1589,8 @@ def _get_role_destination_for_session(session_token: str) -> str:
         return "/user"
     elif role == "officer":
         return "/officer"
+    elif role == "admin":
+        return "/admin"
     else:
         return "/auth/choose-role"
 
