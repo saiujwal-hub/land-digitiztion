@@ -60,14 +60,8 @@ _otp_lock = threading.Lock()
 OTP_EXPIRATION_SECONDS = 300  # 5 minutes
 
 # Google OAuth Credentials
-GOOGLE_CLIENT_ID = os.environ.get(
-    "GOOGLE_CLIENT_ID",
-    ""
-)
-GOOGLE_CLIENT_SECRET = os.environ.get(
-    "GOOGLE_CLIENT_SECRET",
-    ""
-)
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
 
 # =====================================================================
