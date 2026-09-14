@@ -203,6 +203,16 @@ OneBhoomi is strictly designed for government compliance and citizen data protec
 
 ## 👥 Contributors
 
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/saiujwal-hub"><img src="https://avatars.githubusercontent.com/u/240463031?v=4" width="100px;" alt=""/><br /><sub><b>Meesala Sai Ujwal</b></sub></a><br /><a href="https://github.com/saiujwal-hub" title="Core Pipeline & OCR">💻</a></td>
+    <td align="center"><a href="https://github.com/Samarth7887"><img src="https://avatars.githubusercontent.com/u/240462227?v=4" width="100px;" alt=""/><br /><sub><b>Samarth</b></sub></a><br /><a href="https://github.com/Samarth7887" title="UI & Spatial Grounding">🎨</a></td>
+    <td align="center"><a href="https://github.com/yuvanreddy404"><img src="https://avatars.githubusercontent.com/yuvanreddy404" width="100px;" alt=""/><br /><sub><b>Yuvan Reddy</b></sub></a><br /><a href="https://github.com/yuvanreddy404" title="Security & Maintenance">🚧</a></td>
+  </tr>
+</table>
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 - **[Meesala Sai Ujwal](https://github.com/saiujwal-hub)** ([@saiujwal-hub](https://github.com/saiujwal-hub))
 - **[Samarth](https://github.com/Samarth7887)** ([@Samarth7887](https://github.com/Samarth7887))
 - **[Yuvan Reddy](https://github.com/yuvanreddy404)** ([@yuvanreddy404](https://github.com/yuvanreddy404))
