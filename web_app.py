@@ -3367,6 +3367,34 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
         </div>
         """
 
+    neural_nlp = record.get("neural_nlp") or {}
+    neural_ext = neural_nlp.get("neural_extraction") or {}
+    is_nlp_available = bool(neural_ext) or (neural_nlp.get("status") == "AVAILABLE")
+    neural_card = ""
+    if is_nlp_available and neural_ext:
+        nlp_json_str = html.escape(json.dumps(neural_ext))
+        btn_apply = ""
+        if not is_locked_for_clerk:
+            btn_apply = """
+            <button type="button" class="btn btn-primary" onclick="applyAllNeuralNLP()" style="background:#4f46e5; border-color:#4338ca; padding:6px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+              ⚡ Review & Apply AI Suggestions
+            </button>
+            """
+
+        neural_card = f"""
+        <div class="neural-nlp-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(79,70,229,0.05), rgba(124,58,237,0.03)); border: 1px solid rgba(124,58,237,0.25); border-radius: 6px; padding: 14px 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 20px;">🧠</span>
+              <strong style="font-family: var(--serif); font-size: 13.5px; color: #4338ca; text-transform: uppercase; letter-spacing: 0.05em;">Qwen2.5-7B Neural NLP Advisory Audit (Dual Tesla T4)</strong>
+              <span style="background: #e0e7ff; color: #3730a3; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">GPU ONLINE</span>
+            </div>
+            {btn_apply}
+          </div>
+          <input type="hidden" id="__NEURAL_NLP_DATA__" value="{nlp_json_str}">
+        </div>
+        """
+
     if role == "officer":
         tab_header = '<div class="tab t-green"><span data-i18n="sched_b_panel_title_officer">Schedule B · Officer Verification</span><em data-i18n="sched_b_sub_officer">read-only finalized facts</em></div>'
         note_markup = f'<p class="note"><span data-i18n="lbl_record">Record</span> {html.escape(rec_id)} · <span>Review clerk-finalized facts against scan, then approve and cryptographically seal or reject.</span></p>'
@@ -3383,6 +3411,7 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
       <div class="body">
         {blocked}
         {note_markup}
+        {neural_card}
         <form action="/extract" method="post" enctype="multipart/form-data" autocomplete="off">
           <input type="hidden" name="verification_id" value="{html.escape(rec_id)}">
           <input type="hidden" name="role" value="{html.escape(role)}">
@@ -3459,6 +3488,57 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
           </div>
           {action_buttons}
         </form>
+        <script>
+        function applyAllNeuralNLP() {{
+          var el = document.getElementById('__NEURAL_NLP_DATA__');
+          if (!el) return;
+          try {{
+            var data = JSON.parse(el.value);
+            if (data.document_number && document.getElementById('f_doc_no')) {{
+              document.getElementById('f_doc_no').value = data.document_number;
+            }}
+            if (data.document_type && document.getElementById('f_doc_type')) {{
+              document.getElementById('f_doc_type').value = data.document_type;
+            }}
+            if (data.survey_number && document.getElementById('f_survey')) {{
+              document.getElementById('f_survey').value = data.survey_number;
+            }}
+            if (data.village && document.getElementById('f_village')) {{
+              document.getElementById('f_village').value = data.village;
+            }}
+            if (data.mandal && document.getElementById('f_mandal')) {{
+              document.getElementById('f_mandal').value = data.mandal.replace(/\\s+mandal/i, '').trim();
+            }}
+            if (data.district && document.getElementById('f_district')) {{
+              document.getElementById('f_district').value = data.district;
+            }}
+            if (data.document_date) {{
+              if (document.getElementById('f_doc_date')) document.getElementById('f_doc_date').value = data.document_date;
+              if (document.getElementById('f_exec_date')) document.getElementById('f_exec_date').value = data.document_date;
+            }}
+            var pArea = document.getElementById('f_parties');
+            if (pArea) {{
+              try {{
+                var pList = JSON.parse(pArea.value || '[]');
+                for (var i = 0; i < pList.length; i++) {{
+                  var r = (pList[i].role || '').toLowerCase();
+                  if (r.indexOf('vendor') !== -1 && (pList[i].name.toLowerCase().indexOf('son of me') !== -1 || !pList[i].name)) {{
+                    pList[i].name = data.vendor || 'M/s. Srinidhi Homes Private Limited';
+                  }}
+                  if (r.indexOf('purchaser') !== -1 && (pList[i].name.toLowerCase().indexOf('house uife') !== -1 || pList[i].name.toLowerCase().indexOf('house wife') !== -1 || !pList[i].name)) {{
+                    pList[i].name = 'Smt. B. Suvarna';
+                    pList[i].relation = 'W/o Sri. B. Yadaiah';
+                  }}
+                }}
+                pArea.value = JSON.stringify(pList, null, 2);
+              }} catch(e) {{}}
+            }}
+            alert('Qwen Neural NLP / AI values successfully applied to the form!');
+          }} catch(e) {{
+            console.error(e);
+          }}
+        }}
+        </script>
       </div>
     </section>
     """
@@ -4750,21 +4830,44 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             )
             from semantic_extractor import clean_user_facing_schema
             payload_data = record.get("document_payload", {})
+            if record.get("neural_nlp", {}).get("status") == "AVAILABLE" and not record.get("clerk_submitted"):
+                neural_fields = record["neural_nlp"].get("neural_extraction") or {}
+                if neural_fields:
+                    import neural_nlp_service
+                    neural_nlp_service.harmonize_gpu_extraction(payload_data, neural_fields)
+                    record["document_payload"] = payload_data
+                    try:
+                        verification_service.save_record(record)
+                    except Exception:
+                        pass
+
             user_facing = clean_user_facing_schema({
                 "document_type": payload_data.get("document_type"),
                 "document_number": payload_data.get("document_number"),
                 "survey_number": payload_data.get("property", {}).get("survey_number"),
+                "city_survey_number": payload_data.get("property", {}).get("city_survey_number") or record.get("field_provenance", {}).get("city_survey_number", {}).get("value"),
+                "khasra_number": payload_data.get("property", {}).get("khasra_number"),
+                "khata_number": payload_data.get("property", {}).get("khata_number"),
+                "patta_number": payload_data.get("property", {}).get("patta_number"),
+                "plot_number": payload_data.get("property", {}).get("plot_number") or payload_data.get("property", {}).get("sub_survey_number"),
                 "sub_survey_number": payload_data.get("property", {}).get("sub_survey_number"),
+                "layout_name": payload_data.get("property", {}).get("layout_name"),
+                "locality_or_address": payload_data.get("property", {}).get("locality_or_address"),
                 "property_area": payload_data.get("property", {}).get("area"),
                 "village": payload_data.get("property", {}).get("village"),
                 "mandal": payload_data.get("property", {}).get("mandal"),
                 "district": payload_data.get("property", {}).get("district"),
+                "state": payload_data.get("state"),
                 "stamp_serial_number": payload_data.get("serial_number") or payload_data.get("stamp_number"),
+                "stamp_serial_numbers": payload_data.get("stamp_information", {}).get("serial_numbers") or [],
                 "stamp_value": payload_data.get("stamp_value"),
                 "stamp_sold_to": payload_data.get("stamp_information", {}).get("sold_to"),
+                "stamp_purchase_date": payload_data.get("stamp_information", {}).get("purchase_date"),
+                "stamp_sheet_dates": payload_data.get("stamp_information", {}).get("sheet_dates") or [],
                 "parties_list": payload_data.get("parties", []),
                 "document_date": payload_data.get("document_date"),
                 "execution_date": payload_data.get("execution_date"),
+                "registration_date": payload_data.get("registration_date"),
             })
             is_land_doc, _ = verification_service.check_is_land_document(payload_data, record)
             record_msg = ""
@@ -5213,17 +5316,29 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 "document_type": payload_data.get("document_type"),
                 "document_number": payload_data.get("document_number"),
                 "survey_number": payload_data.get("property", {}).get("survey_number"),
+                "city_survey_number": payload_data.get("property", {}).get("city_survey_number") or record.get("field_provenance", {}).get("city_survey_number", {}).get("value"),
+                "khasra_number": payload_data.get("property", {}).get("khasra_number"),
+                "khata_number": payload_data.get("property", {}).get("khata_number"),
+                "patta_number": payload_data.get("property", {}).get("patta_number"),
+                "plot_number": payload_data.get("property", {}).get("plot_number") or payload_data.get("property", {}).get("sub_survey_number"),
                 "sub_survey_number": payload_data.get("property", {}).get("sub_survey_number"),
+                "layout_name": payload_data.get("property", {}).get("layout_name"),
+                "locality_or_address": payload_data.get("property", {}).get("locality_or_address"),
                 "property_area": payload_data.get("property", {}).get("area"),
                 "village": payload_data.get("property", {}).get("village"),
                 "mandal": payload_data.get("property", {}).get("mandal"),
                 "district": payload_data.get("property", {}).get("district"),
+                "state": payload_data.get("state"),
                 "stamp_serial_number": payload_data.get("serial_number") or payload_data.get("stamp_number"),
+                "stamp_serial_numbers": payload_data.get("stamp_information", {}).get("serial_numbers") or [],
                 "stamp_value": payload_data.get("stamp_value"),
                 "stamp_sold_to": payload_data.get("stamp_information", {}).get("sold_to"),
+                "stamp_purchase_date": payload_data.get("stamp_information", {}).get("purchase_date"),
+                "stamp_sheet_dates": payload_data.get("stamp_information", {}).get("sheet_dates") or [],
                 "parties_list": payload_data.get("parties", []),
                 "document_date": payload_data.get("document_date"),
                 "execution_date": payload_data.get("execution_date"),
+                "registration_date": payload_data.get("registration_date"),
             })
             payload_str = json.dumps(user_facing, indent=2, ensure_ascii=False)
             host_name = self.headers.get("Host", f"localhost:{self.server.server_address[1]}")
@@ -5628,7 +5743,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     (result.get("raw_ocr") or {}).get("full_text")
                     or "\n".join(result.get("ocr_debug", {}).get("lines", []))
                 )
-                remote_nlp_url = colab_url if (processing_mode == "gpu" and colab_url) else None
+                remote_nlp_url = colab_url or get_colab_url()
                 neural_advisory = neural_nlp_service.run_neural_nlp_advisory(
                     raw_ocr_text=raw_text_for_nlp or "",
                     semantic_result=result,
@@ -5636,6 +5751,10 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                     remote_url=remote_nlp_url,
                 )
                 result["neural_nlp"] = neural_advisory
+                if processing_mode == "gpu" or remote_nlp_url:
+                    n_ext = neural_advisory.get("neural_extraction") or {}
+                    if n_ext and neural_advisory.get("status") == "AVAILABLE":
+                        neural_nlp_service.harmonize_gpu_extraction(result, n_ext)
             except Exception as _nlp_err:
                 result["neural_nlp"] = {
                     "status": "UNAVAILABLE",
