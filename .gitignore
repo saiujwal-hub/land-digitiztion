@@ -37,3 +37,8 @@ ocr_raw_summary.txt
 .env
 .env.local
 .env.*.local
+
+# Key backups & secure key archives
+*.pem.enc
+*.key.enc
+backups/
