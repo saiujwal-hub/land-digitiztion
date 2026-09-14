@@ -3307,7 +3307,8 @@ def render_user_dashboard(
             Logged in as <b>{html.escape(user_name)}</b> · Land Document Upload, Provenance Audit &amp; Intake
           </div>
         </div>
-        <div class="header-right">
+        <div class="header-right" style="display:flex; align-items:center; gap:10px;">
+          <a href="/new" class="act-btn" style="border-color:var(--primary); color:var(--primary); font-weight:600;">+ New Document Scan</a>
           <a href="/auth/signout" class="act-btn" style="border-color:#fca5a5; color:#b91c1c;">Sign Out</a>
         </div>
       </div>
@@ -3330,51 +3331,6 @@ def render_user_dashboard(
           <div class="stat-num">{len(needs_review) + len(sent_to_officer) + len(decided)}</div>
           <div class="stat-title">Total Your Submissions</div>
         </div>
-      </div>
-
-      <!-- REUSED INGESTION DROPZONE (Stage 1 Intake Desk) -->
-      <div class="intake-card" style="margin-bottom:28px;">
-        <div class="intake-head">
-          <h2>New Document Scan &amp; Intake Desk</h2>
-          <span class="intake-badge">Reused Intake Point · Desk 01</span>
-        </div>
-
-        <form id="scanForm" action="/extract" method="post" enctype="multipart/form-data">
-          <!-- Dropzone File Selector -->
-          <div class="intake-dropzone" id="intakeDropzone" tabindex="0" role="button" aria-label="Drop scan file here or click to browse">
-            <svg class="dz-icon-svg" viewBox="0 0 24 24" stroke-width="1.6">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="12" y1="18" x2="12" y2="12"></line>
-              <line x1="9" y1="15" x2="15" y2="15"></line>
-            </svg>
-            <div class="dz-main-text">Drop the title deed or scan copy here, or <span>browse local files</span></div>
-            <div class="dz-sub-text">Supports PDF (Multi-page) · PNG · JPG · TIFF &mdash; Processed in-memory and linked to your user profile</div>
-            <input type="file" name="document_image" id="scan_file_input" accept="image/*,.pdf,application/pdf" hidden required>
-          </div>
-
-          <!-- Selected File Chip -->
-          <div class="filechip" id="fileChip" style="display:none;">
-            <div class="filechip-name">
-              <span>📄</span>
-              <span id="chipName">document.pdf</span>
-            </div>
-            <div class="filechip-actions">
-              <span class="filechip-size" id="chipSize">0.0 MB</span>
-              <button type="button" class="filechip-btn" id="chipRemove" title="Remove file">&times;</button>
-            </div>
-          </div>
-
-          <!-- Submit Button & Security Note -->
-          <div class="submit-row" style="margin-top:16px;">
-            <div class="submit-note">
-              🔒 Ingestion will automatically link this document to user profile <b>{html.escape(user_name)}</b>.
-            </div>
-            <button type="submit" class="btn btn-primary" id="submitBtn" style="padding:12px 28px; font-size:12.5px;">
-              Start Document Extraction &rarr;
-            </button>
-          </div>
-        </form>
       </div>
 
       {state_progress_markup}
