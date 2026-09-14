@@ -20,11 +20,24 @@ _sessions_lock = threading.RLock()
 
 
 # =====================================================================
-# Users Store Persistence Layer
+# =====================================================================
+# Users Store Persistence Layer (PostgreSQL with JSON fallback)
 # =====================================================================
 
+def _is_postgres_backend() -> bool:
+    try:
+        import postgres_store
+        return postgres_store.is_postgres_backend()
+    except Exception:
+        return False
+
+
 def load_users_db() -> Dict[str, Dict[str, Any]]:
-    """Reads the users JSON database file."""
+    """Reads the users from PostgreSQL or JSON database file."""
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_load_users_db()
+
     with _users_lock:
         if not USERS_DB_PATH.exists():
             return {}
@@ -37,7 +50,12 @@ def load_users_db() -> Dict[str, Dict[str, Any]]:
 
 
 def save_users_db(users_db: Dict[str, Dict[str, Any]]) -> None:
-    """Writes the users database structure to the JSON file."""
+    """Writes the users database structure to PostgreSQL or JSON file."""
+    if _is_postgres_backend():
+        import postgres_store
+        postgres_store.pg_save_users_db(users_db)
+        return
+
     with _users_lock:
         tmp_path = USERS_DB_PATH.with_suffix(".tmp")
         try:
@@ -54,6 +72,11 @@ def get_user(user_id: str) -> Optional[Dict[str, Any]]:
     """Retrieves a user by user_id."""
     if not user_id:
         return None
+
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_get_user(user_id)
+
     users = load_users_db()
     return users.get(user_id)
 
@@ -65,6 +88,10 @@ def get_user_by_identity(identity_type: str, identifier: str) -> Optional[Dict[s
     """
     if not identity_type or not identifier:
         return None
+
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_get_user_by_identity(identity_type, identifier)
 
     target_type = identity_type.strip().lower()
     target_id = identifier.strip().lower()
@@ -97,6 +124,11 @@ def save_user(user: Dict[str, Any]) -> None:
     if role not in VALID_ROLES:
         raise ValueError(f"Invalid user role: {role}. Must be one of {VALID_ROLES}")
 
+    if _is_postgres_backend():
+        import postgres_store
+        postgres_store.pg_save_user(user)
+        return
+
     with _users_lock:
         users = load_users_db()
         users[user_id] = user
@@ -115,6 +147,10 @@ def create_user(
     """
     if role not in VALID_ROLES:
         raise ValueError(f"Invalid user role '{role}'. Must be one of: {', '.join(sorted(VALID_ROLES))}")
+
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_create_user(name, role, identities, user_id)
 
     uid = user_id or f"usr_{uuid.uuid4().hex[:12]}"
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -140,6 +176,10 @@ def create_user(
 
 def link_identity_to_user(user_id: str, identity_type: str, identifier: str, metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Links an additional auth identity (email, phone, google) to an existing user."""
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_link_identity_to_user(user_id, identity_type, identifier, metadata)
+
     with _users_lock:
         user = get_user(user_id)
         if not user:
@@ -169,15 +209,17 @@ def link_identity_to_user(user_id: str, identity_type: str, identifier: str, met
         return user
 
 
-
-
-
 # =====================================================================
 # Sessions Store Persistence Layer
 # =====================================================================
 
 def load_sessions_db() -> Dict[str, Dict[str, Any]]:
-    """Reads the sessions JSON database file."""
+    """Reads the sessions from PostgreSQL or JSON database file."""
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_load_sessions_db()
+
+
     with _sessions_lock:
         if not SESSIONS_DB_PATH.exists():
             return {}
@@ -190,7 +232,12 @@ def load_sessions_db() -> Dict[str, Dict[str, Any]]:
 
 
 def save_sessions_db(sessions_db: Dict[str, Dict[str, Any]]) -> None:
-    """Writes the sessions database structure to the JSON file."""
+    """Writes the sessions database structure to PostgreSQL or JSON file."""
+    if _is_postgres_backend():
+        import postgres_store
+        postgres_store.pg_save_sessions_db(sessions_db)
+        return
+
     with _sessions_lock:
         tmp_path = SESSIONS_DB_PATH.with_suffix(".tmp")
         try:
@@ -225,6 +272,10 @@ def create_session(
     Creates a new authenticated session for user_id with an expiration date.
     Returns the created session dict.
     """
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_create_session(user_id, duration_days, custom_token)
+
     now = datetime.now(timezone.utc)
     expires = now + timedelta(days=duration_days)
     token = custom_token or secrets.token_urlsafe(32)
@@ -252,6 +303,10 @@ def get_session(session_token: str) -> Optional[Dict[str, Any]]:
     if not session_token:
         return None
 
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_get_session(session_token)
+
     sessions = load_sessions_db()
     session = sessions.get(session_token)
     if not session:
@@ -273,6 +328,11 @@ def delete_session(session_token: str) -> bool:
     """Deletes an active session."""
     if not session_token:
         return False
+
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_delete_session(session_token)
+
     with _sessions_lock:
         sessions = load_sessions_db()
         if session_token in sessions:

@@ -65,11 +65,23 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
 
 # =====================================================================
-# Credentials Storage (Argon2 Hashed)
+# Credentials Storage (Argon2 Hashed, PostgreSQL with JSON fallback)
 # =====================================================================
 
+def _is_postgres_backend() -> bool:
+    try:
+        import postgres_store
+        return postgres_store.is_postgres_backend()
+    except Exception:
+        return False
+
+
 def load_credentials_db() -> Dict[str, Dict[str, Any]]:
-    """Loads hashed credentials from auth_credentials.json."""
+    """Loads hashed credentials from PostgreSQL or auth_credentials.json."""
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_load_credentials_db()
+
     with _creds_lock:
         if not AUTH_CREDS_PATH.exists():
             return {}
@@ -82,7 +94,12 @@ def load_credentials_db() -> Dict[str, Dict[str, Any]]:
 
 
 def save_credentials_db(creds: Dict[str, Dict[str, Any]]) -> None:
-    """Saves hashed credentials safely to auth_credentials.json."""
+    """Saves hashed credentials safely to PostgreSQL or auth_credentials.json."""
+    if _is_postgres_backend():
+        import postgres_store
+        postgres_store.pg_save_credentials_db(creds)
+        return
+
     with _creds_lock:
         tmp_path = AUTH_CREDS_PATH.with_suffix(".tmp")
         try:
@@ -162,6 +179,10 @@ def delete_user_account(user_id: str) -> Tuple[bool, str]:
     """
     if not user_id:
         return False, "User ID is required."
+
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_delete_user_account(user_id)
 
     user = accounts_store.get_user(user_id)
     if not user:

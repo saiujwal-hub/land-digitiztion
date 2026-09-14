@@ -842,14 +842,27 @@ def verify_document_signature(payload: Dict[str, Any], signature_b64: str, publi
 
 
 # =====================================================================
-# Database Persistence Layer (verification_db.json)
+# =====================================================================
+# Database Persistence Layer (PostgreSQL with JSON fallback)
 # =====================================================================
 
 DB_PATH = Path("verification_db.json")
 
 
+def _is_postgres_backend() -> bool:
+    try:
+        import postgres_store
+        return postgres_store.is_postgres_backend()
+    except Exception:
+        return False
+
+
 def load_db() -> Dict[str, Any]:
-    """Reads the local JSON database file."""
+    """Reads all verification records from PostgreSQL or local JSON file."""
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_load_db()
+
     if not DB_PATH.exists():
         return {}
     try:
@@ -872,7 +885,12 @@ def load_db() -> Dict[str, Any]:
 
 
 def save_db(db: Dict[str, Any]) -> None:
-    """Writes the database structure to the local JSON file."""
+    """Writes the database structure to PostgreSQL or local JSON file."""
+    if _is_postgres_backend():
+        import postgres_store
+        postgres_store.pg_save_db(db)
+        return
+
     try:
         with open(DB_PATH, "w", encoding="utf-8") as f:
             json.dump(db, f, indent=2, ensure_ascii=False)
@@ -880,8 +898,15 @@ def save_db(db: Dict[str, Any]) -> None:
         raise RuntimeError(f"Failed to write verification database: {e}")
 
 
-def get_record(verification_id: str) -> Dict[str, Any]:
+def get_record(verification_id: str) -> Optional[Dict[str, Any]]:
     """Retrieves a single verification record by ID."""
+    if not verification_id:
+        return None
+
+    if _is_postgres_backend():
+        import postgres_store
+        return postgres_store.pg_get_record(verification_id)
+
     db = load_db()
     return db.get(verification_id)
 
@@ -901,6 +926,11 @@ def save_record(record: Dict[str, Any]) -> None:
             record["clerk_submitted"] = True
         else:
             record["clerk_submitted"] = False
+
+    if _is_postgres_backend():
+        import postgres_store
+        postgres_store.pg_save_record(record)
+        return
 
     db = load_db()
     existing = db.get(verification_id)

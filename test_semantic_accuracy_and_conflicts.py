@@ -320,6 +320,18 @@ class TestSemanticAccuracyAndConflicts(unittest.TestCase):
         self.assertIn("480", all_cands)
         self.assertIn("488", all_cands)
 
+    def test_document_date_not_inferred_from_execution_date(self):
+        """Verify document_date remains None when deed contains execution date but no explicit document date header."""
+        lines = [
+            OCRLine(text="SALE DEED", score=0.98, x_min=10, y_min=10, x_max=200, y_max=30, page_num=1),
+            OCRLine(text="THIS DEED OF SALE is made and executed on this the 15th day of October 2003 by", score=0.97, x_min=100, y_min=380, x_max=900, y_max=420, page_num=1),
+        ]
+        result, provenance, _ = extract_fields_semantic(lines)
+        self.assertIsNone(result.get("document_date"))
+        self.assertEqual(result.get("execution_date"), "15-10-2003")
+        doc_date_prov = provenance.get("document_date", {})
+        self.assertEqual(doc_date_prov.get("status"), "NOT_FOUND")
+
 
 if __name__ == "__main__":
     unittest.main()

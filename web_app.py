@@ -87,7 +87,7 @@ def get_public_web_tunnel() -> str:
 # =====================================================================
 # Kaggle / Colab OCR Tunnel Configuration
 # =====================================================================
-COLAB_OCR_URL = "https://suppose-cambridge-funeral-interview.trycloudflare.com"
+COLAB_OCR_URL = "https://glow-nations-tim-keeps.trycloudflare.com"
 
 
 def get_colab_url() -> str:

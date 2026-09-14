@@ -32,3 +32,8 @@ scratch/
 cloudflared.exe
 page2_full.png
 ocr_raw_summary.txt
+
+# Environment variables
+.env
+.env.local
+.env.*.local

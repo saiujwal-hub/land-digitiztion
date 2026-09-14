@@ -1645,17 +1645,6 @@ def extract_document_date_candidates(lines) -> list[FieldCandidate]:
                 reason=f"Explicit document date on page {pg}"
             ))
 
-    if not candidates:
-        ed_cands = extract_execution_date_candidates(lines)
-        if ed_cands and ed_cands[0].value:
-            candidates.append(FieldCandidate(
-                value=ed_cands[0].value,
-                page=ed_cands[0].page,
-                context=f"Document date inferred from execution date: {ed_cands[0].value}",
-                score=0.90,
-                reason="Document date inferred from deed execution date"
-            ))
-
     return candidates
 
 
