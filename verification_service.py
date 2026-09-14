@@ -708,6 +708,7 @@ def create_verification_record(
         "field_provenance": result.get("field_provenance", {}),
         "checks": checks,
         "duplicate_info": dup_info,
+        "neural_nlp": result.get("neural_nlp"),
         "clerk_submitted": False,
         "created_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decision": None,

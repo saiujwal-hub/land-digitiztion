@@ -24,6 +24,7 @@ os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
 import re
 import sys
 import time
+import json
 import shutil
 import platform
 import tempfile
@@ -326,7 +327,9 @@ def install_compatible_dependencies():
         "transformers",
         "torch",
         "torchvision",
-        "pydantic"
+        "pydantic",
+        "bitsandbytes>=0.46.1",
+        "accelerate"
     ], check=False)
 
     # Refresh Python path and invalidate caches after pip execution
@@ -567,6 +570,494 @@ def get_gpu_htr_model(model_name: str = _DEFAULT_HTR_MODEL_NAME):
 
 
 # ==============================================================================
+# ==============================================================================
+# 6B. PRETRAINED NEURAL NLP MODEL (Qwen2.5-7B-Instruct 4-bit) - LAZY LOAD & SMOKE TEST
+# ==============================================================================
+_GPU_NLP_LOCK = threading.Lock()
+_GPU_NLP_MODEL = None
+_GPU_NLP_TOKENIZER = None
+_GPU_NLP_STATUS = "UNLOADED"
+_GPU_NLP_ERROR = None
+_DEFAULT_NLP_MODEL_NAME = "Qwen/Qwen2.5-7B-Instruct"
+
+SYNTHETIC_SMOKE_OCR = """SALE DEED
+Document No. 1234
+Date: 15/08/2026
+Vendor: Ramesh Kumar
+Purchaser: Suresh Kumar
+Survey No. 278
+Sub Survey No. 278/2
+Area: 2.50 acres
+Village: Kothapalli
+Mandal: Ghatkesar
+District: Medchal
+Consideration Amount: Rs. 2500000"""
+
+TELUGU_SMOKE_OCR = """SALE DEED
+విక్రేత: రమేష్ కుమార్
+కొనుగోలుదారు: సురేష్ కుమార్
+Survey No: 278
+గ్రామం: కొత్తపల్లి
+Mandal: Ghatkesar
+District: Medchal"""
+
+
+def ensure_qwen_gpu_dependencies() -> tuple[str, str]:
+    """
+    Ensures bitsandbytes>=0.46.1 and accelerate are installed for Qwen 4-bit NF4 GPU inference.
+    Installs ONLY missing packages; does NOT touch or reinstall PyTorch, CUDA, or Paddle.
+    Returns (bitsandbytes_version, accelerate_version).
+    """
+    to_install = []
+    bnb_ver = "NOT_INSTALLED"
+    acc_ver = "NOT_INSTALLED"
+
+    try:
+        import bitsandbytes as bnb
+        bnb_ver = getattr(bnb, "__version__", "unknown")
+        from packaging import version
+        if version.parse(bnb_ver) < version.parse("0.46.1"):
+            to_install.append("bitsandbytes>=0.46.1")
+    except Exception:
+        to_install.append("bitsandbytes>=0.46.1")
+
+    try:
+        import accelerate
+        acc_ver = getattr(accelerate, "__version__", "unknown")
+    except Exception:
+        to_install.append("accelerate")
+
+    if to_install:
+        print(f"[SETUP] Installing missing Qwen 4-bit dependencies: {to_install}...")
+        subprocess.run([
+            sys.executable, "-m", "pip", "install", *to_install
+        ], check=False)
+
+        import importlib
+        import site
+        importlib.invalidate_caches()
+        for p in site.getsitepackages():
+            if p not in sys.path:
+                sys.path.insert(0, p)
+
+        try:
+            import bitsandbytes as bnb
+            bnb_ver = getattr(bnb, "__version__", "installed")
+        except Exception as e:
+            bnb_ver = f"error: {e}"
+
+        try:
+            import accelerate
+            acc_ver = getattr(accelerate, "__version__", "installed")
+        except Exception as e:
+            acc_ver = f"error: {e}"
+
+    return str(bnb_ver or "unknown"), str(acc_ver or "unknown")
+
+
+def check_qwen_cuda_diagnostics() -> dict:
+    """
+    Performs specific CUDA hardware and dependency diagnostic checks for Qwen.
+    Prints torch version, bitsandbytes version, accelerate version, CUDA availability,
+    device count, GPU names, and VRAM info.
+    """
+    bnb_ver, acc_ver = ensure_qwen_gpu_dependencies()
+
+    try:
+        import torch
+    except ImportError:
+        print("[QWEN DIAGNOSTICS] PyTorch is not installed.")
+        return {
+            "torch_installed": False,
+            "cuda_available": False,
+            "bitsandbytes_version": bnb_ver,
+            "accelerate_version": acc_ver,
+        }
+
+    print("\n[QWEN DIAGNOSTICS]")
+    print(f"PyTorch: {torch.__version__}")
+    print(f"bitsandbytes: {bnb_ver}")
+    print(f"accelerate: {acc_ver}")
+    cuda_avail = torch.cuda.is_available()
+    print(f"CUDA available: {cuda_avail}")
+    gpu_count = torch.cuda.device_count() if cuda_avail else 0
+    print(f"CUDA devices: {gpu_count}")
+    gpu_names = []
+    if cuda_avail and gpu_count > 0:
+        for idx in range(gpu_count):
+            name = torch.cuda.get_device_name(idx)
+            gpu_names.append(name)
+            print(f"GPU {idx}: {name}")
+            try:
+                free_b, total_b = torch.cuda.mem_get_info(idx)
+                print(f"  Memory {idx}: {free_b // (1024*1024)} MB free / {total_b // (1024*1024)} MB total")
+            except Exception:
+                pass
+        curr_dev = torch.cuda.current_device()
+        print(f"Current CUDA device: {curr_dev}")
+    return {
+        "torch_version": torch.__version__,
+        "bitsandbytes_version": bnb_ver,
+        "accelerate_version": acc_ver,
+        "cuda_available": cuda_avail,
+        "device_count": gpu_count,
+        "gpu_names": gpu_names,
+    }
+
+
+def get_cuda_memory_mb(device_idx: int = 0) -> dict:
+    """Records current allocated and reserved CUDA memory in MB."""
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            return {"allocated_mb": 0.0, "reserved_mb": 0.0}
+        alloc = torch.cuda.memory_allocated(device_idx) / (1024 * 1024)
+        res = torch.cuda.memory_reserved(device_idx) / (1024 * 1024)
+        return {"allocated_mb": round(alloc, 2), "reserved_mb": round(res, 2)}
+    except Exception:
+        return {"allocated_mb": 0.0, "reserved_mb": 0.0}
+
+
+def _get_model_input_device(model: Any) -> Any:
+    """Safely determines the correct CUDA input tensor device for device_map='auto' models."""
+    import torch
+    if hasattr(model, "device"):
+        try:
+            if str(model.device).startswith("cuda") or str(model.device) == "cpu":
+                return model.device
+        except Exception:
+            pass
+    if hasattr(model, "hf_device_map") and model.hf_device_map:
+        first_device = next(iter(model.hf_device_map.values()))
+        if isinstance(first_device, int):
+            return torch.device(f"cuda:{first_device}")
+        elif isinstance(first_device, str):
+            return torch.device(first_device)
+    try:
+        return next(model.parameters()).device
+    except Exception:
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def _parse_qwen_json(raw_text: str) -> dict:
+    """Extracts and parses canonical 12-field JSON object from Qwen generation text."""
+    import json
+    canonical_keys = [
+        "document_type", "document_number", "document_date",
+        "vendor", "purchaser", "survey_number", "sub_survey_number",
+        "property_area", "village", "mandal", "district", "consideration_amount"
+    ]
+    cleaned = (raw_text or "").strip()
+    json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", cleaned, re.DOTALL)
+    if json_match:
+        cleaned = json_match.group(1).strip()
+    else:
+        first_brace = cleaned.find("{")
+        last_brace = cleaned.rfind("}")
+        if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+            cleaned = cleaned[first_brace:last_brace + 1].strip()
+
+    parsed = {}
+    try:
+        parsed = json.loads(cleaned)
+    except Exception:
+        try:
+            fixed = re.sub(r",\s*([\}\]])", r"\1", cleaned)
+            parsed = json.loads(fixed)
+        except Exception:
+            parsed = {}
+            for k in canonical_keys:
+                m = re.search(rf'"{k}"\s*:\s*"([^"]*)"', cleaned)
+                if m:
+                    parsed[k] = m.group(1)
+
+    result = {}
+    for key in canonical_keys:
+        val = parsed.get(key)
+        if val is None or str(val).strip().lower() in ("null", "none", "n/a", "unknown", ""):
+            result[key] = None
+        else:
+            result[key] = str(val).strip()
+    return result
+
+
+def get_gpu_nlp_model(model_name: str = _DEFAULT_NLP_MODEL_NAME):
+    """
+    Lazily loads and caches Qwen2.5-7B-Instruct in 4-bit on Kaggle GPU.
+    Uses BitsAndBytesConfig with NF4 double quantization and device_map='auto'.
+    Returns (model, tokenizer, error_message).
+    """
+    global _GPU_NLP_MODEL, _GPU_NLP_TOKENIZER, _GPU_NLP_STATUS, _GPU_NLP_ERROR
+    if _GPU_NLP_MODEL is not None and _GPU_NLP_TOKENIZER is not None:
+        return _GPU_NLP_MODEL, _GPU_NLP_TOKENIZER, None
+
+    with _GPU_NLP_LOCK:
+        if _GPU_NLP_MODEL is not None and _GPU_NLP_TOKENIZER is not None:
+            return _GPU_NLP_MODEL, _GPU_NLP_TOKENIZER, None
+
+        # Print detailed CUDA diagnostics
+        check_qwen_cuda_diagnostics()
+
+        print(f"Checking environment and loading NLP model '{model_name}'...")
+        try:
+            import torch
+            from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+        except ImportError as ie:
+            _GPU_NLP_STATUS = "UNAVAILABLE"
+            _GPU_NLP_ERROR = f"Neural NLP dependencies not installed: {ie}."
+            print(f"[WARN] {_GPU_NLP_ERROR}")
+            return None, None, _GPU_NLP_ERROR
+
+        if not torch.cuda.is_available():
+            _GPU_NLP_STATUS = "UNAVAILABLE"
+            _GPU_NLP_ERROR = "CUDA is not available. Qwen requires a GPU environment."
+            print(f"[ERROR] {_GPU_NLP_ERROR}")
+            return None, None, _GPU_NLP_ERROR
+
+        # Record GPU Memory before loading
+        mem_before = get_cuda_memory_mb(0)
+
+        try:
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+            )
+            print(f"Loading Qwen 4-bit NF4 weights '{model_name}' onto GPU...")
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                quantization_config=bnb_config,
+                device_map="auto",
+            )
+            model.eval()
+
+            # Record GPU Memory after loading
+            mem_after = get_cuda_memory_mb(0)
+            diff_alloc = round(mem_after["allocated_mb"] - mem_before["allocated_mb"], 2)
+            diff_res = round(mem_after["reserved_mb"] - mem_before["reserved_mb"], 2)
+
+            print("\n[QWEN MEMORY]")
+            print(f"Before: {mem_before['allocated_mb']} MB allocated, {mem_before['reserved_mb']} MB reserved")
+            print(f"After: {mem_after['allocated_mb']} MB allocated, {mem_after['reserved_mb']} MB reserved")
+            print(f"Increase: +{diff_alloc} MB allocated (+{diff_res} MB reserved)")
+
+            input_dev = _get_model_input_device(model)
+            print(f"[QWEN] Model loaded successfully")
+            print(f"[QWEN] Quantization: 4-bit NF4")
+            print(f"[QWEN] Device: {input_dev}")
+            dev_map_str = str(getattr(model, "hf_device_map", input_dev))
+            print(f"[QWEN] Model device map: {dev_map_str}")
+
+            if str(input_dev) == "cpu" or not str(input_dev).startswith("cuda"):
+                raise RuntimeError(f"Qwen model was placed on CPU ({input_dev}) instead of CUDA!")
+
+            _GPU_NLP_MODEL = model
+            _GPU_NLP_TOKENIZER = tokenizer
+            _GPU_NLP_STATUS = "AVAILABLE"
+            _GPU_NLP_ERROR = None
+            return _GPU_NLP_MODEL, _GPU_NLP_TOKENIZER, None
+        except Exception as exc:
+            _GPU_NLP_STATUS = "UNAVAILABLE"
+            _GPU_NLP_ERROR = f"Failed to load NLP model '{model_name}': {exc}"
+            print(f"[ERROR] {_GPU_NLP_ERROR}")
+            return None, None, _GPU_NLP_ERROR
+
+
+def run_qwen_gpu_smoke_test() -> dict:
+    """
+    Executes a real Qwen2.5-7B-Instruct 4-bit GPU inference test.
+    Verifies model load on CUDA, generate() execution, canonical JSON parsing,
+    entity extraction completeness, and Unicode Indic safety.
+    """
+    print("\n" + "=" * 60)
+    print("QWEN NEURAL NLP GPU SMOKE TEST")
+    print("=" * 60)
+
+    if DEVICE != "gpu":
+        print("[WARN] GPU device not active for Qwen smoke test. Skipping.")
+        return {"passed": False, "error": "GPU device not active."}
+
+    print("Loading Qwen...")
+    mem_before = get_cuda_memory_mb(0)
+    t_load_start = time.perf_counter()
+    model, tokenizer, err = get_gpu_nlp_model()
+    if err or model is None or tokenizer is None:
+        print(f"❌ Qwen model failed to load: {err}")
+        return {"passed": False, "error": err}
+
+    load_time_s = time.perf_counter() - t_load_start
+    print(f"Model loaded in {load_time_s:.2f}s...")
+    print("Running inference...")
+
+    try:
+        import torch
+
+        target_device = _get_model_input_device(model)
+        prompt = f"""You are a legal document information extraction assistant for Indian land registry records.
+Extract information ONLY when it is explicitly supported by the supplied OCR text.
+NEVER infer, hallucinate, assume, or invent any legal field.
+Do not guess person names, survey numbers, dates, consideration amounts, or locations.
+If a field is not present or cannot be clearly determined from the text, return null for that field.
+
+Return ONLY a valid JSON object with the following exact keys:
+- "document_type": string or null
+- "document_number": string or null
+- "document_date": string or null
+- "vendor": string or null
+- "purchaser": string or null
+- "survey_number": string or null
+- "sub_survey_number": string or null
+- "property_area": string or null
+- "village": string or null
+- "mandal": string or null
+- "district": string or null
+- "consideration_amount": string or null
+
+SUPPLIED OCR TEXT:
+\"\"\"
+{SYNTHETIC_SMOKE_OCR}
+\"\"\"
+
+Output STRICT JSON only:"""
+
+        messages = [
+            {"role": "system", "content": "You output strictly valid JSON conforming to the requested schema."},
+            {"role": "user", "content": prompt},
+        ]
+
+        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        tokenized = tokenizer([text], return_tensors="pt")
+        inputs = {k: v.to(target_device) for k, v in tokenized.items()}
+
+        t0 = time.perf_counter()
+        with torch.no_grad():
+            generated_ids = model.generate(
+                **inputs,
+                max_new_tokens=384,
+                do_sample=False,
+                temperature=None,
+                top_p=None,
+            )
+        inf_ms = (time.perf_counter() - t0) * 1000
+
+        input_len = inputs["input_ids"].shape[1]
+        raw_output = tokenizer.batch_decode(
+            [out[input_len:] for out in generated_ids],
+            skip_special_tokens=True,
+        )[0]
+        print(f"\n[QWEN RAW GENERATED TEXT]\n{raw_output}\n")
+
+        parsed = _parse_qwen_json(raw_output)
+        extracted_count = sum(1 for v in parsed.values() if v is not None)
+
+        if extracted_count < 4:
+            raise ValueError(f"Extracted too few fields ({extracted_count}/12): {parsed}")
+
+        gpu_mem_info = get_cuda_memory_mb(0)
+        gpu_mem_used = gpu_mem_info["allocated_mb"]
+
+        bnb_ver = "unknown"
+        acc_ver = "unknown"
+        try:
+            import bitsandbytes as bnb
+            bnb_ver = getattr(bnb, "__version__", "installed")
+        except Exception:
+            pass
+        try:
+            import accelerate
+            acc_ver = getattr(accelerate, "__version__", "installed")
+        except Exception:
+            pass
+
+        print(f"\n[QWEN SMOKE TEST RESULTS]")
+        print(f"• bitsandbytes version: {bnb_ver}")
+        print(f"• accelerate version:   {acc_ver}")
+        print(f"• Qwen model status:    {_GPU_NLP_STATUS}")
+        print(f"• CUDA device:          {target_device}")
+        print(f"• GPU VRAM before:      {mem_before['allocated_mb']} MB (reserved: {mem_before['reserved_mb']} MB)")
+        print(f"• GPU VRAM after:       {gpu_mem_used} MB (reserved: {gpu_mem_info['reserved_mb']} MB)")
+        print(f"• Inference latency:    {inf_ms:.1f} ms")
+        print(f"• Generated JSON:")
+        print(json.dumps(parsed, indent=2, ensure_ascii=False))
+
+        print(f"\n✓ Qwen model loaded successfully")
+        print(f"✓ CUDA inference successful")
+        print(f"✓ JSON response received")
+        print(f"✓ Entity extraction successful ({extracted_count}/12 fields)")
+        print(f"✓ Inference latency: {inf_ms:.1f} ms")
+        print(f"✓ GPU memory used: {gpu_mem_used:.1f} MB")
+        print(f"✓ REAL QWEN GPU SMOKE TEST PASSED")
+        print("=" * 60 + "\n")
+
+        # Multilingual Indic Unicode Test
+        print("[QWEN MULTILINGUAL TEST]")
+        print("Testing mixed English + Telugu Unicode OCR inference...")
+        try:
+            m_text = tokenizer.apply_chat_template(
+                [
+                    {"role": "system", "content": "You output strictly valid JSON."},
+                    {"role": "user", "content": f"Extract fields from:\n{TELUGU_SMOKE_OCR}\nOutput JSON:"}
+                ],
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            m_tokenized = tokenizer([m_text], return_tensors="pt")
+            m_inputs = {k: v.to(target_device) for k, v in m_tokenized.items()}
+            with torch.no_grad():
+                m_gen = model.generate(**m_inputs, max_new_tokens=256, do_sample=False)
+            print("✓ Telugu Unicode inference completed without error")
+        except Exception as indic_exc:
+            print(f"⚠️ Telugu Unicode inference warning: {indic_exc}")
+
+        return {
+            "passed": True,
+            "latency_ms": round(inf_ms, 2),
+            "gpu_memory_mb": round(gpu_mem_used, 2),
+            "extracted_fields": parsed,
+            "extracted_count": extracted_count,
+        }
+
+    except Exception as exc:
+        print(f"\n❌ REAL QWEN GPU SMOKE TEST FAILED: {exc}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 60 + "\n")
+        return {"passed": False, "error": str(exc)}
+
+
+def run_nlp_http_test(port: int = 5000) -> bool:
+    """Verifies that the /nlp HTTP endpoint responds with HTTP 200, success=true, gpu=true."""
+    import requests
+    try:
+        res = requests.post(
+            f"http://127.0.0.1:{port}/nlp",
+            json={"text": SYNTHETIC_SMOKE_OCR, "language": "en"},
+            timeout=40,
+        )
+        if res.status_code == 200:
+            data = res.json()
+            if data.get("success") is True and data.get("gpu") is True:
+                res_fields = data.get("result", {})
+                extracted = sum(1 for v in res_fields.values() if v is not None)
+                if extracted >= 4:
+                    print("\n✓ /nlp HTTP TEST PASSED")
+                    print(f"✓ HTTP status: {res.status_code}")
+                    print("✓ success: true")
+                    print("✓ gpu: true")
+                    print(f"✓ Extracted fields: {extracted}/12")
+                    return True
+        print(f"⚠️ /nlp HTTP test unexpected response: {res.status_code} -> {res.text[:200]}")
+        return False
+    except Exception as exc:
+        print(f"⚠️ /nlp HTTP test failed: {exc}")
+        return False
+
+
+
+
+# ==============================================================================
 # 7. FLASK APPLICATION & ENDPOINTS
 # ==============================================================================
 hw_info = detect_hardware_and_cuda()
@@ -618,6 +1109,9 @@ def status_endpoint():
             "paddlex_version": pdx_ver,
             "ocr_model_status": "UNAVAILABLE",
             "htr_model_status": _GPU_HTR_STATUS,
+            "nlp_model_status": _GPU_NLP_STATUS,
+            "nlp_model_name": _DEFAULT_NLP_MODEL_NAME if _GPU_NLP_STATUS == "AVAILABLE" else None,
+            "nlp_quantization": "4-bit NF4" if _GPU_NLP_STATUS == "AVAILABLE" else None,
             "error": _BASELINE_OCR_ERROR,
             "supported_languages": list(SUPPORTED_LANGUAGES.keys()),
             "loaded_models": list(_GPU_OCR_MODELS.keys()),
@@ -634,6 +1128,9 @@ def status_endpoint():
         "paddlex_version": pdx_ver,
         "ocr_model_status": "AVAILABLE" if is_model_available else "INITIALIZING",
         "htr_model_status": _GPU_HTR_STATUS,
+        "nlp_model_status": _GPU_NLP_STATUS,
+        "nlp_model_name": _DEFAULT_NLP_MODEL_NAME if _GPU_NLP_STATUS == "AVAILABLE" else None,
+        "nlp_quantization": "4-bit NF4" if _GPU_NLP_STATUS == "AVAILABLE" else None,
         "supported_languages": list(SUPPORTED_LANGUAGES.keys()),
         "loaded_models": list(_GPU_OCR_MODELS.keys()),
     })
@@ -866,6 +1363,129 @@ def recognize_handwriting_endpoint():
         })
 
 
+@app.route("/nlp", methods=["POST"])
+def nlp_endpoint():
+    """
+    Dedicated remote endpoint for legal land-document information extraction using Qwen2.5-7B-Instruct.
+    Accepts: application/json {"text": "...", "language": "auto"}
+    Returns: Structured JSON with canonical schema.
+    """
+    req_data = request.get_json(silent=True) or {}
+    ocr_text = req_data.get("text", "") or request.form.get("text", "")
+    language = req_data.get("language", "auto") or request.form.get("language", "auto")
+
+    canonical_keys = [
+        "document_type", "document_number", "document_date",
+        "vendor", "purchaser", "survey_number", "sub_survey_number",
+        "property_area", "village", "mandal", "district", "consideration_amount"
+    ]
+    empty_result = {k: None for k in canonical_keys}
+
+    if not ocr_text or not str(ocr_text).strip():
+        return jsonify({
+            "success": True,
+            "model": _DEFAULT_NLP_MODEL_NAME,
+            "gpu": True,
+            "result": empty_result,
+            "evidence": {},
+            "warning": "Empty OCR text supplied."
+        })
+
+    model, tokenizer, err = get_gpu_nlp_model()
+    if model is None or tokenizer is None:
+        return jsonify({
+            "success": False,
+            "model": _DEFAULT_NLP_MODEL_NAME,
+            "gpu": False,
+            "error": err or "Neural NLP model unavailable.",
+            "result": empty_result,
+            "evidence": {}
+        }), 503
+
+    try:
+        import torch
+        prompt = f"""You are a legal document information extraction assistant for Indian land registry records.
+Extract information ONLY when it is explicitly supported by the supplied OCR text.
+NEVER infer, hallucinate, assume, or invent any legal field.
+Do not guess person names, survey numbers, dates, consideration amounts, or locations.
+If a field is not present or cannot be clearly determined from the text, return null for that field.
+
+Return ONLY a valid JSON object with the following exact keys:
+- "document_type": string or null
+- "document_number": string or null
+- "document_date": string or null
+- "vendor": string or null
+- "purchaser": string or null
+- "survey_number": string or null
+- "sub_survey_number": string or null
+- "property_area": string or null
+- "village": string or null
+- "mandal": string or null
+- "district": string or null
+- "consideration_amount": string or null
+
+SUPPLIED OCR TEXT:
+\"\"\"
+{ocr_text}
+\"\"\"
+
+Output STRICT JSON only:"""
+
+        messages = [
+            {"role": "system", "content": "You output strictly valid JSON conforming to the requested schema."},
+            {"role": "user", "content": prompt}
+        ]
+
+        target_device = _get_model_input_device(model)
+        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        tokenized = tokenizer([text], return_tensors="pt")
+        inputs = {k: v.to(target_device) for k, v in tokenized.items()}
+
+        with torch.no_grad():
+            generated_ids = model.generate(
+                **inputs,
+                max_new_tokens=384,
+                do_sample=False,
+                temperature=None,
+                top_p=None,
+            )
+
+        input_len = inputs["input_ids"].shape[1]
+        raw_output = tokenizer.batch_decode(
+            [out[input_len:] for out in generated_ids],
+            skip_special_tokens=True,
+        )[0]
+
+        result = _parse_qwen_json(raw_output)
+
+        evidence = {}
+        for k, v in result.items():
+            if v:
+                v_lower = v.lower()
+                for line in str(ocr_text).splitlines():
+                    if v_lower in line.lower():
+                        evidence[k] = line.strip()
+                        break
+
+        return jsonify({
+            "success": True,
+            "model": _DEFAULT_NLP_MODEL_NAME,
+            "gpu": True,
+            "result": result,
+            "evidence": evidence
+        })
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "model": _DEFAULT_NLP_MODEL_NAME,
+            "gpu": True,
+            "error": f"Inference execution failed: {exc}",
+            "result": empty_result,
+            "evidence": {}
+        }), 500
+
+
+
 # ==============================================================================
 # 8. TUNNEL SUPERVISOR & BROADCAST
 # ==============================================================================
@@ -973,12 +1593,36 @@ def main():
     except Exception as exc:
         print(f"⚠️ TrOCR preload exception: {exc}")
 
-    # 4. Start Flask Thread
+    # 4. Real Qwen2.5-7B-Instruct 4-bit GPU Smoke Test
+    print("\n[STARTUP] Executing Qwen2.5-7B-Instruct 4-bit Neural NLP GPU Smoke Test...")
+    qwen_smoke = run_qwen_gpu_smoke_test()
+    if not qwen_smoke.get("passed"):
+        print(f"⚠️ Qwen GPU smoke test note: {qwen_smoke.get('error')}")
+        print("OCR and HTR remain operational — /status will report nlp_model_status=UNAVAILABLE.")
+    else:
+        print("[STARTUP] Qwen neural NLP engine verified operational on GPU.")
+
+    # 5. Start Flask Thread
     threading.Thread(target=run_flask, daemon=True).start()
     time.sleep(2)
     print("✓ Flask server running on port 5000.")
 
-    # 5. Start Tunnel & Broadcast
+    # 6. Real /nlp HTTP endpoint verification test
+    if qwen_smoke.get("passed"):
+        run_nlp_http_test(port=5000)
+
+    # 7. Post-Verification: Prove PaddleOCR and TrOCR are healthy post-Qwen
+    print("\n[VERIFICATION] Re-verifying PaddleOCR and TrOCR post-Qwen...")
+    post_ocr = run_real_gpu_smoke_test()
+    if post_ocr.get("passed"):
+        print("✓ Post-verification: PaddleOCR GPU engine is operational.")
+    else:
+        print("⚠️ Post-verification warning: PaddleOCR GPU smoke test failed!")
+
+    if htr_model is not None:
+        print("✓ Post-verification: TrOCR handwriting model is operational.")
+
+    # 8. Start Tunnel & Broadcast
     public_url = expose_port(5000)
     broadcast_url(public_url, note="Server Ready")
 

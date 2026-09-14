@@ -1,0 +1,7 @@
+# Optional dependencies for Qwen2.5-7B-Instruct Neural NLP Layer on Kaggle GPU / Local CUDA
+transformers>=4.40.0
+torch>=2.0.0
+accelerate>=0.28.0
+bitsandbytes>=0.43.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0

@@ -4801,6 +4801,12 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 auth_service.handle_signup_post(self)
             return
 
+        # Neural NLP Endpoint: /api/neural_nlp (Isolated optional service)
+        if self.path.split("?")[0] == "/api/neural_nlp":
+            import neural_nlp_service
+            neural_nlp_service.handle_api_neural_nlp(self)
+            return
+
         # Admin Endpoint: /api/admin/reset_user_docs
         if self.path.split("?")[0] == "/api/admin/reset_user_docs":
             parsed = urlparse(self.path)
@@ -5615,6 +5621,29 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
                 </div>
                 """
 
+            # Advisory Neural NLP cross-validation layer (strictly isolated and non-blocking)
+            try:
+                import neural_nlp_service
+                raw_text_for_nlp = raw_text if ('raw_text' in locals() and raw_text) else (
+                    (result.get("raw_ocr") or {}).get("full_text")
+                    or "\n".join(result.get("ocr_debug", {}).get("lines", []))
+                )
+                remote_nlp_url = colab_url if (processing_mode == "gpu" and colab_url) else None
+                neural_advisory = neural_nlp_service.run_neural_nlp_advisory(
+                    raw_ocr_text=raw_text_for_nlp or "",
+                    semantic_result=result,
+                    language=document_language,
+                    remote_url=remote_nlp_url,
+                )
+                result["neural_nlp"] = neural_advisory
+            except Exception as _nlp_err:
+                result["neural_nlp"] = {
+                    "status": "UNAVAILABLE",
+                    "error": str(_nlp_err),
+                    "is_advisory": True,
+                    "conflicts": [],
+                }
+
             # Create local verification record instantly with file hash for duplicate detection
             file_hash = hashlib.sha256(uploaded).hexdigest() if uploaded else None
             current_user = accounts_store.get_current_user(self)
@@ -5629,6 +5658,7 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
             record["ocr_language"] = document_language
             record["raw_ocr"] = result.get("raw_ocr")
             record["field_provenance"] = result.get("field_provenance", {})
+            record["neural_nlp"] = result.get("neural_nlp")
             verification_service.save_record(record)
 
             from semantic_extractor import clean_user_facing_schema
