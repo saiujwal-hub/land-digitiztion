@@ -6,11 +6,16 @@ Designed with pluggable provider hooks (e.g. Twilio, MSG91, SendGrid/SMTP) behin
 """
 
 from datetime import datetime, timezone
+from email.message import EmailMessage
 import json
 import logging
+import os
 from pathlib import Path
+import smtplib
 import sys
 from typing import Any, Dict, Optional
+
+import requests
 
 logger = logging.getLogger("NotificationService")
 NOTIFICATIONS_LOG_PATH = Path(__file__).parent / "notifications.log"
@@ -71,41 +76,152 @@ def _extract_recipient_info(record: Dict[str, Any]) -> Dict[str, str]:
 def send_email_notification(to_email: str, subject: str, body: str, record: Dict[str, Any]) -> bool:
     """
     Email dispatch provider hook.
-    Pluggable for SendGrid, SES, or SMTP. Formats and prints to console for demo.
+    Sends email via SMTP using Python's built-in smtplib and EmailMessage if configured.
+    Falls back to console output if required SMTP environment variables are missing.
     """
-    formatted_email = (
-        f"\n{'='*72}\n"
-        f"[EMAIL NOTIFICATION DISPATCHED]\n"
-        f"{'-'*72}\n"
-        f"To:      {to_email}\n"
-        f"From:    OneBhoomi Land Registry <noreply@onebhoomi.gov.in>\n"
-        f"Subject: {subject}\n"
-        f"{'-'*72}\n"
-        f"{body.strip()}\n"
-        f"{'='*72}"
-    )
-    _safe_print(formatted_email)
-    logger.info("Email notification dispatched to %s", to_email)
-    return True
+    smtp_host = os.environ.get("SMTP_HOST", "").strip()
+    smtp_port_raw = os.environ.get("SMTP_PORT", "587").strip()
+    smtp_user = os.environ.get("SMTP_USER", "").strip()
+    smtp_password = os.environ.get("SMTP_PASSWORD", "").strip()
+    smtp_from = os.environ.get("SMTP_FROM_ADDRESS", "").strip()
+
+    required_vars = {
+        "SMTP_HOST": smtp_host,
+        "SMTP_USER": smtp_user,
+        "SMTP_PASSWORD": smtp_password,
+        "SMTP_FROM_ADDRESS": smtp_from,
+    }
+    missing_vars = [k for k, v in required_vars.items() if not v]
+
+    if missing_vars:
+        logger.warning(
+            "Email notification running in console fallback mode: missing required env var(s): %s",
+            ", ".join(missing_vars),
+        )
+        formatted_email = (
+            f"\n{'='*72}\n"
+            f"[EMAIL NOTIFICATION DISPATCHED]\n"
+            f"{'-'*72}\n"
+            f"To:      {to_email}\n"
+            f"From:    {smtp_from or 'OneBhoomi Land Registry <noreply@onebhoomi.gov.in>'}\n"
+            f"Subject: {subject}\n"
+            f"{'-'*72}\n"
+            f"{body.strip()}\n"
+            f"{'='*72}"
+        )
+        _safe_print(formatted_email)
+        logger.info("Email notification dispatched (console fallback) to %s", to_email)
+        return True
+
+    try:
+        port = int(smtp_port_raw) if smtp_port_raw else 587
+    except (ValueError, TypeError):
+        port = 587
+
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = smtp_from
+        msg["To"] = to_email
+        msg.set_content(body)
+
+        with smtplib.SMTP(smtp_host, port, timeout=10) as server:
+            server.starttls()
+            if smtp_user and smtp_password:
+                server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+
+        logger.info("Email notification successfully sent via SMTP to %s", to_email)
+        return True
+    except Exception as exc:
+        err_msg = str(exc)
+        if smtp_password and smtp_password in err_msg:
+            err_msg = err_msg.replace(smtp_password, "[REDACTED]")
+        logger.error(
+            "Failed to send email notification to %s via SMTP (%s): %s",
+            to_email,
+            type(exc).__name__,
+            err_msg,
+        )
+        return False
 
 
 def send_sms_notification(phone_number: str, message: str, record: Dict[str, Any]) -> bool:
     """
     SMS dispatch provider hook.
-    Pluggable for Twilio or MSG91 gateway. Formats and prints to console for demo.
+    Sends SMS via Twilio REST API using requests if configured.
+    Falls back to console output if required Twilio environment variables are missing.
     """
-    formatted_sms = (
-        f"\n{'='*72}\n"
-        f"[SMS NOTIFICATION DISPATCHED]\n"
-        f"{'-'*72}\n"
-        f"To:      {phone_number}\n"
-        f"Sender:  GOV-ONEBHOOMI\n"
-        f"Message: {message.strip()}\n"
-        f"{'='*72}\n"
-    )
-    _safe_print(formatted_sms)
-    logger.info("SMS notification dispatched to %s", phone_number)
-    return True
+    account_sid = os.environ.get("TWILIO_ACCOUNT_SID", "").strip()
+    auth_token = os.environ.get("TWILIO_AUTH_TOKEN", "").strip()
+    from_number = os.environ.get("TWILIO_FROM_NUMBER", "").strip()
+
+    required_vars = {
+        "TWILIO_ACCOUNT_SID": account_sid,
+        "TWILIO_AUTH_TOKEN": auth_token,
+        "TWILIO_FROM_NUMBER": from_number,
+    }
+    missing_vars = [k for k, v in required_vars.items() if not v]
+
+    if missing_vars:
+        logger.warning(
+            "SMS notification running in console fallback mode: missing required env var(s): %s",
+            ", ".join(missing_vars),
+        )
+        formatted_sms = (
+            f"\n{'='*72}\n"
+            f"[SMS NOTIFICATION DISPATCHED]\n"
+            f"{'-'*72}\n"
+            f"To:      {phone_number}\n"
+            f"Sender:  {from_number or 'GOV-ONEBHOOMI'}\n"
+            f"Message: {message.strip()}\n"
+            f"{'='*72}\n"
+        )
+        _safe_print(formatted_sms)
+        logger.info("SMS notification dispatched (console fallback) to %s", phone_number)
+        return True
+
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+    try:
+        response = requests.post(
+            url,
+            data={
+                "From": from_number,
+                "To": phone_number,
+                "Body": message,
+            },
+            auth=(account_sid, auth_token),
+            timeout=10,
+        )
+        if 200 <= response.status_code < 300:
+            logger.info(
+                "SMS notification successfully sent via Twilio to %s (HTTP %d)",
+                phone_number,
+                response.status_code,
+            )
+            return True
+        else:
+            resp_body = response.text
+            if auth_token and auth_token in resp_body:
+                resp_body = resp_body.replace(auth_token, "[REDACTED]")
+            logger.error(
+                "Twilio SMS dispatch failed to %s: HTTP %d - %s",
+                phone_number,
+                response.status_code,
+                resp_body,
+            )
+            return False
+    except Exception as exc:
+        err_msg = str(exc)
+        if auth_token and auth_token in err_msg:
+            err_msg = err_msg.replace(auth_token, "[REDACTED]")
+        logger.error(
+            "Failed to send SMS notification to %s via Twilio (%s): %s",
+            phone_number,
+            type(exc).__name__,
+            err_msg,
+        )
+        return False
 
 
 def notify_record_sealed(record: Dict[str, Any]) -> Dict[str, Any]:
