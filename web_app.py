@@ -12,6 +12,7 @@ import json
 import mimetypes
 import re
 import tempfile
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -244,18 +245,22 @@ def generate_qr_base64(text: str) -> str:
 
 
 PREVIEW_CACHE: dict[str, str] = {}
+_PREVIEW_LOCK = threading.Lock()
 PREVIEW_CACHE_DIR = Path("scratch/preview_cache")
 PREVIEW_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+import storage_encryption
 
 
 def save_preview_html(verification_id: str, html_content: str) -> None:
     if not verification_id or not html_content:
         return
-    PREVIEW_CACHE[verification_id] = html_content
+    with _PREVIEW_LOCK:
+        PREVIEW_CACHE[verification_id] = html_content
     try:
-        (PREVIEW_CACHE_DIR / f"{verification_id}.html").write_text(
-            html_content, encoding="utf-8"
-        )
+        raw_bytes = html_content.encode("utf-8")
+        encrypted_bytes = storage_encryption.encrypt_bytes(raw_bytes)
+        (PREVIEW_CACHE_DIR / f"{verification_id}.html").write_bytes(encrypted_bytes)
     except Exception:
         pass
 
@@ -263,13 +268,17 @@ def save_preview_html(verification_id: str, html_content: str) -> None:
 def get_preview_html(verification_id: str) -> str:
     if not verification_id:
         return ""
-    if verification_id in PREVIEW_CACHE:
-        return PREVIEW_CACHE[verification_id]
+    with _PREVIEW_LOCK:
+        if verification_id in PREVIEW_CACHE:
+            return PREVIEW_CACHE[verification_id]
     cache_file = PREVIEW_CACHE_DIR / f"{verification_id}.html"
     if cache_file.exists():
         try:
-            content = cache_file.read_text(encoding="utf-8")
-            PREVIEW_CACHE[verification_id] = content
+            raw_data = cache_file.read_bytes()
+            # Fail-closed: requires valid ONEBHOOMI-ENC-V1 storage envelope
+            content = storage_encryption.decrypt_bytes(raw_data).decode("utf-8")
+            with _PREVIEW_LOCK:
+                PREVIEW_CACHE[verification_id] = content
             return content
         except Exception:
             pass
@@ -4496,8 +4505,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
         self.current_user = current_user
         self.user_role = (current_user.get("role") or "").lower()
 
-        # Admin Routes: (/admin, /admin/dashboard, /admin/users)
-        if parsed.path in {"/admin", "/admin/dashboard", "/admin/users"}:
+        # Admin Routes: (/admin, /admin/dashboard, /admin/users, /admin/gis)
+        if parsed.path in {"/admin", "/admin/dashboard", "/admin/users", "/admin/gis"}:
             identities = self.current_user.get("identities", [])
             user_emails = [
                 i.get("identifier") or i.get("value")
@@ -4524,6 +4533,12 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
 
             if parsed.path == "/admin/users":
                 page_bytes = dashboard_view.render_admin_users_page(
+                    host_name=host_name,
+                    colab_url=colab_url,
+                    user_name=user_name,
+                )
+            elif parsed.path == "/admin/gis":
+                page_bytes = dashboard_view.render_admin_gis_page(
                     host_name=host_name,
                     colab_url=colab_url,
                     user_name=user_name,
@@ -4752,7 +4767,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
         if parsed.path in {"/api/reset_registry", "/reset"}:
             try:
                 verification_service.save_db({})
-                PREVIEW_CACHE.clear()
+                with _PREVIEW_LOCK:
+                    PREVIEW_CACHE.clear()
                 for p in PREVIEW_CACHE_DIR.glob("*.html"):
                     try:
                         p.unlink(missing_ok=True)
@@ -4993,7 +5009,8 @@ class LandExtractorHandler(BaseHTTPRequestHandler):
         if self.path == "/api/reset_registry":
             try:
                 verification_service.save_db({})
-                PREVIEW_CACHE.clear()
+                with _PREVIEW_LOCK:
+                    PREVIEW_CACHE.clear()
                 for p in PREVIEW_CACHE_DIR.glob("*.html"):
                     try:
                         p.unlink(missing_ok=True)

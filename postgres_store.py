@@ -24,6 +24,8 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 from psycopg_pool import ConnectionPool
 
+import storage_encryption
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -297,6 +299,26 @@ def _row_to_verification_record(row: Dict[str, Any]) -> Dict[str, Any]:
     """Converts a database row back into the exact Python record dict."""
     if not row:
         return {}
+
+    # Decrypt sensitive payloads at persistence read boundary (fail-closed)
+    doc_payload_raw = row.get("document_payload")
+    if doc_payload_raw is None:
+        doc_payload = {}
+    else:
+        doc_payload = storage_encryption.decrypt_json(doc_payload_raw)
+
+    raw_ocr_val = row.get("raw_ocr")
+    raw_ocr = storage_encryption.decrypt_json(raw_ocr_val) if raw_ocr_val is not None else None
+
+    field_prov_raw = row.get("field_provenance")
+    if field_prov_raw is None:
+        field_prov = {}
+    else:
+        field_prov = storage_encryption.decrypt_json(field_prov_raw)
+
+    neural_nlp_val = row.get("neural_nlp")
+    neural_nlp = storage_encryption.decrypt_json(neural_nlp_val) if neural_nlp_val is not None else None
+
     rec = {
         "verification_id": row["verification_id"],
         "status": row["status"],
@@ -304,9 +326,9 @@ def _row_to_verification_record(row: Dict[str, Any]) -> Dict[str, Any]:
         "populated_fields": row["populated_fields"] if row["populated_fields"] is not None else [],
         "file_hash": row["file_hash"],
         "uploaded_by_user_id": row["uploaded_by_user_id"],
-        "document_payload": row["document_payload"] if row["document_payload"] is not None else {},
-        "raw_ocr": row["raw_ocr"],
-        "field_provenance": row["field_provenance"] if row["field_provenance"] is not None else {},
+        "document_payload": doc_payload,
+        "raw_ocr": raw_ocr,
+        "field_provenance": field_prov,
         "checks": row["checks"] if row["checks"] is not None else [],
         "duplicate_info": row["duplicate_info"],
         "clerk_submitted": bool(row["clerk_submitted"]),
@@ -321,11 +343,12 @@ def _row_to_verification_record(row: Dict[str, Any]) -> Dict[str, Any]:
         rec["submitted_at"] = row["submitted_at"]
     if row.get("approved_at") is not None:
         rec["approved_at"] = row["approved_at"]
-    if row.get("neural_nlp") is not None:
-        rec["neural_nlp"] = row["neural_nlp"]
+    if neural_nlp is not None:
+        rec["neural_nlp"] = neural_nlp
     if row.get("canonical_sealed_payload") is not None:
         raw_b = row["canonical_sealed_payload"]
-        rec["canonical_sealed_payload"] = bytes(raw_b) if isinstance(raw_b, memoryview) else raw_b
+        raw_bytes = bytes(raw_b) if isinstance(raw_b, memoryview) else raw_b
+        rec["canonical_sealed_payload"] = storage_encryption.decrypt_bytes(raw_bytes)
 
     return rec
 
@@ -389,8 +412,11 @@ def pg_save_record(record: Dict[str, Any]) -> None:
 
             if existing:
                 if existing["status"] == "APPROVED":
-                    # Check document payload immutability
-                    if existing["document_payload"] != record.get("document_payload"):
+                    # Compare decrypted logical document payload against incoming modification
+                    existing_doc = existing["document_payload"]
+                    if storage_encryption.is_encrypted_json(existing_doc):
+                        existing_doc = storage_encryption.decrypt_json(existing_doc)
+                    if existing_doc != record.get("document_payload"):
                         raise ValueError("Immutable approved records cannot be modified.")
 
                 # Immutably preserve raw_ocr and field_provenance
@@ -403,15 +429,24 @@ def pg_save_record(record: Dict[str, Any]) -> None:
             canonical_bytes = None
             if record.get("canonical_sealed_payload"):
                 raw_b = record["canonical_sealed_payload"]
-                canonical_bytes = bytes(raw_b) if isinstance(raw_b, memoryview) else raw_b
+                b = bytes(raw_b) if isinstance(raw_b, memoryview) else raw_b
+                canonical_bytes = storage_encryption.decrypt_bytes(b) if storage_encryption.is_encrypted_bytes(b) else b
             elif existing and existing.get("canonical_sealed_payload"):
-                canonical_bytes = bytes(existing["canonical_sealed_payload"])
+                b = bytes(existing["canonical_sealed_payload"])
+                canonical_bytes = storage_encryption.decrypt_bytes(b) if storage_encryption.is_encrypted_bytes(b) else b
             elif (record.get("status") or "").upper() == "APPROVED" and record.get("document_payload"):
                 try:
                     import verification_service
                     canonical_bytes = verification_service.canonicalize_document(record["document_payload"])
                 except Exception:
                     canonical_bytes = None
+
+            # Storage encryption boundary: encrypt sensitive payloads before database write
+            encrypted_doc_payload = storage_encryption.encrypt_json(record.get("document_payload") or {})
+            encrypted_raw_ocr = storage_encryption.encrypt_json(record.get("raw_ocr")) if record.get("raw_ocr") is not None else None
+            encrypted_field_prov = storage_encryption.encrypt_json(record.get("field_provenance") or {})
+            encrypted_neural_nlp = storage_encryption.encrypt_json(record.get("neural_nlp")) if record.get("neural_nlp") is not None else None
+            stored_canonical_bytes = storage_encryption.encrypt_bytes(canonical_bytes) if canonical_bytes else None
 
             cur.execute(
                 """
@@ -466,13 +501,13 @@ def pg_save_record(record: Dict[str, Any]) -> None:
                     record.get("qr_code"),
                     Jsonb(record.get("decision")) if record.get("decision") is not None else None,
                     Jsonb(record.get("populated_fields") or []),
-                    Jsonb(record.get("document_payload") or {}),
-                    canonical_bytes,
-                    Jsonb(record["raw_ocr"]) if record.get("raw_ocr") is not None else None,
-                    Jsonb(record.get("field_provenance") or {}),
+                    Jsonb(encrypted_doc_payload),
+                    stored_canonical_bytes,
+                    Jsonb(encrypted_raw_ocr) if encrypted_raw_ocr is not None else None,
+                    Jsonb(encrypted_field_prov),
                     Jsonb(record.get("checks") or []),
                     Jsonb(record.get("duplicate_info")) if record.get("duplicate_info") is not None else None,
-                    Jsonb(record.get("neural_nlp")) if record.get("neural_nlp") is not None else None,
+                    Jsonb(encrypted_neural_nlp) if encrypted_neural_nlp is not None else None,
                 )
             )
         conn.commit()
@@ -527,13 +562,20 @@ def pg_save_db(db: Dict[str, Any]) -> None:
                 canonical_bytes = None
                 if record.get("canonical_sealed_payload"):
                     raw_b = record["canonical_sealed_payload"]
-                    canonical_bytes = bytes(raw_b) if isinstance(raw_b, memoryview) else raw_b
+                    b = bytes(raw_b) if isinstance(raw_b, memoryview) else raw_b
+                    canonical_bytes = storage_encryption.decrypt_bytes(b) if storage_encryption.is_encrypted_bytes(b) else b
                 elif (record.get("status") or "").upper() == "APPROVED" and record.get("document_payload"):
                     try:
                         import verification_service
                         canonical_bytes = verification_service.canonicalize_document(record["document_payload"])
                     except Exception:
                         canonical_bytes = None
+
+                encrypted_doc_payload = storage_encryption.encrypt_json(record.get("document_payload") or {})
+                encrypted_raw_ocr = storage_encryption.encrypt_json(record.get("raw_ocr")) if record.get("raw_ocr") is not None else None
+                encrypted_field_prov = storage_encryption.encrypt_json(record.get("field_provenance") or {})
+                encrypted_neural_nlp = storage_encryption.encrypt_json(record.get("neural_nlp")) if record.get("neural_nlp") is not None else None
+                stored_canonical_bytes = storage_encryption.encrypt_bytes(canonical_bytes) if canonical_bytes else None
 
                 cur.execute(
                     """
@@ -588,13 +630,13 @@ def pg_save_db(db: Dict[str, Any]) -> None:
                         record.get("qr_code"),
                         Jsonb(record.get("decision")) if record.get("decision") is not None else None,
                         Jsonb(record.get("populated_fields") or []),
-                        Jsonb(record.get("document_payload") or {}),
-                        canonical_bytes,
-                        Jsonb(record["raw_ocr"]) if record.get("raw_ocr") is not None else None,
-                        Jsonb(record.get("field_provenance") or {}),
+                        Jsonb(encrypted_doc_payload),
+                        stored_canonical_bytes,
+                        Jsonb(encrypted_raw_ocr) if encrypted_raw_ocr is not None else None,
+                        Jsonb(encrypted_field_prov),
                         Jsonb(record.get("checks") or []),
                         Jsonb(record.get("duplicate_info")) if record.get("duplicate_info") is not None else None,
-                        Jsonb(record.get("neural_nlp")) if record.get("neural_nlp") is not None else None,
+                        Jsonb(encrypted_neural_nlp) if encrypted_neural_nlp is not None else None,
                     )
                 )
         conn.commit()

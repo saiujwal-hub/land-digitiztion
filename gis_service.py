@@ -70,20 +70,122 @@ def _clean_spatial_name(val: Any, name_type: str = "village") -> str:
     return norm.strip()
 
 
+def get_available_states(base_dir: Optional[Path] = None) -> Dict[str, str]:
+    """
+    Dynamically discovers all onboarded GIS states by inspecting DATA_DIR.
+    Returns a mapping from normalized search keys to canonical state keys
+    (e.g., 'demo_state' -> 'DEMO_STATE', 'demo state' -> 'DEMO_STATE', 'telangana' -> 'TELANGANA').
+    """
+    root = base_dir or DATA_DIR
+    mapping: Dict[str, str] = {}
+    if not root.exists() or not root.is_dir():
+        return mapping
+
+    for entry in root.iterdir():
+        if not entry.is_dir():
+            continue
+        state_slug = entry.name.lower()
+        # Verify the directory contains at least one dataset layer
+        has_files = any(
+            entry.glob(f"{state_slug}_spatial_registry.json")
+        ) or any(
+            entry.glob(f"{state_slug}_villages.geojson*")
+        ) or any(
+            f.name.endswith((".json", ".geojson", ".geojson.gz")) and f.name != "README.md"
+            for f in entry.iterdir()
+        )
+        if not has_files:
+            continue
+
+        canonical = state_slug.upper()
+        mapping[state_slug] = canonical
+        mapping[state_slug.replace("_", " ")] = canonical
+        dense = re.sub(r"[^a-z0-9]", "", state_slug)
+        if dense:
+            mapping[dense] = canonical
+
+    return mapping
+
+
+def get_state_metadata(state_key: str) -> Dict[str, Any]:
+    """
+    Returns data-driven metadata, source attribution, and disclaimers for a given state.
+    Properly distinguishes synthetic/demo datasets from official government datasets.
+    """
+    state_slug = state_key.lower()
+    state_dir = DATA_DIR / state_slug
+    is_synthetic = "demo" in state_slug or "synthetic" in state_slug
+
+    readme_path = state_dir / "README.md"
+    if readme_path.exists():
+        try:
+            readme_text = readme_path.read_text(encoding="utf-8", errors="replace")
+            if "SYNTHETIC" in readme_text.upper() or "NOT REAL" in readme_text.upper():
+                is_synthetic = True
+        except Exception:
+            pass
+
+    display_name = state_slug.replace("_", " ").title()
+    if is_synthetic:
+        attribution = "SYNTHETIC / DEMO DATA — NOT REAL GOVERNMENT DATA"
+        disclaimer = "SYNTHETIC / DEMO DATA — NOT REAL GOVERNMENT DATA. Fictional boundaries for architectural validation."
+    elif state_key == "TELANGANA":
+        attribution = "TGRAC Telangana Master Administrative Boundary (Layer 5)"
+        disclaimer = "Village boundary resolved from TGRAC Telangana master administrative GIS data. This is not an authoritative cadastral/survey-number parcel boundary."
+    elif state_key == "KARNATAKA":
+        attribution = "DataMeet Indian Village Boundaries (ODbL / CC-BY 4.0)"
+        disclaimer = "Village boundary resolved from DataMeet Indian Village GIS data. This is not an authoritative cadastral/survey-number parcel boundary."
+    else:
+        attribution = f"{display_name} Local Spatial Registry"
+        disclaimer = f"Village boundary resolved from {display_name} local spatial dataset. This is not an authoritative cadastral/survey-number parcel boundary."
+
+    return {
+        "is_synthetic": is_synthetic,
+        "display_name": display_name,
+        "attribution": attribution,
+        "village_disclaimer": disclaimer,
+    }
+
+
 def normalize_state(
     state_raw: Any,
     district_raw: Any = None,
     mandal_raw: Any = None,
     village_raw: Any = None,
+    base_dir: Optional[Path] = None,
 ) -> Optional[str]:
-    """Normalizes state names safely to supported dataset keys with contextual fallback."""
-    norm_state = _norm_text(state_raw)
-    if "telangana" in norm_state:
-        return "TELANGANA"
-    if "andhra" in norm_state or norm_state in ("ap", "a p"):
-        return "TELANGANA"
-    if "karnataka" in norm_state:
-        return "KARNATAKA"
+    """Normalizes state names safely and data-driven to supported dataset keys with contextual fallback."""
+    available = get_available_states(base_dir=base_dir)
+
+    if state_raw:
+        raw_norm = _norm_text(state_raw)
+        clean_spaced = re.sub(r"[_\-\s]+", " ", raw_norm).strip()
+        clean_slug = clean_spaced.replace(" ", "_")
+        clean_dense = re.sub(r"[^a-z0-9]", "", raw_norm)
+
+        # 1. Exact canonical matches against discovered states
+        if clean_slug in available:
+            return available[clean_slug]
+        if clean_spaced in available:
+            return available[clean_spaced]
+        if clean_dense in available:
+            return available[clean_dense]
+
+        # 2. Token / word boundary check (e.g. "State of Telangana" or "Karnataka State")
+        for search_key, canonical in available.items():
+            pattern = r"(?:\b|_)" + re.escape(search_key) + r"(?:\b|_)"
+            if re.search(pattern, clean_slug) or re.search(pattern, clean_spaced):
+                return canonical
+
+        # 3. Known backward-compatibility alias for Andhra Pradesh legacy data
+        if "andhra" in clean_spaced or clean_spaced in ("ap", "a p"):
+            if "ANDHRA_PRADESH" in available.values():
+                return "ANDHRA_PRADESH"
+            if "TELANGANA" in available.values():
+                return "TELANGANA"
+
+        # Explicit state was provided but does not match any configured dataset
+        return None
 
     # Contextual inference from district / mandal / village if state is unprovided or unknown
     combined = f"{_norm_text(district_raw)} {_norm_text(mandal_raw)} {_norm_text(village_raw)}"
@@ -94,7 +196,7 @@ def normalize_state(
         "rajendranagar", "serilingampally", "sangareddy", "vikarabad", "secunderabad",
         "warangal", "khammam", "karimnagar", "nizamabad", "mahbubnagar", "nalgonda"
     )
-    if any(anchor in combined for anchor in telangana_anchors):
+    if "TELANGANA" in available.values() and any(anchor in combined for anchor in telangana_anchors):
         return "TELANGANA"
 
     karnataka_anchors = (
@@ -102,10 +204,10 @@ def normalize_state(
         "kolar", "hassan", "chikkaballapur", "ramnagara", "ramanagara", "bellary",
         "ballari", "belgaum", "belagavi", "dharwad", "hubli", "shimoga", "shivamogga"
     )
-    if any(anchor in combined for anchor in karnataka_anchors):
+    if "KARNATAKA" in available.values() and any(anchor in combined for anchor in karnataka_anchors):
         return "KARNATAKA"
 
-    if not state_raw:
+    if not state_raw and "KARNATAKA" in available.values():
         return "KARNATAKA"
     return None
 
@@ -353,7 +455,8 @@ def verify_gis_location(ocr_json: Dict[str, Any]) -> Dict[str, Any]:
     best_feature: Optional[Dict[str, Any]] = None
     resolution_level = "none"
     confidence = 0
-    source_attribution = "geoBoundaries IND ADM2/ADM3 (CC-BY 4.0)"
+    state_meta = get_state_metadata(state_key)
+    source_attribution = state_meta["attribution"] if state_meta["is_synthetic"] else "geoBoundaries IND ADM2/ADM3 (CC-BY 4.0)"
 
     # 1. Village Level Match (Karnataka - DataMeet, Telangana - TGRAC Master Administrative Boundary)
     village_dataset = get_local_dataset(state_key, layer="villages")
@@ -395,10 +498,7 @@ def verify_gis_location(ocr_json: Dict[str, Any]) -> Dict[str, Any]:
             best_feature = matched_village_feature
             resolution_level = "village"
             confidence = 90
-            if state_key == "TELANGANA":
-                source_attribution = "TGRAC Telangana Master Administrative Boundary (Layer 5)"
-            else:
-                source_attribution = "DataMeet Indian Village Boundaries (ODbL / CC-BY 4.0)"
+            source_attribution = state_meta["attribution"]
         elif len(candidates) > 1:
             ambiguous_village = True
 
@@ -572,15 +672,14 @@ def verify_gis_location(ocr_json: Dict[str, Any]) -> Dict[str, Any]:
     if village_raw and resolution_level != "village":
         if hierarchy_status == "CONTRADICTORY":
             village_disclaimer = hierarchy_message
+        elif state_meta["is_synthetic"]:
+            village_disclaimer = f"Village '{village_raw}' could not be uniquely resolved in synthetic {state_meta['display_name']} dataset. Displaying best administrative boundary ({resolution_level.title()} Level)."
         elif state_key == "TELANGANA":
             village_disclaimer = f"Village '{village_raw}' could not be uniquely resolved in TGRAC Telangana master administrative dataset. Displaying best administrative boundary ({resolution_level.title()} Level)."
         else:
             village_disclaimer = f"Village '{village_raw}' could not be uniquely resolved in the bundled local spatial dataset. Displaying best administrative boundary ({resolution_level.title()} Level)."
     elif resolution_level == "village":
-        if state_key == "TELANGANA":
-            village_disclaimer = "Village boundary resolved from TGRAC Telangana master administrative GIS data. This is not an authoritative cadastral/survey-number parcel boundary."
-        else:
-            village_disclaimer = "Village boundary resolved from DataMeet Indian Village GIS data. This is not an authoritative cadastral/survey-number parcel boundary."
+        village_disclaimer = state_meta["village_disclaimer"]
 
     # Parse dimensions if present
     parsed_dims = parse_dimensions_from_text(dimensions_raw)

@@ -1,0 +1,108 @@
+{
+  "type": "FeatureCollection",
+  "state": "DEMO_STATE",
+  "dataset_metadata": {
+    "provider": "OneBhoomi Synthetic Demo Data Generator",
+    "license": "CC0-1.0 (Public Domain)",
+    "crs": "EPSG:4326 (WGS 84)",
+    "description": "SYNTHETIC / DEMO DATA — NOT REAL GOVERNMENT DATA"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "level": "village",
+        "state": "Demo State",
+        "district": "Central District",
+        "mandal": "Sunrise Mandal",
+        "village": "Green Valley",
+        "name": "Green Valley",
+        "village_code": 999001
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [77.85, 17.85],
+            [77.95, 17.85],
+            [77.95, 17.95],
+            [77.85, 17.95],
+            [77.85, 17.85]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "level": "village",
+        "state": "Demo State",
+        "district": "Central District",
+        "mandal": "Sunrise Mandal",
+        "village": "Blue Lake",
+        "name": "Blue Lake",
+        "village_code": 999002
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [78.00, 17.85],
+            [78.10, 17.85],
+            [78.10, 17.95],
+            [78.00, 17.95],
+            [78.00, 17.85]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "level": "village",
+        "state": "Demo State",
+        "district": "Coastal District",
+        "mandal": "Sunset Mandal",
+        "village": "Ocean View",
+        "name": "Ocean View",
+        "village_code": 999003
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [78.65, 17.85],
+            [78.75, 17.85],
+            [78.75, 17.95],
+            [78.65, 17.95],
+            [78.65, 17.85]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "level": "village",
+        "state": "Demo State",
+        "district": "Coastal District",
+        "mandal": "Sunset Mandal",
+        "village": "Pine Ridge",
+        "name": "Pine Ridge",
+        "village_code": 999004
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [78.78, 17.85],
+            [78.88, 17.85],
+            [78.88, 17.95],
+            [78.78, 17.95],
+            [78.78, 17.85]
+          ]
+        ]
+      }
+    }
+  ]
+}

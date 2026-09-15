@@ -1901,6 +1901,7 @@ def _render_sidebar(active_item: str, desk_n: int, sealed_n: int, worker_label: 
     scan_active = 'class="active"' if active_item == "new_scan" else ''
     admin_telemetry_active = 'class="active"' if active_item == "admin" else ''
     admin_users_active = 'class="active"' if active_item == "admin_users" else ''
+    admin_gis_active = 'class="active"' if active_item == "admin_gis" else ''
     role_clean = role.lower()
     if role_clean == "admin":
         nav_items_html = f"""
@@ -1915,6 +1916,13 @@ def _render_sidebar(active_item: str, desk_n: int, sealed_n: int, worker_label: 
           <a {admin_users_active} href="/admin/users">
             <span class="nav-link-left">
               <span>👥 Registered Users</span>
+            </span>
+          </a>
+        </li>
+        <li>
+          <a {admin_gis_active} href="/admin/gis">
+            <span class="nav-link-left">
+              <span>🗺️ GIS Datasets</span>
             </span>
           </a>
         </li>
@@ -5082,5 +5090,240 @@ async function deleteUser(userId, userName, userRole) {{
 </html>
 """.encode("utf-8")
     return page_html
+
+
+def render_admin_gis_page(
+    host_name: str = "localhost:8001",
+    colab_url: str = "",
+    user_name: str = "Administrator",
+) -> bytes:
+    """
+    Renders the dedicated read-only /admin/gis page displaying all currently
+    configured GIS states dynamically discovered from data/gis/.
+    Strictly read-only: does not modify GIS datasets or provide mutation actions.
+    """
+    data = get_dashboard_data()
+
+    if colab_url and colab_url.strip():
+        try:
+            worker_host = urlparse(colab_url).hostname or colab_url
+        except Exception:
+            worker_host = colab_url
+        worker_label = f"Remote GPU ({worker_host[:16]}...)"
+    else:
+        worker_label = "Local CPU (PaddleOCR)"
+
+    sidebar_html = _render_sidebar("admin_gis", data["desk_n"], data["sealed_n"], worker_label, role="admin")
+
+    gis_base_dir = Path(__file__).resolve().parent / "data" / "gis"
+    states_info = []
+
+    if gis_base_dir.exists() and gis_base_dir.is_dir():
+        for state_path in sorted(gis_base_dir.iterdir()):
+            if not state_path.is_dir():
+                continue
+            state_id = state_path.name
+            files_info = []
+            state_features = 0
+            is_synthetic = "demo" in state_id.lower() or "synthetic" in state_id.lower()
+
+            readme_file = state_path / "README.md"
+            if readme_file.exists():
+                try:
+                    text = readme_file.read_text(encoding="utf-8", errors="replace")
+                    if "SYNTHETIC" in text.upper() or "NOT REAL" in text.upper():
+                        is_synthetic = True
+                except Exception:
+                    pass
+
+            for file_path in sorted(state_path.iterdir()):
+                if file_path.name.lower().endswith((".geojson", ".json")) and file_path.name != "README.md":
+                    feature_count = 0
+                    try:
+                        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                            raw_data = json.load(f)
+                            if isinstance(raw_data, dict) and raw_data.get("type") == "FeatureCollection":
+                                feature_count = len(raw_data.get("features", []))
+                    except Exception:
+                        feature_count = 0
+                    
+                    state_features += feature_count
+                    files_info.append({
+                        "name": file_path.name,
+                        "features": feature_count,
+                        "size_kb": max(1, round(file_path.stat().st_size / 1024)),
+                    })
+
+            states_info.append({
+                "state_id": state_id,
+                "display_name": state_id.replace("_", " ").title(),
+                "is_synthetic": is_synthetic,
+                "files": files_info,
+                "total_features": state_features,
+            })
+
+    total_states = len(states_info)
+    total_files = sum(len(s["files"]) for s in states_info)
+    total_features = sum(s["total_features"] for s in states_info)
+
+    state_rows = []
+    for idx, s in enumerate(states_info, start=1):
+        if s["is_synthetic"]:
+            type_badge = '<span class="count-pill pill-amber" style="font-size:11px; background:#fef3c7; color:#92400e; border:1px solid #f59e0b;">🧪 SYNTHETIC / DEMO DATA (NOT REAL)</span>'
+        else:
+            type_badge = '<span class="count-pill pill-sealed" style="font-size:11px; background:#ecfdf5; color:#065f46; border:1px solid #10b981;">🏛️ STATE GOVERNMENT REGISTRY</span>'
+
+        file_list_html = "".join(
+            f'<div style="font-family:var(--type); font-size:11.5px; color:var(--ink-soft); margin-bottom:2px;">'
+            f'<code>{html.escape(f["name"])}</code> &middot; <b>{f["features"]:,}</b> features ({f["size_kb"]} KB)'
+            f'</div>'
+            for f in s["files"]
+        ) if s["files"] else '<span style="color:var(--ink-soft); font-style:italic;">No GeoJSON datasets found</span>'
+
+        state_rows.append(f"""
+        <tr class="data-row">
+          <td class="td-sl">{idx}</td>
+          <td>
+            <div style="font-weight:700; font-size:14px; color:var(--ink);">{html.escape(s["display_name"])}</div>
+            <div style="font-family:var(--type); font-size:11px; color:var(--ink-soft);">ID: <code>{html.escape(s["state_id"])}</code></div>
+          </td>
+          <td>{type_badge}</td>
+          <td>{file_list_html}</td>
+          <td style="text-align:right; font-weight:700; font-family:var(--type); font-size:13px;">
+            {s["total_features"]:,}
+          </td>
+          <td>
+            <span class="count-pill pill-sealed" style="font-size:10.5px;">✓ Configured (Read-Only)</span>
+          </td>
+        </tr>
+        """)
+
+    if state_rows:
+        table_html = f"""
+        <table class="master-ledger">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>State Identifier</th>
+              <th>Classification &amp; Source</th>
+              <th>Configured Dataset Files</th>
+              <th style="text-align:right;">Feature Count</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {''.join(state_rows)}
+          </tbody>
+        </table>
+        """
+    else:
+        table_html = """
+        <div style="padding:24px; text-align:center; color:var(--ink-soft); font-style:italic;">
+          No state datasets found in data/gis/.
+        </div>
+        """
+
+    page_html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OneBhoomi — Configured GIS Datasets</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Archivo:wght@400;500;600;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    {DASHBOARD_CSS}
+  </style>
+</head>
+<body>
+
+<div class="security-bg"></div>
+
+<div class="app-layout">
+  {sidebar_html}
+
+  <main class="dash-content">
+    <div class="main-inner">
+
+      <!-- Top Header -->
+      <div class="top-action-bar">
+        <div class="header-left">
+          <div style="font-family:var(--type); font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--stamp); font-weight:700; margin-bottom:4px;">
+            🗺️ GIS REPOSITORIES &amp; SPATIAL REGISTRIES
+          </div>
+          <h1>Configured GIS <em>States</em></h1>
+          <div class="header-tagline">
+            Read-only registry of active offline GIS spatial boundaries and cadastral datasets discovered in <code>data/gis/</code>.
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="date-badge">⚙️ Host: {html.escape(host_name)}</div>
+          <a href="/admin" class="btn btn-primary">&larr; Admin Console</a>
+        </div>
+      </div>
+
+      <!-- KPI METRIC CARDS -->
+      <div class="kpi-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin-bottom:24px;">
+        <div class="kpi-card" style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:18px;">
+          <div style="font-size:12px; color:var(--ink-soft); font-family:var(--type); text-transform:uppercase; letter-spacing:.05em;">Configured States</div>
+          <div style="font-size:28px; font-weight:700; color:var(--ink); margin-top:4px;">{total_states}</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">Discovered in <code>data/gis/</code></div>
+        </div>
+        <div class="kpi-card" style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:18px;">
+          <div style="font-size:12px; color:var(--ink-soft); font-family:var(--type); text-transform:uppercase; letter-spacing:.05em;">Dataset Layers / Files</div>
+          <div style="font-size:28px; font-weight:700; color:var(--ink); margin-top:4px;">{total_files}</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">Spatial registries &amp; village boundaries</div>
+        </div>
+        <div class="kpi-card" style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:18px;">
+          <div style="font-size:12px; color:var(--ink-soft); font-family:var(--type); text-transform:uppercase; letter-spacing:.05em;">Total Cadastral Features</div>
+          <div style="font-size:28px; font-weight:700; color:var(--green); margin-top:4px;">{total_features:,}</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">WGS 84 spatial polygons &amp; parcels</div>
+        </div>
+      </div>
+
+      <!-- CONFIGURED GIS STATES TABLE -->
+      <div class="queue-box" style="margin-bottom:28px;">
+        <div class="queue-header" style="background:#f8fafc; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div class="queue-title">
+              <span>🗺️ Configured GIS State Repositories</span>
+              <span class="queue-badge-count" style="background:#0f172a;">{total_states} States</span>
+            </div>
+            <div style="font-size:12.5px; color:var(--ink-soft); margin-top:2px;">
+              Dynamically loaded from local GeoJSON and spatial registry files &middot; Strictly Read-Only
+            </div>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft); font-family:var(--type);">
+            🔒 Read-Only Inspection Mode
+          </div>
+        </div>
+        <div class="queue-table-scroll">
+          {table_html}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Page Footer -->
+    <footer class="dash-footer">
+      <div class="main-inner" style="padding-top:0; padding-bottom:0;">
+        <div class="dash-footer-wrap">
+          <div><b>OneBhoomi Registry Console</b> &middot; GIS Spatial Administration</div>
+          <div>100% Air-Gapped &amp; Immutable &middot; Zero cloud dependencies &middot; Host: <code>{html.escape(host_name)}</code></div>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+{DASHBOARD_JS}
+</script>
+</body>
+</html>
+""".encode("utf-8")
+    return page_html
+
 
 
