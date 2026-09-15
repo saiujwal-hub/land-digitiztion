@@ -35,44 +35,34 @@ Conforming to the **Digital India Land Records Modernization Programme (DILRMP)*
 flowchart LR
     subgraph P1 ["1. Ingest & OCR"]
         direction TB
-        IN["📄 Deed Scan / PDF"] --> PRE["✨ Quality Telemetry<br/>& Sauvola Binarization"]
-        PRE --> OCR["🔤 PaddleOCR 3.0+<br/>& TrOCR Handwritten"]
+        IN["Deed Scan / PDF"] --> PRE["Quality Telemetry<br/>& Sauvola Preprocessing"]
+        PRE --> OCR["PaddleOCR Multilingual<br/>& TrOCR Handwritten"]
     end
 
     subgraph P2 ["2. Dual AI & GIS"]
         direction TB
-        OCR --> RULE["⚖️ Legal Rules Extractor<br/><i>(14+ Canonical Fields)</i>"]
-        OCR --> LLM["🤖 Qwen2.5-7B Advisory<br/><i>(4-bit NF4 Quantized)</i>"]
-        RULE & LLM --> DIFF["📊 12-Field Cross-Audit<br/><i>Discrepancy Matrix</i>"]
-        RULE --> GIS["🗺️ Cadastral GIS Index<br/><i>(11,000+ Centroids)</i>"]
+        OCR --> RULE["Legal Rules Extractor<br/>14+ Canonical Fields"]
+        OCR --> LLM["Qwen2.5-7B Advisory<br/>4-bit NF4 Quantized"]
+        RULE & LLM --> DIFF["12-Field Cross-Audit<br/>Discrepancy Matrix"]
+        RULE --> GIS["Cadastral GIS Index<br/>11,000+ Centroids"]
     end
 
     subgraph P3 ["3. Governance & Review"]
         direction TB
-        DIFF & GIS --> GATE{"🛡️ Schedule A<br/>Validation Gating"}
-        GATE -->|"Valid & Unique"| CLERK["👨‍💼 Schedule B Review<br/><i>Split Viewer & Diffs</i>"]
-        CLERK -->|"Feedback"| ADAPT["🔄 Closed-Loop Learning<br/><i>Zero-Retrain Normalizer</i>"]
-        CLERK --> APPR{"⚖️ Sub-Registrar<br/>Decision"}
+        DIFF & GIS --> GATE{"Schedule A<br/>Validation Gating"}
+        GATE -->|"Valid & Unique"| CLERK["Schedule B Review<br/>Split Viewer & Diffs"]
+        CLERK -->|"Clerk Edits"| ADAPT["Adaptive Learning<br/>Pattern Normalizer"]
+        CLERK --> APPR{"Sub-Registrar<br/>Decision"}
     end
 
     subgraph P4 ["4. Sovereign Trust"]
         direction TB
-        APPR -->|"Approved"| SEAL["🔐 RSA-PSS 2048-bit<br/><i>Digital Signature Seal</i>"]
-        SEAL --> QR["📲 Dynamic QR Verification<br/><i>Air-Gapped Offline Audit</i>"]
-        SEAL --> PDF["📜 Court-Admissible PDF<br/><i>PIN-Locked Certificate</i>"]
+        APPR -->|"Approved"| SEAL["RSA-PSS 2048-bit<br/>Digital Signature Seal"]
+        SEAL --> QR["Dynamic QR Verification<br/>Air-Gapped Offline Audit"]
+        SEAL --> PDF["Court-Admissible PDF<br/>PIN-Locked Certificate"]
     end
 
     P1 ==> P2 ==> P3 ==> P4
-
-    classDef stage1 fill:#0f172a,stroke:#06b6d4,stroke-width:2px,color:#f8fafc;
-    classDef stage2 fill:#1e1b4b,stroke:#8b5cf6,stroke-width:2px,color:#f5f3ff;
-    classDef stage3 fill:#172554,stroke:#3b82f6,stroke-width:2px,color:#eff6ff;
-    classDef stage4 fill:#022c22,stroke:#10b981,stroke-width:2px,color:#ecfdf5;
-
-    class IN,PRE,OCR stage1;
-    class RULE,LLM,DIFF,GIS stage2;
-    class GATE,CLERK,ADAPT,APPR stage3;
-    class SEAL,QR,PDF stage4;
 ```
 
 ---
@@ -82,78 +72,59 @@ flowchart LR
 ```mermaid
 flowchart TD
     %% SUBGRAPH 1: INGESTION & PREPROCESSING
-    subgraph Phase1 ["📥 Phase 1: Ingestion & Quality-Aware Preprocessing"]
-        DOC(["📄 Scanned Land Deed<br/><b>Multi-Page PDF / High-Res Image</b>"]):::inputNode
-        DOC --> TELEMETRY["📊 Image Quality Assessment<br/><code>Laplacian Blur · Contrast SD · Illumination</code>"]:::preprocNode
-        TELEMETRY --> PREPROC["⚡ Adaptive Enhancement Engine<br/><code>Sauvola Binarization · CLAHE · Morphological Deskew</code>"]:::preprocNode
+    subgraph Phase1 ["Phase 1: Ingestion & Quality-Aware Preprocessing"]
+        DOC["Scanned Land Deed<br/>Multi-Page PDF / High-Res Image"]
+        DOC --> TELEMETRY["Image Quality Assessment<br/>Laplacian Blur · Contrast SD · Illumination"]
+        TELEMETRY --> PREPROC["Adaptive Enhancement Engine<br/>Sauvola Binarization · CLAHE · Deskew"]
     end
 
     %% SUBGRAPH 2: DUAL OCR & HTR
-    subgraph Phase2 ["👁️ Phase 2: Multimodal OCR & TrOCR Handwritten Engine"]
-        PREPROC --> ROUTER{"🔀 Script & Type Router"}:::decisionNode
-        ROUTER -->|"Printed Indic / English"| PADDLE["📑 PaddleOCR 3.0+ Multilingual Engine<br/><code>7 Indic Scripts + English · Dynamic Lexicons</code>"]:::ocrNode
-        ROUTER -->|"Handwritten Notes / Crops"| TROCR["✍️ TrOCR Neural Recognition<br/><code>microsoft/trocr-base-handwritten (GPU)</code>"]:::ocrNode
+    subgraph Phase2 ["Phase 2: Multimodal OCR & TrOCR Handwritten Engine"]
+        PREPROC --> ROUTER{"Script & Type Router"}
+        ROUTER -->|"Printed Indic / English"| PADDLE["PaddleOCR 3.0+ Multilingual Engine<br/>7 Indic Scripts + English"]
+        ROUTER -->|"Handwritten Notes / Crops"| TROCR["TrOCR Neural Recognition<br/>microsoft/trocr-base-handwritten"]
         PADDLE --> RAW_CAPTURE
         TROCR --> RAW_CAPTURE
-        RAW_CAPTURE[("📦 Schedule C: Untouched Raw OCR Exposure<br/><i>Exact Tokens · Bounding Polygons · Confidence Scores</i>")]:::storageNode
+        RAW_CAPTURE[("Schedule C: Untouched Raw OCR Exposure<br/>Exact Tokens · Bounding Polygons · Confidence Scores")]
     end
 
     %% SUBGRAPH 3: DUAL-INTELLIGENCE EXTRACTION & CROSS-AUDIT
-    subgraph Phase3 ["🧠 Phase 3: Dual-Intelligence Extraction & Cross-Audit"]
-        RAW_CAPTURE --> DETERMINISTIC["⚖️ Deterministic Legal Rule Extractor<br/><code>14+ Canonical Property Fields · Legal Boundary Regex</code>"]:::legalNode
-        RAW_CAPTURE --> NEURAL_NLP["🤖 Advisory Neural NLP Engine<br/><code>Qwen2.5-7B-Instruct (4-bit NF4 Quantized)</code>"]:::neuralNode
+    subgraph Phase3 ["Phase 3: Dual-Intelligence Extraction & Cross-Audit"]
+        RAW_CAPTURE --> DETERMINISTIC["Deterministic Legal Rule Extractor<br/>14+ Canonical Property Fields · Regex Rules"]
+        RAW_CAPTURE --> NEURAL_NLP["Advisory Neural NLP Engine<br/>Qwen2.5-7B-Instruct (4-bit NF4)"]
         DETERMINISTIC --> AUDIT_MATRIX
         NEURAL_NLP --> AUDIT_MATRIX
-        AUDIT_MATRIX["📊 12-Field Advisory Cross-Audit Matrix<br/><code>AGREEMENT · DISCREPANCY_ADVISORY · MISSING</code>"]:::auditNode
+        AUDIT_MATRIX["12-Field Advisory Cross-Audit Matrix<br/>AGREEMENT · DISCREPANCY_ADVISORY · MISSING"]
     end
 
     %% SUBGRAPH 4: CADASTRAL GIS & INTEGRITY GATING
-    subgraph Phase4 ["🛡️ Phase 4: Cadastral GIS Grounding & Integrity Gating"]
-        DETERMINISTIC --> GIS_ENGINE["🗺️ Cadastral Spatial Index<br/><code>11,000+ Centroids (Telangana & Karnataka)</code>"]:::gisNode
+    subgraph Phase4 ["Phase 4: Cadastral GIS Grounding & Integrity Gating"]
+        DETERMINISTIC --> GIS_ENGINE["Cadastral Spatial Index<br/>11,000+ Centroids (Telangana & Karnataka)"]
         AUDIT_MATRIX --> SCHEDULE_A
         GIS_ENGINE --> SCHEDULE_A
-        SCHEDULE_A["🛡️ Schedule A Automated Validation Checklist<br/><code>Chronological Sanity · Geo-Hierarchy · Mandatory Fields</code>"]:::legalNode
-        SCHEDULE_A --> CHK_VALID{"❓ Valid Land Deed?"}:::decisionNode
-        CHK_VALID -->|"❌ No / Empty Fields"| NON_LAND["⚠️ Flag: NOT_A_LAND_DOCUMENT<br/><i>Warning Banner · Suppress GIS Engine</i>"]:::rejectNode
-        CHK_VALID -->|"✅ Yes"| DUP_CHECK{"🔍 Anti-Fraud Check"}:::decisionNode
-        DUP_CHECK -->|"⚠️ Duplicate Match"| BLOCK_DUP["🚫 Block Registration<br/><i>Link Existing Certified Record</i>"]:::rejectNode
+        SCHEDULE_A["Schedule A Automated Validation Checklist<br/>Chronological Sanity · Geo-Hierarchy · Mandatory Fields"]
+        SCHEDULE_A --> CHK_VALID{"Valid Land Deed?"}
+        CHK_VALID -->|"No / Empty Fields"| NON_LAND["Flag: NOT_A_LAND_DOCUMENT<br/>Warning Banner · Suppress GIS Engine"]
+        CHK_VALID -->|"Yes"| DUP_CHECK{"Anti-Fraud Check"}
+        DUP_CHECK -->|"Duplicate Match"| BLOCK_DUP["Block Registration<br/>Link Existing Certified Record"]
     end
 
     %% SUBGRAPH 5: HUMAN-IN-THE-LOOP REVIEW & ADAPTIVE LEARNING
-    subgraph Phase5 ["👤 Phase 5: Human-in-the-Loop Review & Adaptive Learning"]
-        DUP_CHECK -->|"✅ Unique Deed"| CLERK_REVIEW["👨‍💼 Schedule B: Clerk Review Console<br/><i>Split Viewer · Visual Bounding Overlays · Field Diffs</i>"]:::hitlNode
-        CLERK_REVIEW -->|"✏️ Clerk Correction"| ADAPT_LEARN["🔄 Closed-Loop Adaptive Learning<br/><i>Error Clustering · Dynamic Regex Normalization</i>"]:::learningNode
-        ADAPT_LEARN -.->|"Zero-Retraining Feedback"| DETERMINISTIC
-        CLERK_REVIEW --> OFFICER_DECISION{"⚖️ Sub-Registrar Decision"}:::decisionNode
-        OFFICER_DECISION -->|"❌ Reject Deed"| REJECTED["❌ Flagged Non-Certified<br/><i>Audit Trail & Administrative Remarks</i>"]:::rejectNode
+    subgraph Phase5 ["Phase 5: Human-in-the-Loop Review & Adaptive Learning"]
+        DUP_CHECK -->|"Unique Deed"| CLERK_REVIEW["Schedule B: Clerk Review Console<br/>Split Viewer · Visual Bounding Overlays · Field Diffs"]
+        CLERK_REVIEW -->|"Clerk Correction"| ADAPT_LEARN["Closed-Loop Adaptive Learning<br/>Error Clustering · Dynamic Normalization"]
+        ADAPT_LEARN -.->|"Feedback Loop"| DETERMINISTIC
+        CLERK_REVIEW --> OFFICER_DECISION{"Sub-Registrar Decision"}
+        OFFICER_DECISION -->|"Reject Deed"| REJECTED["Flagged Non-Certified<br/>Audit Trail & Administrative Remarks"]
     end
 
     %% SUBGRAPH 6: CRYPTOGRAPHIC SEALING & DISSEMINATION
-    subgraph Phase6 ["🔐 Phase 6: Cryptographic Digital Sealing & Dissemination"]
-        OFFICER_DECISION -->|"✅ Approve Deed"| SEAL_ENGINE["🔐 Air-Gapped RSA-PSS 2048-Bit Sealing<br/><i>SHA-256 Hash · MGF1 Padding · Sovereign Key Custody</i>"]:::sealNode
-        SEAL_ENGINE --> DYNAMIC_QR["📲 Dynamic QR Verification<br/><i>Instant Offline / LAN Authenticity Validation</i>"]:::outputNode
-        SEAL_ENGINE --> PDF_CERT["📜 Court-Admissible PDF Certificate<br/><i>Cadastral GIS Map · PIN Lock · Tamper-Evident Hash</i>"]:::outputNode
-        SEAL_ENGINE --> MASTER_LEDGER[("🏛️ Master Registry Ledger<br/><i>PostgreSQL Connection Pool / Durable JSON DB</i>")]:::outputNode
+    subgraph Phase6 ["Phase 6: Cryptographic Digital Sealing & Dissemination"]
+        OFFICER_DECISION -->|"Approve Deed"| SEAL_ENGINE["Air-Gapped RSA-PSS 2048-Bit Sealing<br/>SHA-256 Hash · MGF1 Padding · Local Key Custody"]
+        SEAL_ENGINE --> DYNAMIC_QR["Dynamic QR Verification<br/>Instant Offline / LAN Authenticity Validation"]
+        SEAL_ENGINE --> PDF_CERT["Court-Admissible PDF Certificate<br/>Cadastral GIS Map · PIN Lock · Tamper-Evident Hash"]
+        SEAL_ENGINE --> MASTER_LEDGER[("Master Registry Ledger<br/>PostgreSQL Connection Pool / Durable JSON DB")]
     end
-
-    %% Flowchart Link Styling
-    linkStyle default stroke:#64748b,stroke-width:1.5px;
-
-    %% Color Palette Classes (WCAG 2.1 Compliant Light/Dark)
-    classDef inputNode fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
-    classDef preprocNode fill:#0f172a,stroke:#06b6d4,stroke-width:2px,color:#f8fafc;
-    classDef ocrNode fill:#082f49,stroke:#0284c7,stroke-width:2px,color:#f0f9ff;
-    classDef storageNode fill:#2e1065,stroke:#8b5cf6,stroke-width:2px,color:#f5f3ff;
-    classDef legalNode fill:#042f2e,stroke:#0d9488,stroke-width:2px,color:#f0fdfa;
-    classDef neuralNode fill:#3b0764,stroke:#c084fc,stroke-width:2px,color:#faf5ff;
-    classDef auditNode fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fef3c7;
-    classDef gisNode fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#ecfdf5;
-    classDef decisionNode fill:#1e1b4b,stroke:#818cf8,stroke-width:2px,color:#ffffff;
-    classDef rejectNode fill:#4c0519,stroke:#f43f5e,stroke-width:2px,color:#ffe4e6;
-    classDef hitlNode fill:#172554,stroke:#3b82f6,stroke-width:2px,color:#eff6ff;
-    classDef learningNode fill:#4a044e,stroke:#e879f9,stroke-width:2px,color:#fdf4ff;
-    classDef sealNode fill:#022c22,stroke:#059669,stroke-width:2.5px,color:#ffffff;
-    classDef outputNode fill:#042f2e,stroke:#14b8a6,stroke-width:2px,color:#f0fdfa;
 ```
 
 ---
