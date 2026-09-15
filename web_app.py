@@ -87,7 +87,7 @@ def get_public_web_tunnel() -> str:
 # =====================================================================
 # Kaggle / Colab OCR Tunnel Configuration
 # =====================================================================
-COLAB_OCR_URL = "https://glow-nations-tim-keeps.trycloudflare.com"
+COLAB_OCR_URL = "https://studied-injured-llp-bio.trycloudflare.com"
 
 
 def get_colab_url() -> str:
@@ -3371,23 +3371,17 @@ def _clerk_panel(record: dict, message: str, role: str = "clerk") -> str:
     neural_ext = neural_nlp.get("neural_extraction") or {}
     is_nlp_available = bool(neural_ext) or (neural_nlp.get("status") == "AVAILABLE")
     neural_card = ""
-    if is_nlp_available and neural_ext:
+    if is_nlp_available and neural_ext and not is_locked_for_clerk:
         nlp_json_str = html.escape(json.dumps(neural_ext))
-        btn_apply = ""
-        if not is_locked_for_clerk:
-            btn_apply = """
+        btn_apply = """
             <button type="button" class="btn btn-primary" onclick="applyAllNeuralNLP()" style="background:#4f46e5; border-color:#4338ca; padding:6px 14px; font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
               Review & Apply AI Suggestions
             </button>
-            """
+        """
 
         neural_card = f"""
-        <div class="neural-nlp-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(79,70,229,0.05), rgba(124,58,237,0.03)); border: 1px solid rgba(124,58,237,0.25); border-radius: 6px; padding: 14px 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <strong style="font-family: var(--serif); font-size: 13.5px; color: #4338ca; text-transform: uppercase; letter-spacing: 0.05em;">Qwen2.5-7B Neural NLP Advisory Audit (Dual Tesla T4)</strong>
-              <span style="background: #e0e7ff; color: #3730a3; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700;">GPU ONLINE</span>
-            </div>
+        <div class="neural-nlp-card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(79,70,229,0.05), rgba(124,58,237,0.03)); border: 1px solid rgba(124,58,237,0.25); border-radius: 6px; padding: 12px 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
             {btn_apply}
           </div>
           <input type="hidden" id="__NEURAL_NLP_DATA__" value="{nlp_json_str}">
